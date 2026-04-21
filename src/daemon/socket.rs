@@ -1,5 +1,5 @@
 use tokio::net::{UnixListener, UnixStream};
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::io::AsyncBufReadExt;
 use anyhow::{Result, Context};
 use std::fs;
 use std::path::Path;
@@ -37,7 +37,7 @@ pub async fn listen(primary_pane_id: String) -> Result<()> {
     }
 }
 
-async fn handle_connection(mut stream: UnixStream, engine: engine::Engine) -> Result<()> {
+async fn handle_connection(stream: UnixStream, engine: engine::Engine) -> Result<()> {
     // Need to read first, then write ACK
     // To do this properly with the same stream, we use into_split.
     let (reader, mut writer) = stream.into_split();

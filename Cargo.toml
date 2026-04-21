@@ -8,9 +8,9 @@ clap = { version = "~4.5.0", features = ["derive"] }
 ratatui = "0.26"
 crossterm = "0.27"
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.8"
+toml = { version = "0.8", features = ["preserve_order"] }
 tokio = { version = "1.37", features = ["full"] }
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
 nix = { version = "0.28", features = ["process", "user", "fs"] }
 which = "6.0"
@@ -23,3 +23,12 @@ env_logger = "0.11"
 clap_lex = "=1.0.1"
 indexmap = "=2.2.6"
 unicode-segmentation = "=1.12.0"
+regex = "1.10"
+
+[dev-dependencies]
+tempfile = "3.10"
+
+[build-dependencies]
+anyhow = "1.0"
+regex = "1.10"
+

@@ -15,4 +15,6 @@ integration-tests/.venv/
 # System
 .DS_Store
 *.log
-*.err
+# Kid CLI
+tmp_repos/
+scratch/

@@ -27,8 +27,14 @@ impl Engine {
                 config::commands::Config::default()
             });
 
+        // LOAD PERSISTENT STATS
+        let persistent_stats = crate::daemon::stats::Stats::load().unwrap_or_default();
+
+        let mut state = State::new();
+        state.stats = persistent_stats;
+
         Self {
-            state: Arc::new(Mutex::new(State::new())),
+            state: Arc::new(Mutex::new(state)),
             messages_config: Arc::new(msg_config),
             commands_config: Arc::new(cmd_config),
             primary_pane_id,
@@ -43,17 +49,13 @@ impl Engine {
         let is_primary = pane_id == self.primary_pane_id || pane_id == "unknown";
         
         let mut trigger = false;
+        let mut brain_insight = None;
         
         {
             let mut state = self.state.lock().await;
             match event_type {
                 "pre" => {
                     state.last_command = Some(data.to_string());
-                    state.command_count += 1;
-                    
-                    if data.starts_with("ls") {
-                        state.ls_count += 1;
-                    }
                     
                     let cmd_name = data.split_whitespace().next().unwrap_or(data);
                     let is_launcher = self.commands_config.launchers.contains_key(cmd_name);
@@ -68,6 +70,28 @@ impl Engine {
                     }
                 }
                 "exec" => {
+                    // 1. UPDATE STATS
+                    let cmd_name = data.split_whitespace().next().unwrap_or(data).to_string();
+                    
+                    // We split the updates to avoid borrow checker issues with the Brain call
+                    if let Some(s) = state.stats.commands.get_mut(&cmd_name) {
+                        s.count += 1;
+                    } else {
+                        state.stats.commands.insert(cmd_name.clone(), crate::daemon::stats::CommandStats {
+                            count: 1,
+                            last_run: chrono::Utc::now(),
+                        });
+                    }
+                    
+                    // 2. BRAIN CHECK (uses NEW count but OLD timestamp for absence check)
+                    brain_insight = crate::daemon::brain::Brain::get_insight(&state.stats, data);
+                    
+                    // 3. Update timestamp and PERSIST
+                    if let Some(s) = state.stats.commands.get_mut(&cmd_name) {
+                        s.last_run = chrono::Utc::now();
+                    }
+                    let _ = state.stats.save();
+
                     // Discovery trigger: ONLY if it's a registered launcher or starts with cd
                     if data.starts_with("cd") {
                          // Unconditionally ensure pane (ONLY IF PRIMARY)
@@ -81,25 +105,21 @@ impl Engine {
                              None => true,
                          };
                          if is_primary && can_greet {
-                             effects::trigger_greeting(&self.messages_config, cwd).await?;
+                             effects::trigger_greeting(&self.messages_config, cwd, brain_insight.clone()).await?;
                              state.update_last_message_time();
                              state.last_message_is_discovery = false;
                          }
-                    } else {
-                         // Check if the command (first word of data) is in our launchers
-                         let cmd_name = data.split_whitespace().next().unwrap_or(data);
-                         if self.commands_config.launchers.contains_key(cmd_name) {
-                             // Unconditionally ensure pane (ONLY IF PRIMARY)
-                             if is_primary {
-                                let _ = crate::daemon::pane::ensure_companion_pane();
-                             }
+                    } else if self.commands_config.launchers.contains_key(&cmd_name) {
+                         // Unconditionally ensure pane (ONLY IF PRIMARY)
+                         if is_primary {
+                            let _ = crate::daemon::pane::ensure_companion_pane();
+                         }
 
-                             // Only trigger discovery for launchers, skip generic greeting
-                             if is_primary {
-                                 effects::trigger_discovery(&self.messages_config, data).await?;
-                                 state.update_last_message_time();
-                                 state.last_message_is_discovery = true;
-                             }
+                         // Only trigger discovery for launchers, skip generic greeting
+                         if is_primary {
+                             effects::trigger_discovery(&self.messages_config, data, brain_insight.clone()).await?;
+                             state.update_last_message_time();
+                             state.last_message_is_discovery = true;
                          }
                     }
                 }
@@ -111,7 +131,7 @@ impl Engine {
         }
 
         if is_primary && trigger {
-            effects::trigger_greeting(&self.messages_config, cwd).await?;
+            effects::trigger_greeting(&self.messages_config, cwd, brain_insight).await?;
             
             let mut state = self.state.lock().await;
             state.update_last_message_time();
@@ -124,24 +144,33 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
 
     #[tokio::test]
     async fn test_engine_counting() {
-        let engine = Engine::new();
+        // Use a temporary file for stats in test
+        let temp_dir = std::env::temp_dir();
+        let stats_path = temp_dir.join("kid_test_stats.toml");
+        let _ = std::fs::remove_file(&stats_path);
+        std::env::set_var("KID_STATS_PATH", stats_path.to_str().unwrap());
+
+        // Use "primary" as the ID, but send events from "other" to skip UI effects in test
+        let engine = Engine::new("primary".to_string());
         
-        // Prevent companion message from triggering during test
-        // by setting a recent message time
+        // Prevent companion message from triggering during test (safety fallback)
         {
             let mut state = engine.state.lock().await;
             state.update_last_message_time();
         }
 
-        engine.process("pre", "ls").await.unwrap();
-        engine.process("pre", "cd").await.unwrap();
+        engine.process("exec", "ls", "/home/kid", "other").await.unwrap();
+        engine.process("exec", "cd", "/home/kid", "other").await.unwrap();
         
         let state = engine.state.lock().await;
-        assert_eq!(state.command_count, 2);
-        assert_eq!(state.ls_count, 1);
+        assert_eq!(state.stats.commands.get("ls").unwrap().count, 1);
+        assert_eq!(state.stats.commands.get("cd").unwrap().count, 1);
+        
+        // Cleanup after test
+        std::env::remove_var("KID_STATS_PATH");
+        let _ = std::fs::remove_file(&stats_path);
     }
 }

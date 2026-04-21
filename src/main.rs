@@ -6,6 +6,8 @@ mod terminal;
 mod dispatch;
 mod config;
 mod daemon;
+mod characters;
+
 
 #[derive(Parser)]
 #[command(name = "kid")]
@@ -54,6 +56,8 @@ enum Commands {
         /// Originating pane ID
         pane_id: Option<String>,
     },
+    /// Browse and view character assets
+    Characters,
 }
 
 #[tokio::main]
@@ -120,6 +124,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Help { section }) => {
             commands::help::run(&section)
+        }
+        Some(Commands::Characters) => {
+            commands::characters::run().await
         }
         None => {
             // If called as 'kid' without command, show interactive help

@@ -3,7 +3,10 @@ FROM rust:bookworm AS builder
 WORKDIR /build
 
 # Cache dependencies
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock build.rs ./
+# Copy assets early so build.rs can use them even during dependency caching
+# (Optional: if assets are large, this might bloat the cache layer, but here they are small)
+COPY assets/ ./assets/
 RUN mkdir src \
     && echo "fn main() {}" > src/main.rs \
     && cargo build --release \
@@ -42,7 +45,7 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 RUN curl -LsSf https://astral.sh/uv/install.sh | BINDIR=/usr/local/bin sh
-ENV PATH="/home/kid/.local/bin:${PATH}"
+ENV PATH="/kid/bin:/home/kid/.local/bin:${PATH}"
 
 # Layer 3: The Kid User + /kid runtime directories
 RUN getent group render || groupadd render \

@@ -1,7 +1,6 @@
 use std::process::Command;
 use anyhow::{Result, anyhow};
 
-const PANE_TITLE: &str = "kid-companion";
 
 pub async fn show_message(text: &str) -> Result<()> {
     // 1. Ensure companion pane exists
@@ -52,7 +51,6 @@ pub fn ensure_companion_pane() -> Result<String> {
     let tmux = "/usr/bin/tmux";
     let target = get_active_pane(tmux);
     
-    let mut debug_log = format!("TARGET: {}\n", target);
 
     // 1. Try to find pane with title "Companion" across all panes globally
     let output = Command::new(tmux)
@@ -85,10 +83,9 @@ pub fn ensure_companion_pane() -> Result<String> {
     let panes_str = String::from_utf8(output.stdout)?;
     let pane_ids: Vec<&str> = panes_str.lines().collect();
     let initial_count = pane_ids.len();
-    let mut debug_log = format!("TARGET: {}\nPANE_COUNT: {}\n", target, initial_count);
 
     if initial_count == 1 {
-        let split_out = Command::new(tmux)
+        let _split_out = Command::new(tmux)
             .arg("split-window")
             .arg("-t")
             .arg(&target)
@@ -99,7 +96,6 @@ pub fn ensure_companion_pane() -> Result<String> {
             .arg("/kid/bin/kid companion")
             .output()?;
             
-        debug_log.push_str(&format!("SPLIT_STATUS: {}\nSPLIT_ERR: {}\n", split_out.status, String::from_utf8_lossy(&split_out.stderr)));
             
         // Re-list to get the new pane
         let mut cmd = Command::new(tmux);
@@ -111,9 +107,7 @@ pub fn ensure_companion_pane() -> Result<String> {
         }
         let updated_str = String::from_utf8(output.stdout)?;
         let updated_ids: Vec<&str> = updated_str.lines().collect();
-        debug_log.push_str(&format!("RE-LIST: {}\n", updated_str));
         
-        let _ = std::fs::write("/tmp/pane_debug.txt", &debug_log);
         
         if updated_ids.len() > initial_count {
             if let Some(last_id) = updated_ids.last() {

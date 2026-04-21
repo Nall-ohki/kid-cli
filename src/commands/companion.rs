@@ -1,4 +1,4 @@
-use std::{io::{self, BufRead, BufReader}, time::Duration, fs::{self, OpenOptions}, os::unix::fs::OpenOptionsExt};
+use std::{io::{self, BufRead, BufReader}, time::Duration, fs::{self, OpenOptions}};
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -6,14 +6,15 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout, Alignment},
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout, Alignment, Rect},
     widgets::{Block, Borders, Paragraph, Wrap},
-    Frame, Terminal,
+    Terminal,
     style::{Style, Color, Modifier},
-    text::{Line, Span},
+    text::Span,
 };
 use tokio::sync::mpsc;
+use crate::characters::{registry::Registry, render, types::CharacterKind};
 
 const WELCOME_MSG: &str = "Hello! I am your AI coach. How can I help you today?";
 
@@ -24,6 +25,10 @@ pub async fn run() -> Result<()> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+
+    // Character Registry
+    let mut registry = Registry::from_builtins();
+    registry.select_by_name("cow");
 
     // Channel for pipe messages
     let (tx, mut rx) = mpsc::channel::<String>(10);
@@ -37,7 +42,6 @@ pub async fn run() -> Result<()> {
 
     tokio::spawn(async move {
         loop {
-            // Open blocks until a writer connects
             if let Ok(file) = OpenOptions::new().read(true).open(pipe_path) {
                 let reader = BufReader::new(file);
                 for line in reader.lines() {
@@ -53,8 +57,67 @@ pub async fn run() -> Result<()> {
     let mut current_msg = WELCOME_MSG.to_string();
     let mut tick_count = 0u64;
 
+    let mut sixel_area = Rect::default();
+    
     loop {
-        terminal.draw(|f| ui(f, &current_msg, tick_count))?;
+        terminal.draw(|f| {
+            let size = f.size();
+            let char_height = registry.current().map(|c| c.height as u16).unwrap_or(8);
+            
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Min(4),
+                    Constraint::Length(char_height + 2),
+                ])
+                .split(size);
+
+            sixel_area = chunks[1];
+
+            // Rainbow colors logic
+            let rainbow = [
+                Color::Red, Color::LightRed, Color::Yellow, 
+                Color::Green, Color::Cyan, Color::Blue, Color::Magenta
+            ];
+            let base_color = rainbow[(tick_count / 10 % rainbow.len() as u64) as usize];
+
+            // 1. Speech Bubble
+            let bubble = Paragraph::new(current_msg.as_str())
+                .wrap(Wrap { trim: true })
+                .alignment(Alignment::Center)
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(base_color))
+                    .title(Span::styled(" COACH ", Style::default().add_modifier(Modifier::BOLD).fg(base_color))));
+            
+            f.render_widget(bubble, chunks[0]);
+
+            // 2. Character (Grid path)
+            if let Some(chara) = registry.current() {
+                if let CharacterKind::Grid(grid) = &chara.kind {
+                    let lines = render::render_grid(grid);
+                    let para = Paragraph::new(lines)
+                        .alignment(Alignment::Left);
+                    f.render_widget(para, chunks[1]);
+                }
+            }
+        })?;
+
+        // If current is Sixel, output it now
+        if let Some(chara) = registry.current() {
+            if let CharacterKind::Sixel(data) = &chara.kind {
+                use crossterm::cursor;
+                let mut stdout = io::stdout();
+                let _ = execute!(
+                    stdout,
+                    cursor::MoveTo(sixel_area.x, sixel_area.y),
+                );
+                // The data might have literal \x1B, we need to resolve them
+                let resolved_data = data.replace("\\x1B", "\x1B");
+                print!("{}", resolved_data);
+                let _ = io::Write::flush(&mut stdout);
+            }
+        }
 
         // Check for messages
         while let Ok(new_msg) = rx.try_recv() {
@@ -67,8 +130,11 @@ pub async fn run() -> Result<()> {
 
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
-                if key.code == KeyCode::Char('q') {
-                    break;
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Char('n') => { registry.next(); },
+                    KeyCode::Char('p') => { registry.prev(); },
+                    _ => {}
                 }
             }
         }
@@ -87,44 +153,3 @@ pub async fn run() -> Result<()> {
     Ok(())
 }
 
-fn ui(f: &mut Frame, msg: &str, tick: u64) {
-    let size = f.size();
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Min(4), Constraint::Length(8)])
-        .split(size);
-
-    // Rainbow colors logic (smooth transition)
-    let colors = [
-        Color::Red, Color::LightRed, Color::Yellow, 
-        Color::Green, Color::Cyan, Color::Blue, Color::Magenta
-    ];
-    let base_color = colors[(tick / 10 % colors.len() as u64) as usize];
-
-    // 1. Speech Bubble
-    let bubble = Paragraph::new(msg)
-        .wrap(Wrap { trim: true })
-        .alignment(Alignment::Center)
-        .block(Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(base_color))
-            .title(Span::styled(" COACH ", Style::default().add_modifier(Modifier::BOLD).fg(base_color))));
-    
-    f.render_widget(bubble, chunks[0]);
-
-    // 2. Cow ASCII
-    let cow = r#"
-        \   ^__^
-         \  (oo)\_______
-            (__)\       )\/\
-                ||----w |
-                ||     ||
-    "#;
-    
-    let cow_para = Paragraph::new(cow)
-        .alignment(Alignment::Left)
-        .style(Style::default().fg(Color::White));
-    
-    // Put cow in the bottom chunk
-    f.render_widget(cow_para, chunks[1]);
-}

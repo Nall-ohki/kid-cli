@@ -3,6 +3,8 @@ pub mod pane;
 pub mod engine;
 pub mod state;
 pub mod effects;
+pub mod stats;
+pub mod brain;
 
 use std::fs;
 use std::path::PathBuf;

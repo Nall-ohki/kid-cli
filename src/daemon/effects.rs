@@ -4,7 +4,12 @@ use crate::config::messages::Config;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-pub async fn trigger_greeting(config: &Config, cwd: &str) -> Result<()> {
+pub async fn trigger_greeting(config: &Config, cwd: &str, insight: Option<String>) -> Result<()> {
+    // 0. If we have a contextual brain insight, it takes TOP priority
+    if let Some(msg) = insight {
+        return pane::show_message(&msg).await;
+    }
+
     // 1. Check for specific context match (e.g. apps/gcompris)
     for (pattern, message) in &config.cd.context {
         if match_path(cwd, pattern) {
@@ -31,7 +36,12 @@ pub async fn trigger_greeting(config: &Config, cwd: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn trigger_discovery(config: &Config, cmd: &str) -> Result<()> {
+pub async fn trigger_discovery(config: &Config, cmd: &str, insight: Option<String>) -> Result<()> {
+    // Brain insight takes priority for discovery too
+    if let Some(msg) = insight {
+        return pane::show_message(&msg).await;
+    }
+
     let msg = config.discovery.template
         .replace("{cmd}", cmd)
         .replace("{icon}", "⭐");

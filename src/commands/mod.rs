@@ -7,3 +7,4 @@ pub mod launch;
 pub mod passthrough;
 pub mod block;
 pub mod companion;
+pub mod characters;

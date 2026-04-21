@@ -1,10 +1,10 @@
+use crate::daemon::stats::Stats;
 use std::time::{Instant, Duration};
 
 pub struct State {
     pub last_command: Option<String>,
     pub last_exit_code: Option<i32>,
-    pub command_count: u32,
-    pub ls_count: u32,
+    pub stats: Stats,
     pub last_message_time: Option<Instant>,
     pub last_message_is_discovery: bool,
     pub cooldown: Duration,
@@ -15,8 +15,7 @@ impl State {
         Self {
             last_command: None,
             last_exit_code: None,
-            command_count: 0,
-            ls_count: 0,
+            stats: Stats::default(), 
             last_message_time: None,
             last_message_is_discovery: false,
             cooldown: Duration::from_secs(30), // 30 second cooldown by default
