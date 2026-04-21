@@ -1,0 +1,18 @@
+# Rust
+/kid/rust/target/
+/target/
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.ruff_cache/
+.pytest_cache/
+.uv/
+tests/.venv/
+
+# Docker/System
+.DS_Store
+*.log

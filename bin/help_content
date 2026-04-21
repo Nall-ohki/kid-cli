@@ -1,0 +1,94 @@
+#!/bin/bash
+# Kid's Help Content
+# This script is called by the help wrapper to display the menu
+
+BLUE='\033[1;36m'   # Light Cyan (Bold)
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
+GRAY='\033[0;90m'    # Dark gray for hints
+MUTED='\033[0;34m'   # Darker muted blue for hint commands
+NC='\033[0m'
+
+# Parse arguments to determine which sections to show
+SHOW_BASIC=false
+SHOW_FILES=false
+SHOW_TOOLS=false
+SHOW_FUN=false
+
+# If no arguments, default to basic
+if [ $# -eq 0 ]; then
+  SHOW_BASIC=true
+else
+  # Process all arguments
+  for arg in "$@"; do
+    case "$arg" in
+      basic) SHOW_BASIC=true ;;
+      files) SHOW_FILES=true ;;
+      tools) SHOW_TOOLS=true ;;
+      fun) SHOW_FUN=true ;;
+      all) SHOW_BASIC=true; SHOW_FILES=true; SHOW_TOOLS=true; SHOW_FUN=true ;;
+    esac
+  done
+fi
+
+if [ "$SHOW_BASIC" = true ]; then
+  echo -e "${BLUE}⭐ Basic Commands:${NC}"
+  echo -e "  ${GREEN}home${NC}     🏠 Go home"
+  echo -e "  ${GREEN}ls${NC}       👀 List files"
+  echo -e "  ${GREEN}cd${NC}       📂 Change directory"
+  echo -e "  ${GREEN}pwd${NC}      📍 Show directory"
+  echo -e "  ${GREEN}clear${NC}    ✨ Clear the screen"
+  echo -e "  ${GREEN}exit${NC}     👋 Goodbye!"
+  echo ""
+fi
+
+if [ "$SHOW_FILES" = true ]; then
+  echo -e "${BLUE}📂 Files:${NC}"
+  echo -e "  ${GREEN}cat${NC}      📄 Read a file"
+  echo -e "  ${GREEN}file${NC}     🔍 Check what kind of file it is"
+  echo -e "  ${GREEN}touch${NC}    ✨ Create a new empty file"
+  echo -e "  ${GREEN}rm${NC}       🚫 Remove a file (DISABLED!)"
+  echo -e "  ${GREEN}cp${NC}       🚫 Copy a file (DISABLED!)"
+  echo -e "  ${GREEN}mkdir${NC}    🚫 Create a new directory (DISABLED!)"
+  echo -e "  ${GREEN}rmdir${NC}    🚫 Remove a directory (DISABLED!)"
+  echo ""
+fi
+
+if [ "$SHOW_TOOLS" = true ]; then
+  echo -e "${BLUE}🛠️  More Tools:${NC}"
+  echo -e "  ${GREEN}man${NC}      ❓ Ask for detailed help on a command"
+  echo -e "  ${GREEN}nano${NC}     ✏️  Simple text editor"
+  echo -e "  ${GREEN}date${NC}     📅 Show the date"
+  echo -e "  ${GREEN}cal${NC}      🗓️  Show a calendar"
+  echo -e "  ${GREEN}echo${NC}     🗣️  Say something"
+  echo -e "  ${GREEN}whoami${NC}   👤 Who am I logged in as?"
+  echo ""
+fi
+
+if [ "$SHOW_FUN" = true ]; then
+  echo -e "${BLUE}🎉 Fun:${NC}"
+  echo -e "  ${GREEN}sl${NC}       🚂 Steam Locomotive"
+  echo -e "  ${GREEN}gti${NC}      🚗 Git typo with car animation"
+  echo -e "  ${GREEN}cmatrix${NC}  💚 Matrix-style falling characters"
+  echo -e "  ${GREEN}asciiquarium${NC} 🐟 ASCII aquarium"
+  echo -e "  ${GREEN}cowsay${NC}   🐮 Make a cow talk"
+  echo -e "  ${GREEN}figlet${NC}   🅰️  Make big text banners"
+  echo -e "  ${GREEN}nyancat${NC}  🌈 Rainbow cat animation"
+  echo ""
+fi
+
+# Show usage hint if only showing basic
+if [ "$SHOW_BASIC" = true ]; then
+  echo ""
+  echo ""
+  echo ""
+  echo ""
+  echo -e "${GRAY}Try the following:${NC}"
+  echo -e "${GRAY}  ${MUTED}help basic${NC}   - Basic commands${NC}"
+  echo -e "${GRAY}  ${MUTED}help files${NC}   - File commands${NC}"
+  echo -e "${GRAY}  ${MUTED}help tools${NC}   - More tools${NC}"
+  echo -e "${GRAY}  ${MUTED}help fun${NC}     - Fun commands${NC}"
+  echo ""
+fi

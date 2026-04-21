@@ -1,0 +1,120 @@
+#!/bin/bash
+# kid-run - Unified command runner for kid environment
+
+# Restore infrastructure PATH so we can use grep, cut, tmux internals
+export PATH="$_INFRA_PATH"
+
+FULL_PATHS=false
+COMPANION=false
+BOTTOM=false
+PERSIST=""  # Will be set based on pane type if not explicitly specified
+LOLCAT=""   # Empty, "lol", or "lol-anim"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -p|--full-paths)  FULL_PATHS=true; shift ;;
+    -c|--companion)   COMPANION=true; shift ;;
+    -b|--bottom)      BOTTOM=true; shift ;;
+    --persist)        PERSIST=true; shift ;;
+    --no-persist)     PERSIST=false; shift ;;
+    --lol)            LOLCAT="lol"; shift ;;
+    --lol-anim)       LOLCAT="lol-anim"; shift ;;
+    -h|--help)
+      echo "Usage: kid-run [--full-paths] [--companion | --bottom] [--persist | --no-persist] [--lol | --lol-anim] <command>"
+      echo "  --full-paths       Restore infrastructure PATH"
+      echo "  --companion        Run in companion tmux pane (right side)"
+      echo "  --bottom           Run in bottom tmux pane (full width)"
+      echo "  --persist          Keep pane open after command exits"
+      echo "  --no-persist       Close pane when command exits"
+      echo "  --lol              Pipe output through lolcat"
+      echo "  --lol-anim         Pipe output through lolcat --animate"
+      exit 0
+      ;;
+    --) shift; break ;;
+    -*) echo "Unknown option: $1" >&2; exit 1 ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]; then
+  echo "Usage: kid-run [--full-paths] [--companion | --bottom] <command>"
+  exit 1
+fi
+
+# Validate pane type (can't have both)
+if [ "$COMPANION" = true ] && [ "$BOTTOM" = true ]; then
+  echo "Error: Cannot use both --companion and --bottom" >&2
+  exit 1
+fi
+
+# Set default persist behavior based on pane type
+if [ -z "$PERSIST" ]; then
+  if [ "$COMPANION" = true ]; then
+    PERSIST=true   # Companion panes persist by default
+  elif [ "$BOTTOM" = true ]; then
+    PERSIST=false  # Bottom panes auto-close by default
+  fi
+fi
+
+# Handle pane creation
+if [ "$COMPANION" = true ] || [ "$BOTTOM" = true ]; then
+  [ -z "$TMUX" ] && { echo "Not in tmux"; exit 1; }
+
+  # Determine pane title and split command
+  if [ "$COMPANION" = true ]; then
+    PANE_TITLE="companion"
+    SPLIT_CMD="split-window -h -p 50"
+  else
+    PANE_TITLE="bottom"
+    SPLIT_CMD="split-window -fv -p 30"  # -f for full width
+  fi
+
+  # Kill existing pane of this type if present
+  # Use exact title match to avoid partial matches
+  PANE=$(tmux list-panes -F '#{pane_id} #{pane_title}' 2>/dev/null | awk -v title="$PANE_TITLE" '$2 == title {print $1}')
+  if [ -n "$PANE" ]; then
+    tmux kill-pane -t "$PANE" 2>/dev/null || true
+    # Brief wait to ensure pane is fully closed
+    sleep 0.1
+  fi
+
+  # Build full command
+  CMD="$*"
+  [ "$FULL_PATHS" = true ] && CMD="export PATH='$_INFRA_PATH'; $CMD"
+
+  # Add lolcat piping if requested and available
+  if [ -n "$LOLCAT" ]; then
+    if command -v lolcat &> /dev/null; then
+      if [ "$LOLCAT" = "lol-anim" ]; then
+        CMD="$CMD | lolcat --animate --speed=100"
+      else
+        CMD="$CMD | lolcat"
+      fi
+    fi
+  fi
+
+  # Wrap command to prevent it from changing the pane title
+  WRAPPED_CMD="($CMD)"
+
+  # Add persist suffix if needed
+  if [ "$PERSIST" = true ]; then
+    WRAPPED_CMD="$WRAPPED_CMD; cat"
+  fi
+
+  # Create pane (detached, so focus stays on current pane)
+  tmux $SPLIT_CMD -d "$WRAPPED_CMD"
+
+  # Title the new pane without changing focus
+  # Set title immediately after creation to ensure it sticks
+  if [ "$COMPANION" = true ]; then
+    NEW_PANE=$(tmux list-panes -F '#{pane_id}' | tail -1)
+    tmux select-pane -t "$NEW_PANE" -T "$PANE_TITLE"
+  else
+    NEW_PANE=$(tmux list-panes -F '#{pane_id}' | tail -1)
+    tmux select-pane -t "$NEW_PANE" -T "$PANE_TITLE"
+  fi
+else
+  # Direct execution (no pane)
+  [ "$FULL_PATHS" = true ] && export PATH="$_INFRA_PATH"
+  exec "$@"
+fi

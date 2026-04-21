@@ -1,0 +1,24 @@
+services:
+  kid:
+    build: .
+    image: kid-env:latest
+    privileged: true
+    stdin_open: true
+    tty: true
+    volumes:
+      # Bind mount for creations so host can access them easily
+      - ./creations:/home/kid/creations
+      # Named volumes for saving progress and history
+      - tuxpaint-data:/home/kid/.tuxpaint
+      - gcompris-data:/home/kid/.config/gcompris
+      - zsh-history:/home/kid/.zsh_history
+      # Direct passage to host devices for Wayland/GPU/input/sound
+      - /dev:/dev
+      - /run/udev:/run/udev
+    environment:
+      - TERM=xterm-256color
+
+volumes:
+  tuxpaint-data:
+  gcompris-data:
+  zsh-history:

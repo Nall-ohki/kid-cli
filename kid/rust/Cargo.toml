@@ -1,0 +1,25 @@
+[package]
+name = "kid"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "~4.5.0", features = ["derive"] }
+ratatui = "0.26"
+crossterm = "0.27"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+tokio = { version = "1.37", features = ["full"] }
+chrono = "0.4"
+rand = "0.8"
+nix = { version = "0.28", features = ["process", "user", "fs"] }
+which = "6.0"
+home = "=0.5.9"
+serde_json = "1.0"
+directories = "5.0"
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+clap_lex = "=1.0.1"
+indexmap = "=2.2.6"
+unicode-segmentation = "=1.12.0"
