@@ -56,21 +56,23 @@ sudo docker exec -it kid-env-kid-1 /bin/zsh -l
 
 ## Configuration Files
 
-All configs are symlinked from `~/login/kid/config`:
+All configs are managed by the `kid` CLI:
 
 - **ZSH**: `config/zshrc.zsh`, `config/prompt.zsh`
-- **Tmux**: `config/tmux.conf.local`
+- **Tmux**: `config/tmux.conf`
 
-## Installation Scripts
+## Installation
 
-Located in `kid/install/`:
+The environment is bootstrapped via the Rust CLI tool:
 
-1. `install_kid_user.sh` - Creates kid user
-2. `install_kid_structure.sh` - Creates directory tree
-3. `install_kid_software.sh` - Installs educational apps
-4. `install_kid_launchers.sh` - Creates app launchers
-5. `install_kid_shell.sh` - Calls existing install_zsh.sh and install_tmux.sh as kid user
-6. `install_kid_links.sh` - Creates config symlinks
-7. `install_kid.sh` - Main installer (runs all above)
+```bash
+/kid/bin/kid install
+```
+
+This command:
+1. Creates the directory structure (`~/apps`, `~/creations`).
+2. Symlinks the shell and tmux configurations.
+3. Installs educational application wrappers.
+4. (Optional) With `--safebin`, creates the security proxies in `/kid/wrap/bin`.
 
 

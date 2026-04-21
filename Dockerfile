@@ -3,14 +3,14 @@ FROM rust:bookworm AS builder
 WORKDIR /build
 
 # Cache dependencies
-COPY kid/rust/Cargo.toml kid/rust/Cargo.lock ./
+COPY Cargo.toml Cargo.lock ./
 RUN mkdir src \
     && echo "fn main() {}" > src/main.rs \
     && cargo build --release \
     && rm -rf src
 
 # Build actual source
-COPY kid/rust/src/ ./src/
+COPY src/ ./src/
 RUN touch src/main.rs && cargo build --release
 
 FROM debian:bookworm-slim
@@ -37,10 +37,12 @@ RUN install -m 0755 -d /etc/apt/keyrings \
     && apt-get update && apt-get install -y --no-install-recommends docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Layer 2: Environment Setup & UV (Keep UV if needed for other things, or remove)
+# Layer 2: Environment Setup & UV
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
+RUN curl -LsSf https://astral.sh/uv/install.sh | BINDIR=/usr/local/bin sh
+ENV PATH="/home/kid/.local/bin:${PATH}"
 
 # Layer 3: The Kid User + /kid runtime directories
 RUN getent group render || groupadd render \

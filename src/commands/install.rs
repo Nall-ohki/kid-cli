@@ -27,6 +27,7 @@ fn create_structure() -> Result<()> {
     
     let dirs = [
         "apps",
+        "tools",
         "creations/pictures",
         "creations/programs",
         "creations/games",
@@ -146,7 +147,7 @@ fn install_symlinks(config_dir: &Path) -> Result<()> {
     let emergency_proxies = [
         "ls", "cat", "less", "file", "touch", "echo", "mkdir", "rmdir", 
         "pwd", "wc", "head", "tail", "grep", "cal", "rm", "mv", "cp", 
-        "help", "clear", "reset", "whoami", "date", "groups", "id"
+        "help", "clear", "reset", "whoami", "date", "groups", "id", "uv"
     ];
     for p in emergency_proxies {
         create_symlink(kid_bin, &format!("/kid/allow/bin/{}", p))?;

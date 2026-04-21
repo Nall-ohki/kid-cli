@@ -10,7 +10,7 @@ __pycache__/
 .ruff_cache/
 .pytest_cache/
 .uv/
-tests/.venv/
+integration-tests/.venv/
 
 # System
 .DS_Store

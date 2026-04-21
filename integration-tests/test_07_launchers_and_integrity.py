@@ -27,6 +27,6 @@ def test_img_002_user_ownership(run_in_restricted_env):
     pass
 
 def test_img_012_uv_installed(run_in_restricted_env):
-    rc, out, err = run_in_restricted_env("/home/kid/.cargo/bin/uv --version || /usr/local/bin/uv --version || /bin/uv --version")
+    rc, out, err = run_in_restricted_env("/kid/allow/bin/uv --version || /home/kid/.cargo/bin/uv --version || /usr/local/bin/uv --version || /bin/uv --version")
     assert rc == 0
     assert "uv" in out

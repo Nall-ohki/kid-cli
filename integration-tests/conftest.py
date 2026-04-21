@@ -38,7 +38,7 @@ def run_in_restricted_env(docker_cmd):
     def _run(command):
         # Use ';' instead of '&&' to ensure command runs even if .zshrc has minor errors
         full_command = f"source /home/kid/.zshrc; {command}"
-        cmd = ["run", "--rm", "-e", "TMUX=dummy", "kid-env:latest", "/bin/zsh", "-c", full_command]
+        cmd = ["run", "--rm", "kid-env:latest", "/bin/zsh", "-c", full_command]
         return run_docker(docker_cmd, cmd)
     return _run
 

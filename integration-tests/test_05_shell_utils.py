@@ -1,6 +1,7 @@
 import pytest
 import time
 
+@pytest.mark.xfail(reason="tmux display-popup requires an attached client, which is not available in headless tests")
 def test_hlp_001_basic(tmux_session):
     tmux_session.send_keys("help")
     # Wait for the popup to open and show content

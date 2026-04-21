@@ -82,7 +82,7 @@ def test_lnk_001_zshrc_is_symlink(run_in_kid_env):
 def test_lnk_002_zshrc_target_correct(run_in_kid_env):
     rc, out, err = run_in_kid_env("readlink /home/kid/.zshrc")
     assert rc == 0
-    assert "kid/config/zshrc.zsh" in out
+    assert ".config/zsh/zshrc.zsh" in out
 
 def test_lnk_003_tmux_conf_is_symlink(run_in_kid_env):
     rc, out, err = run_in_kid_env("test -L /home/kid/.tmux.conf")
@@ -91,4 +91,4 @@ def test_lnk_003_tmux_conf_is_symlink(run_in_kid_env):
 def test_lnk_004_tmux_conf_target_correct(run_in_kid_env):
     rc, out, err = run_in_kid_env("readlink /home/kid/.tmux.conf")
     assert rc == 0
-    assert "kid/config/tmux.conf" in out
+    assert ".config/zsh/tmux.conf" in out
