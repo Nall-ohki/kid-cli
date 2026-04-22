@@ -96,13 +96,16 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
             height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
         }
 
-        // Strip connector lines; keep only the actual Sixel DCS sequence
-        let sixel_data: String = data
-            .lines()
-            .filter(|line| line.contains("\x1BP"))
-            .collect::<Vec<_>>()
-            .join("\n");
-        let sixel_data = sixel_data.replace('\u{E000}', "");
+        // Extract only the Sixel DCS sequence (ESC P ... ESC \)
+        // Strip connector lines, leading spaces, and cursor-movement prefixes
+        let mut sixel_data = String::new();
+        for line in data.lines() {
+            if let Some(pos) = line.find("\x1BP") {
+                sixel_data.push_str(&line[pos..]);
+            }
+        }
+        // Resolve Perl-style escapes: \" -> " and \\\\ -> \\
+        let sixel_data = sixel_data.replace("\\\"", "\"").replace("\\\\", "\\");
 
          return Ok(Character {
             id: id.to_string(),

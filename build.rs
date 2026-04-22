@@ -210,15 +210,16 @@ fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Charac
             height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
         }
 
-        // Strip connector lines and leading whitespace-only lines;
-        // keep only the actual Sixel DCS sequence
-        let sixel_data: String = full_body
-            .lines()
-            .filter(|line| line.contains("\x1BP"))
-            .collect::<Vec<_>>()
-            .join("\n");
-        // Remove any remaining connector sentinels from the Sixel line itself
-        let sixel_data = sixel_data.replace('\u{E000}', "");
+        // Extract only the Sixel DCS sequence (ESC P ... ESC \)
+        // Strip connector lines, leading spaces, and cursor-movement prefixes
+        let mut sixel_data = String::new();
+        for line in full_body.lines() {
+            if let Some(pos) = line.find("\x1BP") {
+                sixel_data.push_str(&line[pos..]);
+            }
+        }
+        // Resolve Perl-style escapes: \" -> " and \\\\ -> \\
+        let sixel_data = sixel_data.replace("\\\"", "\"").replace("\\\\", "\\");
 
          return Ok(Character {
             id: name.to_string(),
