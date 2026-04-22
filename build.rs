@@ -21,9 +21,17 @@ fn main() -> anyhow::Result<()> {
             let path = entry.path();
             if let Some(ext) = path.extension() {
                 if ext == "chara" || ext == "cow" {
-                    let name = path.file_stem().unwrap().to_string_lossy().to_string();
+                    let id = path.file_stem().unwrap().to_string_lossy().to_string();
+                    let source = if ext == "chara" { "Source::Charasay" } else { "Source::CowFiles" };
+                    
+                    // Human readable name
+                    let mut name = id.clone();
+                    if name.starts_with("sxl-") { name = name[4..].to_string(); }
+                    name = name.replace('-', " ").replace('_', " ");
+                    name = name.chars().enumerate().map(|(i, c)| if i == 0 { c.to_uppercase().next().unwrap() } else { c }).collect();
+
                     let content = fs::read_to_string(&path)?;
-                    builtins.push((name, content));
+                    builtins.push((id, name, source, content));
                 }
             }
         }
@@ -36,7 +44,7 @@ fn main() -> anyhow::Result<()> {
     code.push_str("pub fn load_builtins() -> Vec<Character> {\n");
     code.push_str("    vec![\n");
 
-    for (name, content) in builtins {
+    for (id, name, source, content) in builtins {
         // We'll parse here using a local version of the parser
         // Since we want Phase 2 to work, I'll implement the parsing logic here or include it.
         // Let's use a trick: define the parser in a way it can be shared.
@@ -45,9 +53,12 @@ fn main() -> anyhow::Result<()> {
         // Wait, if I parse at build time, I need to generate the recursive Vec<Vec<Cell>> structure as code.
         // This is exactly what the user wanted: "compile-time conversion".
         
-        if let Ok(chara) = parse_local(&name, &content) {
+        let is_cow = source == "Source::CowFiles";
+        if let Ok(chara) = parse_local(&id, &content, is_cow) {
             code.push_str(&format!("        Character {{\n"));
-            code.push_str(&format!("            name: {:?}.to_string(),\n", chara.name));
+            code.push_str(&format!("            id: {:?}.to_string(),\n", id));
+            code.push_str(&format!("            name: {:?}.to_string(),\n", name));
+            code.push_str(&format!("            source: {},\n", source));
             code.push_str(&format!("            kind: {},\n", kind_to_code(&chara.kind)));
             code.push_str(&format!("            height: {},\n", chara.height));
             code.push_str(&format!("            width: {},\n", chara.width));
@@ -74,8 +85,6 @@ pub enum Color {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cell {
-    Empty,
-    Pixel { bg: Color },
     Styled { ch: char, fg: Option<Color>, bg: Option<Color> },
 }
 
@@ -86,6 +95,7 @@ pub enum CharacterKind {
 }
 
 pub struct Character {
+    pub id: String,
     pub name: String,
     pub kind: CharacterKind,
     pub height: usize,
@@ -113,8 +123,6 @@ fn kind_to_code(kind: &CharacterKind) -> String {
 
 fn cell_to_code(cell: &Cell) -> String {
     match cell {
-        Cell::Empty => "Cell::Empty".to_string(),
-        Cell::Pixel { bg } => format!("Cell::Pixel {{ bg: {} }}", color_to_code(bg)),
         Cell::Styled { ch, fg, bg } => {
             let fg_code = fg.as_ref().map_or("None".to_string(), |c| format!("Some({})", color_to_code(c)));
             let bg_code = bg.as_ref().map_or("None".to_string(), |c| format!("Some({})", color_to_code(c)));
@@ -133,7 +141,7 @@ fn color_to_code(color: &Color) -> String {
 
 // --- Copy of parser logic (simplified/standalone) ---
 
-fn parse_local(name: &str, content: &str) -> anyhow::Result<Character> {
+fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Character> {
     let lines: Vec<&str> = content.lines().collect();
     let mut vars = HashMap::new();
     let mut body_lines = Vec::new();
@@ -177,6 +185,7 @@ fn parse_local(name: &str, content: &str) -> anyhow::Result<Character> {
         }
 
          return Ok(Character {
+            id: name.to_string(),
             name: name.to_string(),
             kind: CharacterKind::Sixel(full_body),
             height: if height > 0 { (height / 10) as usize } else { body_lines.len() },
@@ -192,8 +201,9 @@ fn parse_local(name: &str, content: &str) -> anyhow::Result<Character> {
         for (key, val) in sorted_vars {
             resolved = resolved.replace(key, val);
         }
-        resolved = resolved.replace("$thoughts", "\\ ");
-        resolved = resolved.replace("$t", "\\ ");
+        let thoughts_replacement = if is_cow { "\\" } else { "\\ " };
+        resolved = resolved.replace("$thoughts", thoughts_replacement);
+        resolved = resolved.replace("$t", thoughts_replacement);
         resolved = resolved.replace("\\e", "\x1B");
         resolved = normalize_unicode_escapes(&resolved);
         resolved = normalize_hex_escapes(&resolved);
@@ -205,6 +215,7 @@ fn parse_local(name: &str, content: &str) -> anyhow::Result<Character> {
     let width = grid.iter().map(|r| r.len()).max().unwrap_or(0);
 
     Ok(Character {
+        id: name.to_string(),
         name: name.to_string(),
         kind: CharacterKind::Grid(grid),
         height,
@@ -258,16 +269,8 @@ fn construct_grid(lines: &[String]) -> Vec<Vec<Cell>> {
                 }
             }
             let ch = chars[pos];
-            if ch == ' ' && pos + 1 < chars.len() && chars[pos+1] == ' ' && current_bg.is_some() {
-                row.push(Cell::Pixel { bg: current_bg.clone().unwrap() });
-                pos += 2;
-            } else if ch == ' ' && pos + 1 < chars.len() && chars[pos+1] == ' ' && current_bg.is_none() {
-                row.push(Cell::Empty);
-                pos += 2;
-            } else {
-                row.push(Cell::Styled { ch, fg: current_fg.clone(), bg: current_bg.clone() });
-                pos += 1;
-            }
+            row.push(Cell::Styled { ch, fg: current_fg.clone(), bg: current_bg.clone() });
+            pos += 1;
         }
         grid.push(row);
     }

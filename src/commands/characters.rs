@@ -171,7 +171,13 @@ fn draw_detail_view(f: &mut Frame, area: Rect, app: &mut App) {
                 Line::from(vec![
                     Span::styled("Name: ", Style::default().fg(Color::Gray)),
                     Span::styled(&chara.name, Style::default().add_modifier(Modifier::BOLD).fg(Color::White)),
-                    Span::raw(" | "),
+                    Span::raw(" ("),
+                    Span::styled(&chara.id, Style::default().fg(Color::DarkGray)),
+                    Span::raw(") | "),
+                    Span::styled("Source: ", Style::default().fg(Color::Gray)),
+                    Span::styled(format!("{:?}", chara.source), Style::default().fg(Color::Yellow)),
+                ]),
+                Line::from(vec![
                     Span::styled("Type: ", Style::default().fg(Color::Gray)),
                     Span::styled(match &chara.kind {
                         CharacterKind::Grid(_) => "ASCII/Grid",
@@ -181,10 +187,6 @@ fn draw_detail_view(f: &mut Frame, area: Rect, app: &mut App) {
                     Span::styled("Size: ", Style::default().fg(Color::Gray)),
                     Span::styled(format!("{}x{}", chara.width, chara.height), Style::default().fg(Color::Magenta)),
                 ]),
-                Line::from(vec![
-                    Span::styled("Controls: ", Style::default().fg(Color::DarkGray)),
-                    Span::styled("[v] Toggle Mode | [q] Quit | [j/k] Navigate", Style::default().fg(Color::Yellow)),
-                ])
             ]).block(Block::default().borders(Borders::BOTTOM));
             f.render_widget(info, preview_chunks[0]);
 

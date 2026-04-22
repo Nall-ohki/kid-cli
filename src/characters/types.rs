@@ -7,11 +7,7 @@ pub enum Color {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cell {
-    /// Transparent — terminal default background, no content
-    Empty,
-    /// A colored "pixel" (Charasay style: 2 spaces with bg color)
-    Pixel { bg: Color },
-    /// A styled character (CowFiles style: Unicode char with fg/bg)
+    /// A styled character (ASCII, Unicode, or Space)
     Styled {
         ch: char,
         fg: Option<Color>,
@@ -27,9 +23,18 @@ pub enum CharacterKind {
     Sixel(String),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Source {
+    Charasay,
+    CowFiles,
+    User,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Character {
-    pub name: String,
+    pub id: String,          // The filename/internal ID
+    pub name: String,        // Human-readable name
+    pub source: Source,      // Origin of the asset
     pub kind: CharacterKind,
     pub height: usize,
     pub width: usize,

@@ -1,5 +1,5 @@
 use std::path::Path;
-use crate::characters::types::Character;
+use crate::characters::types::{Character, Source};
 use crate::characters::parser;
 
 pub struct Registry {
@@ -33,7 +33,7 @@ impl Registry {
                              // Phase 5 will handle Sixel better, for now we can skip or parse as Sixel
                         }
                         if let Ok(content) = std::fs::read_to_string(&path) {
-                            if let Ok(chara) = parser::parse(&name, &content) {
+                            if let Ok(chara) = parser::parse(&name, &content, Source::User) {
                                 characters.push(chara);
                             }
                         }
@@ -70,11 +70,11 @@ impl Registry {
 
     #[allow(dead_code)]
     pub fn by_name(&self, name: &str) -> Option<&Character> {
-        self.characters.iter().find(|c| c.name == name)
+        self.characters.iter().find(|c| c.name == name || c.id == name)
     }
 
     pub fn select_by_name(&mut self, name: &str) -> bool {
-        if let Some(i) = self.characters.iter().position(|c| c.name == name) {
+        if let Some(i) = self.characters.iter().position(|c| c.name == name || c.id == name) {
             self.current_index = i;
             return true;
         }
@@ -98,8 +98,8 @@ mod tests {
 
     #[test]
     fn test_registry_next_cycles() {
-        let c1 = Character { name: "c1".into(), kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
-        let c2 = Character { name: "c2".into(), kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
+        let c1 = Character { id: "c1".into(), name: "c1".into(), source: Source::CowFiles, kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
+        let c2 = Character { id: "c2".into(), name: "c2".into(), source: Source::CowFiles, kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
         let mut reg = Registry::new(vec![c1, c2]);
         
         assert_eq!(reg.current().unwrap().name, "c1");
@@ -109,8 +109,8 @@ mod tests {
 
     #[test]
     fn test_registry_prev_cycles() {
-        let c1 = Character { name: "c1".into(), kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
-        let c2 = Character { name: "c2".into(), kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
+        let c1 = Character { id: "c1".into(), name: "c1".into(), source: Source::CowFiles, kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
+        let c2 = Character { id: "c2".into(), name: "c2".into(), source: Source::CowFiles, kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
         let mut reg = Registry::new(vec![c1, c2]);
         
         assert_eq!(reg.current().unwrap().name, "c1");
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_registry_by_name() {
-        let c1 = Character { name: "ferris".into(), kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
+        let c1 = Character { id: "ferris".into(), name: "ferris".into(), source: Source::CowFiles, kind: crate::characters::types::CharacterKind::Grid(vec![]), height: 0, width: 0 };
         let reg = Registry::new(vec![c1]);
         assert!(reg.by_name("ferris").is_some());
         assert!(reg.by_name("unknown").is_none());
@@ -163,6 +163,6 @@ mod tests {
         fs::write(&chara_path, "$the_cow = <<EOC\nbody\nEOC").unwrap();
         let reg = Registry::load_from_dir(dir.path()).unwrap();
         assert_eq!(reg.count(), 1);
-        assert_eq!(reg.current().unwrap().name, "test");
+        assert_eq!(reg.current().unwrap().name, "Test");
     }
 }

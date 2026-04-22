@@ -3,8 +3,14 @@ use regex::Regex;
 use crate::characters::types::*;
 
 #[allow(dead_code)]
-pub fn parse(name: &str, content: &str) -> anyhow::Result<Character> {
+pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Character> {
     let lines: Vec<&str> = content.lines().collect();
+    
+    // Human readable name
+    let mut name = id.to_string();
+    if name.starts_with("sxl-") { name = name[4..].to_string(); }
+    name = name.replace('-', " ").replace('_', " ");
+    name = name.chars().enumerate().map(|(i, c)| if i == 0 { c.to_uppercase().next().unwrap() } else { c }).collect();
     
     // 1. Strip comments and extract variables
     let mut vars = HashMap::new();
@@ -42,7 +48,7 @@ pub fn parse(name: &str, content: &str) -> anyhow::Result<Character> {
     }
 
     if body_lines.is_empty() && !content.contains("<<") {
-        return Err(anyhow::anyhow!("No character body found in {}", name));
+        return Err(anyhow::anyhow!("No character body found in {}", id));
     }
 
     // Check for Sixel
@@ -57,7 +63,9 @@ pub fn parse(name: &str, content: &str) -> anyhow::Result<Character> {
         }
 
          return Ok(Character {
-            name: name.to_string(),
+            id: id.to_string(),
+            name,
+            source,
             kind: CharacterKind::Sixel(full_body),
             height: if height > 0 { (height / 10) as usize } else { body_lines.len() },
             width: if width > 0 { (width / 5) as usize } else { 0 },
@@ -65,6 +73,11 @@ pub fn parse(name: &str, content: &str) -> anyhow::Result<Character> {
     }
 
     // 2. Variable substitution and escape normalization
+    let thoughts_replacement = match source {
+        Source::CowFiles => "\\",
+        Source::Charasay | Source::User => "\\ ",
+    };
+    
     let mut resolved_lines = Vec::new();
     for line in body_lines {
         let mut resolved = line.to_string();
@@ -76,8 +89,8 @@ pub fn parse(name: &str, content: &str) -> anyhow::Result<Character> {
             resolved = resolved.replace(key, val);
         }
 
-        resolved = resolved.replace("$thoughts", "\\ ");
-        resolved = resolved.replace("$t", "\\ ");
+        resolved = resolved.replace("$thoughts", thoughts_replacement);
+        resolved = resolved.replace("$t", thoughts_replacement);
 
         resolved = resolved.replace("\\e", "\x1B");
         resolved = normalize_unicode_escapes(&resolved);
@@ -92,7 +105,9 @@ pub fn parse(name: &str, content: &str) -> anyhow::Result<Character> {
     let width = grid.iter().map(|r| r.len()).max().unwrap_or(0);
 
     Ok(Character {
-        name: name.to_string(),
+        id: id.to_string(),
+        name,
+        source,
         kind: CharacterKind::Grid(grid),
         height,
         width,
@@ -149,20 +164,12 @@ fn construct_grid(lines: &[String]) -> Vec<Vec<Cell>> {
             }
 
             let ch = chars[pos];
-            if ch == ' ' && pos + 1 < chars.len() && chars[pos+1] == ' ' && current_bg.is_some() {
-                row.push(Cell::Pixel { bg: current_bg.clone().unwrap() });
-                pos += 2;
-            } else if ch == ' ' && pos + 1 < chars.len() && chars[pos+1] == ' ' && current_bg.is_none() {
-                row.push(Cell::Empty);
-                pos += 2;
-            } else {
-                row.push(Cell::Styled {
-                    ch,
-                    fg: current_fg.clone(),
-                    bg: current_bg.clone(),
-                });
-                pos += 1;
-            }
+            row.push(Cell::Styled {
+                ch,
+                fg: current_fg.clone(),
+                bg: current_bg.clone(),
+            });
+            pos += 1;
         }
         grid.push(row);
     }
@@ -218,7 +225,7 @@ mod tests {
     #[test]
     fn test_strip_comments() {
         let content = "# comment\n$the_cow = <<EOC\nline1\n## comment\nline2\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
             assert_eq!(grid.len(), 2);
         }
@@ -227,49 +234,49 @@ mod tests {
     #[test]
     fn test_strip_comments_preserves_inline() {
         let content = "$a = \"\\e[48;5;233m  \"; # comment\n$the_chara = <<EOC\n$a\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Pixel { bg: Color::Indexed(233) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(233)) });
         }
     }
 
     #[test]
     fn test_extract_variables_chara() {
         let content = "$a = \"\\e[48;5;233m  \";\n$the_chara = <<EOC\n$a\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Pixel { bg: Color::Indexed(233) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(233)) });
         }
     }
 
     #[test]
     fn test_extract_variables_case_sensitive() {
         let content = "$a = \"\\e[48;5;1m  \";\n$A = \"\\e[48;5;2m  \";\n$the_chara = <<EOC\n$a$A\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Pixel { bg: Color::Indexed(1) });
-            assert_eq!(grid[0][1], Cell::Pixel { bg: Color::Indexed(2) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(1)) });
+            assert_eq!(grid[0][2], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(2)) });
         }
     }
 
     #[test]
     fn test_extract_body_chara() {
         let content = "$the_chara = <<EOC\nbody\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         assert_eq!(chara.height, 1);
     }
 
     #[test]
     fn test_extract_body_cow() {
         let content = "$the_cow = <<EOC;\nbody\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         assert_eq!(chara.height, 1);
     }
 
     #[test]
     fn test_variable_substitution() {
         let content = "$a = \"pixel\";\n$the_cow = <<EOC\n$a\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
              assert_eq!(grid[0].len(), 5);
         }
@@ -278,9 +285,9 @@ mod tests {
     #[test]
     fn test_escape_normalization_backslash_e() {
         let content = "$the_cow = <<EOC\n\\e[48;5;208m  \nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Pixel { bg: Color::Indexed(208) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(208)) });
         }
     }
 
@@ -289,12 +296,16 @@ mod tests {
         let s = "\\x{1FB35}";
         let normalized = normalize_unicode_escapes(s);
         assert_eq!(normalized, "🬵");
+        
+        let s2 = "\\x{1CD96}";
+        let normalized2 = normalize_unicode_escapes(s2);
+        assert_eq!(normalized2, "\u{1CD96}");
     }
 
     #[test]
     fn test_sixel_detection() {
         let content = "$the_cow = <<EOC\n\\x1BP0;1q...\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         assert!(matches!(chara.kind, CharacterKind::Sixel(_)));
     }
 
@@ -302,14 +313,15 @@ mod tests {
     fn test_parse_pixel_sequence() {
         let lines = vec!["\x1B[48;5;208m  ".to_string()];
         let grid = construct_grid(&lines);
-        assert_eq!(grid[0][0], Cell::Pixel { bg: Color::Indexed(208) });
+        assert_eq!(grid[0].len(), 2);
+        assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(208)) });
     }
 
     #[test]
     fn test_parse_reset_as_empty() {
         let lines = vec!["\x1B[49m  ".to_string()];
         let grid = construct_grid(&lines);
-        assert_eq!(grid[0][0], Cell::Empty);
+        assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: None });
     }
 
     #[test]
@@ -336,7 +348,7 @@ mod tests {
     #[test]
     fn test_thoughts_replacement() {
         let content = "$the_cow = <<EOC\n$thoughts\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::Charasay).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
             assert_eq!(grid[0][0], Cell::Styled { ch: '\\', fg: None, bg: None });
             assert_eq!(grid[0][1], Cell::Styled { ch: ' ', fg: None, bg: None });
@@ -346,7 +358,7 @@ mod tests {
     #[test]
     fn test_grid_dimensions() {
         let content = "$the_cow = <<EOC\nline1\nline123\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         assert_eq!(chara.height, 2);
         assert_eq!(chara.width, 7);
     }
@@ -354,21 +366,21 @@ mod tests {
     #[test]
     fn test_extract_variables_cow() {
         let content = "## comment\n$the_cow = <<EOC\nbody\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         assert_eq!(chara.height, 1);
     }
 
     #[test]
     fn test_extract_body_empty() {
         let content = "$a = 1;";
-        let res = parse("test", content);
+        let res = parse("test", content, Source::CowFiles);
         assert!(res.is_err());
     }
 
     #[test]
     fn test_variable_substitution_ordering() {
         let content = "$a = \"short\";\n$aa = \"long\";\n$the_cow = <<EOC\n$aa $a\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         // $aa should be replaced by "long", not "$a" being replaced by "short" inside "$aa"
         if let CharacterKind::Grid(grid) = chara.kind {
              assert_eq!(grid[0].len(), 10); // "long" (4) + " " (1) + "short" (5)
@@ -378,7 +390,7 @@ mod tests {
     #[test]
     fn test_escape_normalization_hex_passthrough() {
         let content = "$the_cow = <<EOC\n\\x1B[37m_\nEOC";
-        let chara = parse("test", content).unwrap();
+        let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
             assert_eq!(grid[0][0], Cell::Styled { ch: '_', fg: Some(Color::Named(37)), bg: None });
         }
@@ -406,8 +418,8 @@ mod tests {
     fn test_parse_full_ferris() {
         let path = "assets/characters/ferris.chara";
         if let Ok(content) = std::fs::read_to_string(path) {
-            let chara = parse("ferris", &content).unwrap();
-            assert_eq!(chara.name, "ferris");
+            let chara = parse("ferris", &content, Source::CowFiles).unwrap();
+            assert_eq!(chara.id, "ferris");
             assert!(chara.height > 10);
         }
     }
@@ -416,8 +428,8 @@ mod tests {
     fn test_parse_full_clippit() {
         let path = "assets/characters/clippit.cow";
         if let Ok(content) = std::fs::read_to_string(path) {
-            let chara = parse("clippit", &content).unwrap();
-            assert_eq!(chara.name, "clippit");
+            let chara = parse("clippit", &content, Source::CowFiles).unwrap();
+            assert_eq!(chara.id, "clippit");
         }
     }
 
@@ -425,8 +437,8 @@ mod tests {
     fn test_parse_full_alexkidd() {
         let path = "assets/characters/alexkidd.cow";
         if let Ok(content) = std::fs::read_to_string(path) {
-            let chara = parse("alexkidd", &content).unwrap();
-            assert_eq!(chara.name, "alexkidd");
+            let chara = parse("alexkidd", &content, Source::CowFiles).unwrap();
+            assert_eq!(chara.id, "alexkidd");
         }
     }
 }

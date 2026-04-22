@@ -13,8 +13,6 @@ pub fn render_grid(grid: &[Vec<Cell>]) -> Vec<Line<'static>> {
 
 pub fn cell_to_span(cell: &Cell) -> Span<'static> {
     match cell {
-        Cell::Empty => Span::raw("  "),
-        Cell::Pixel { bg } => Span::styled("  ", Style::default().bg(to_ratatui_color(bg))),
         Cell::Styled { ch, fg, bg } => {
             let mut style = Style::default();
             if let Some(fg) = fg {
@@ -59,23 +57,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_render_empty_cell() {
-        let span = cell_to_span(&Cell::Empty);
-        assert_eq!(span.content, "  ");
-    }
-
-    #[test]
-    fn test_render_pixel_cell() {
-        let cell = Cell::Pixel { bg: Color::Indexed(208) };
+    fn test_render_styled_cell() {
+        let cell = Cell::Styled { ch: 'x', fg: Some(Color::Indexed(1)), bg: None };
         let span = cell_to_span(&cell);
-        assert_eq!(span.style.bg, Some(TuiColor::Indexed(208)));
+        assert_eq!(span.content, "x");
+        assert_eq!(span.style.fg, Some(TuiColor::Indexed(1)));
     }
 
     #[test]
     fn test_render_grid_line_count() {
         let grid = vec![
-            vec![Cell::Empty],
-            vec![Cell::Empty, Cell::Empty],
+            vec![Cell::Styled { ch: ' ', fg: None, bg: None }],
+            vec![Cell::Styled { ch: ' ', fg: None, bg: None }, Cell::Styled { ch: ' ', fg: None, bg: None }],
         ];
         let lines = render_grid(&grid);
         assert_eq!(lines.len(), 2);

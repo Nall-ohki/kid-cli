@@ -56,41 +56,64 @@ pub async fn run() -> Result<()> {
 
     let mut current_msg = WELCOME_MSG.to_string();
     let mut tick_count = 0u64;
-
+    let mut last_msg_tick = 0u64;
     let mut sixel_area = Rect::default();
     
     loop {
         terminal.draw(|f| {
             let size = f.size();
             let char_height = registry.current().map(|c| c.height as u16).unwrap_or(8);
+
+            // Determine if we should flash
+            let is_flashing = tick_count - last_msg_tick < 40; // 40 ticks @ 50ms = 2 seconds
             
-            let chunks = Layout::default()
+            let base_color = if is_flashing {
+                let rainbow = [
+                    Color::Red, Color::LightRed, Color::Yellow, 
+                    Color::Green, Color::Cyan, Color::Blue, Color::Magenta
+                ];
+                rainbow[(tick_count / 2 % rainbow.len() as u64) as usize]
+            } else {
+                Color::Cyan
+            };
+
+            // Calculate bubble height (estimate)
+            let wrap_width = size.width.saturating_sub(4) as usize;
+            let text_lines = if wrap_width > 0 {
+                (current_msg.len() / wrap_width) + 1
+            } else {
+                1
+            };
+            let bubble_height = (text_lines as u16 + 4).min(size.height / 2); // 2 padding + 2 borders
+            let total_height = bubble_height + char_height;
+            let v_padding = size.height.saturating_sub(total_height) / 2;
+
+            let main_chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
-                    Constraint::Min(4),
-                    Constraint::Length(char_height + 2),
+                    Constraint::Length(v_padding),
+                    Constraint::Length(bubble_height),
+                    Constraint::Length(char_height),
+                    Constraint::Min(0),
                 ])
                 .split(size);
 
-            sixel_area = chunks[1];
-
-            // Rainbow colors logic
-            let rainbow = [
-                Color::Red, Color::LightRed, Color::Yellow, 
-                Color::Green, Color::Cyan, Color::Blue, Color::Magenta
-            ];
-            let base_color = rainbow[(tick_count / 10 % rainbow.len() as u64) as usize];
+            sixel_area = main_chunks[2];
 
             // 1. Speech Bubble
-            let bubble = Paragraph::new(current_msg.as_str())
+            let bubble_content = format!("\n{}\n", current_msg); // Padding
+            let bubble = Paragraph::new(bubble_content)
                 .wrap(Wrap { trim: true })
                 .alignment(Alignment::Center)
                 .block(Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(base_color))
-                    .title(Span::styled(" COACH ", Style::default().add_modifier(Modifier::BOLD).fg(base_color))));
+                    .title(Span::styled(
+                        format!(" {} ", registry.current().map(|c| c.name.as_str()).unwrap_or("COACH")),
+                        Style::default().add_modifier(Modifier::BOLD).fg(base_color)
+                    )));
             
-            f.render_widget(bubble, chunks[0]);
+            f.render_widget(bubble, main_chunks[1]);
 
             // 2. Character (Grid path)
             if let Some(chara) = registry.current() {
@@ -98,7 +121,18 @@ pub async fn run() -> Result<()> {
                     let lines = render::render_grid(grid);
                     let para = Paragraph::new(lines)
                         .alignment(Alignment::Left);
-                    f.render_widget(para, chunks[1]);
+                    
+                    let char_width = chara.width as u16;
+                    let h_padding = main_chunks[2].width.saturating_sub(char_width) / 2;
+                    let char_h_chunks = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([
+                            Constraint::Length(h_padding),
+                            Constraint::Length(char_width),
+                            Constraint::Min(0),
+                        ])
+                        .split(main_chunks[2]);
+                    f.render_widget(para, char_h_chunks[1]);
                 }
             }
         })?;
@@ -126,6 +160,7 @@ pub async fn run() -> Result<()> {
             } else {
                 current_msg = new_msg;
             }
+            last_msg_tick = tick_count; // Trigger flash
         }
 
         if event::poll(Duration::from_millis(50))? {
