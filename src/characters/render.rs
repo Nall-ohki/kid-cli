@@ -2,24 +2,28 @@ use ratatui::style::{Color as TuiColor, Style};
 use ratatui::text::{Line, Span};
 use crate::characters::types::*;
 
-pub fn render_grid(grid: &[Vec<Cell>]) -> Vec<Line<'static>> {
+pub fn render_grid(grid: &[Vec<Cell>], connector_style: Option<Style>) -> Vec<Line<'static>> {
     grid.iter()
         .map(|row| {
-            let spans: Vec<Span<'static>> = row.iter().map(cell_to_span).collect();
+            let spans: Vec<Span<'static>> = row.iter().map(|c| cell_to_span(c, connector_style)).collect();
             Line::from(spans)
         })
         .collect()
 }
 
-pub fn cell_to_span(cell: &Cell) -> Span<'static> {
+pub fn cell_to_span(cell: &Cell, connector_style: Option<Style>) -> Span<'static> {
     match cell {
-        Cell::Styled { ch, fg, bg } => {
+        Cell::Styled { ch, fg, bg, is_connector } => {
             let mut style = Style::default();
-            if let Some(fg) = fg {
-                style = style.fg(to_ratatui_color(fg));
-            }
-            if let Some(bg) = bg {
-                style = style.bg(to_ratatui_color(bg));
+            if *is_connector && connector_style.is_some() {
+                style = connector_style.unwrap();
+            } else {
+                if let Some(fg) = fg {
+                    style = style.fg(to_ratatui_color(fg));
+                }
+                if let Some(bg) = bg {
+                    style = style.bg(to_ratatui_color(bg));
+                }
             }
             Span::styled(ch.to_string(), style)
         }
@@ -58,8 +62,8 @@ mod tests {
 
     #[test]
     fn test_render_styled_cell() {
-        let cell = Cell::Styled { ch: 'x', fg: Some(Color::Indexed(1)), bg: None };
-        let span = cell_to_span(&cell);
+        let cell = Cell::Styled { ch: 'x', fg: Some(Color::Indexed(1)), bg: None, is_connector: false };
+        let span = cell_to_span(&cell, None);
         assert_eq!(span.content, "x");
         assert_eq!(span.style.fg, Some(TuiColor::Indexed(1)));
     }
@@ -67,10 +71,10 @@ mod tests {
     #[test]
     fn test_render_grid_line_count() {
         let grid = vec![
-            vec![Cell::Styled { ch: ' ', fg: None, bg: None }],
-            vec![Cell::Styled { ch: ' ', fg: None, bg: None }, Cell::Styled { ch: ' ', fg: None, bg: None }],
+            vec![Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false }],
+            vec![Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false }, Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false }],
         ];
-        let lines = render_grid(&grid);
+        let lines = render_grid(&grid, None);
         assert_eq!(lines.len(), 2);
     }
 }

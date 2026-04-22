@@ -85,7 +85,7 @@ pub enum Color {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cell {
-    Styled { ch: char, fg: Option<Color>, bg: Option<Color> },
+    Styled { ch: char, fg: Option<Color>, bg: Option<Color>, is_connector: bool },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -123,10 +123,10 @@ fn kind_to_code(kind: &CharacterKind) -> String {
 
 fn cell_to_code(cell: &Cell) -> String {
     match cell {
-        Cell::Styled { ch, fg, bg } => {
+        Cell::Styled { ch, fg, bg, is_connector } => {
             let fg_code = fg.as_ref().map_or("None".to_string(), |c| format!("Some({})", color_to_code(c)));
             let bg_code = bg.as_ref().map_or("None".to_string(), |c| format!("Some({})", color_to_code(c)));
-            format!("Cell::Styled {{ ch: {:?}, fg: {}, bg: {} }}", ch, fg_code, bg_code)
+            format!("Cell::Styled {{ ch: {:?}, fg: {}, bg: {}, is_connector: {} }}", ch, fg_code, bg_code, is_connector)
         }
     }
 }
@@ -201,7 +201,7 @@ fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Charac
         for (key, val) in sorted_vars {
             resolved = resolved.replace(key, val);
         }
-        let thoughts_replacement = if is_cow { "\\" } else { "\\ " };
+        let thoughts_replacement = if is_cow { "\u{E000}" } else { "\u{E000} " };
         resolved = resolved.replace("$thoughts", thoughts_replacement);
         resolved = resolved.replace("$t", thoughts_replacement);
         resolved = resolved.replace("\\e", "\x1B");
@@ -268,8 +268,14 @@ fn construct_grid(lines: &[String]) -> Vec<Vec<Cell>> {
                     continue;
                 }
             }
-            let ch = chars[pos];
-            row.push(Cell::Styled { ch, fg: current_fg.clone(), bg: current_bg.clone() });
+            let mut ch = chars[pos];
+            let mut is_connector = false;
+            if ch == '\u{E000}' {
+                ch = '\\';
+                is_connector = true;
+            }
+
+            row.push(Cell::Styled { ch, fg: current_fg.clone(), bg: current_bg.clone(), is_connector });
             pos += 1;
         }
         grid.push(row);

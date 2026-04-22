@@ -74,8 +74,8 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
 
     // 2. Variable substitution and escape normalization
     let thoughts_replacement = match source {
-        Source::CowFiles => "\\",
-        Source::Charasay | Source::User => "\\ ",
+        Source::CowFiles => "\u{E000}",
+        Source::Charasay | Source::User => "\u{E000} ",
     };
     
     let mut resolved_lines = Vec::new();
@@ -163,11 +163,19 @@ fn construct_grid(lines: &[String]) -> Vec<Vec<Cell>> {
                 }
             }
 
-            let ch = chars[pos];
+            let mut ch = chars[pos];
+            let mut is_connector = false;
+            
+            if ch == '\u{E000}' {
+                ch = '\\';
+                is_connector = true;
+            }
+
             row.push(Cell::Styled {
                 ch,
                 fg: current_fg.clone(),
                 bg: current_bg.clone(),
+                is_connector,
             });
             pos += 1;
         }
@@ -236,7 +244,7 @@ mod tests {
         let content = "$a = \"\\e[48;5;233m  \"; # comment\n$the_chara = <<EOC\n$a\nEOC";
         let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(233)) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(233)), is_connector: false });
         }
     }
 
@@ -245,7 +253,7 @@ mod tests {
         let content = "$a = \"\\e[48;5;233m  \";\n$the_chara = <<EOC\n$a\nEOC";
         let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(233)) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(233)), is_connector: false });
         }
     }
 
@@ -254,8 +262,8 @@ mod tests {
         let content = "$a = \"\\e[48;5;1m  \";\n$A = \"\\e[48;5;2m  \";\n$the_chara = <<EOC\n$a$A\nEOC";
         let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(1)) });
-            assert_eq!(grid[0][2], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(2)) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(1)), is_connector: false });
+            assert_eq!(grid[0][2], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(2)), is_connector: false });
         }
     }
 
@@ -287,7 +295,7 @@ mod tests {
         let content = "$the_cow = <<EOC\n\\e[48;5;208m  \nEOC";
         let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(208)) });
+            assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(208)), is_connector: false });
         }
     }
 
@@ -314,35 +322,35 @@ mod tests {
         let lines = vec!["\x1B[48;5;208m  ".to_string()];
         let grid = construct_grid(&lines);
         assert_eq!(grid[0].len(), 2);
-        assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(208)) });
+        assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: Some(Color::Indexed(208)), is_connector: false });
     }
 
     #[test]
     fn test_parse_reset_as_empty() {
         let lines = vec!["\x1B[49m  ".to_string()];
         let grid = construct_grid(&lines);
-        assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: None });
+        assert_eq!(grid[0][0], Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false });
     }
 
     #[test]
     fn test_parse_styled_char() {
         let lines = vec!["\x1B[38;5;16m█".to_string()];
         let grid = construct_grid(&lines);
-        assert_eq!(grid[0][0], Cell::Styled { ch: '█', fg: Some(Color::Indexed(16)), bg: None });
+        assert_eq!(grid[0][0], Cell::Styled { ch: '█', fg: Some(Color::Indexed(16)), bg: None, is_connector: false });
     }
 
     #[test]
     fn test_parse_fg_and_bg() {
         let lines = vec!["\x1B[38;5;16;48;5;231m█".to_string()];
         let grid = construct_grid(&lines);
-        assert_eq!(grid[0][0], Cell::Styled { ch: '█', fg: Some(Color::Indexed(16)), bg: Some(Color::Indexed(231)) });
+        assert_eq!(grid[0][0], Cell::Styled { ch: '█', fg: Some(Color::Indexed(16)), bg: Some(Color::Indexed(231)), is_connector: false });
     }
 
     #[test]
     fn test_parse_named_colors() {
         let lines = vec!["\x1B[37m_".to_string()];
         let grid = construct_grid(&lines);
-        assert_eq!(grid[0][0], Cell::Styled { ch: '_', fg: Some(Color::Named(37)), bg: None });
+        assert_eq!(grid[0][0], Cell::Styled { ch: '_', fg: Some(Color::Named(37)), bg: None, is_connector: false });
     }
 
     #[test]
@@ -350,8 +358,8 @@ mod tests {
         let content = "$the_cow = <<EOC\n$thoughts\nEOC";
         let chara = parse("test", content, Source::Charasay).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Styled { ch: '\\', fg: None, bg: None });
-            assert_eq!(grid[0][1], Cell::Styled { ch: ' ', fg: None, bg: None });
+            assert_eq!(grid[0][0], Cell::Styled { ch: '\\', fg: None, bg: None, is_connector: true });
+            assert_eq!(grid[0][1], Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false });
         }
     }
 
@@ -392,7 +400,7 @@ mod tests {
         let content = "$the_cow = <<EOC\n\\x1B[37m_\nEOC";
         let chara = parse("test", content, Source::CowFiles).unwrap();
         if let CharacterKind::Grid(grid) = chara.kind {
-            assert_eq!(grid[0][0], Cell::Styled { ch: '_', fg: Some(Color::Named(37)), bg: None });
+            assert_eq!(grid[0][0], Cell::Styled { ch: '_', fg: Some(Color::Named(37)), bg: None, is_connector: false });
         }
     }
 
@@ -401,7 +409,7 @@ mod tests {
         let lines = vec!["hello".to_string()];
         let grid = construct_grid(&lines);
         assert_eq!(grid[0].len(), 5);
-        assert_eq!(grid[0][0], Cell::Styled { ch: 'h', fg: None, bg: None });
+        assert_eq!(grid[0][0], Cell::Styled { ch: 'h', fg: None, bg: None, is_connector: false });
     }
 
     #[test]
@@ -410,8 +418,8 @@ mod tests {
         let lines = vec!["\x1B[90m(\x1B[97mo\x1B[90m)".to_string()];
         let grid = construct_grid(&lines);
         assert_eq!(grid[0].len(), 3);
-        assert_eq!(grid[0][0], Cell::Styled { ch: '(', fg: Some(Color::Named(90)), bg: None });
-        assert_eq!(grid[0][1], Cell::Styled { ch: 'o', fg: Some(Color::Named(97)), bg: None });
+        assert_eq!(grid[0][0], Cell::Styled { ch: '(', fg: Some(Color::Named(90)), bg: None, is_connector: false });
+        assert_eq!(grid[0][1], Cell::Styled { ch: 'o', fg: Some(Color::Named(97)), bg: None, is_connector: false });
     }
 
     #[test]

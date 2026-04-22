@@ -193,7 +193,7 @@ fn draw_detail_view(f: &mut Frame, area: Rect, app: &mut App) {
             // Character render
             match &chara.kind {
                 CharacterKind::Grid(grid) => {
-                    let lines = render::render_grid(grid);
+                    let lines = render::render_grid(grid, None);
                     let para = Paragraph::new(lines)
                         .alignment(Alignment::Left);
                     f.render_widget(para, preview_chunks[1]);
@@ -247,7 +247,7 @@ fn draw_grid_view(f: &mut Frame, area: Rect, app: &mut App) {
 
                     match &chara.kind {
                         CharacterKind::Grid(grid) => {
-                            let lines = render::render_grid(grid);
+                            let lines = render::render_grid(grid, None);
                             let para = Paragraph::new(lines).wrap(Wrap { trim: false });
                             f.render_widget(para, inner);
                         }

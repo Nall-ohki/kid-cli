@@ -12,6 +12,7 @@ pub enum Cell {
         ch: char,
         fg: Option<Color>,
         bg: Option<Color>,
+        is_connector: bool,
     },
 }
 
