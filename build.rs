@@ -218,8 +218,13 @@ fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Charac
                 sixel_data.push_str(&line[pos..]);
             }
         }
-        // Resolve Perl-style escapes: \" -> " and \\\\ -> \\
-        let sixel_data = sixel_data.replace("\\\"", "\"").replace("\\\\", "\\");
+        // Resolve Perl heredoc escapes: \$ -> $, \" -> ", \@ -> @, \\\\ -> \\
+        // \$ is critical: $ is the Sixel carriage return command
+        let sixel_data = sixel_data
+            .replace("\\$", "$")
+            .replace("\\\"", "\"")
+            .replace("\\@", "@")
+            .replace("\\\\", "\\");
 
          return Ok(Character {
             id: name.to_string(),

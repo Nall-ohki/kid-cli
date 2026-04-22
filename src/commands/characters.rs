@@ -120,9 +120,9 @@ pub async fn run() -> Result<()> {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => break,
-                    KeyCode::Char('v') => app.toggle_view(),
-                    KeyCode::Down | KeyCode::Char('j') => app.next(),
-                    KeyCode::Up | KeyCode::Char('k') => app.previous(),
+                    KeyCode::Char('v') => { app.toggle_view(); terminal.clear()?; },
+                    KeyCode::Down | KeyCode::Char('j') => { app.next(); terminal.clear()?; },
+                    KeyCode::Up | KeyCode::Char('k') => { app.previous(); terminal.clear()?; },
                     _ => {}
                 }
             }

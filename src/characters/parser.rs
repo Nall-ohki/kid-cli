@@ -104,8 +104,13 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
                 sixel_data.push_str(&line[pos..]);
             }
         }
-        // Resolve Perl-style escapes: \" -> " and \\\\ -> \\
-        let sixel_data = sixel_data.replace("\\\"", "\"").replace("\\\\", "\\");
+        // Resolve Perl heredoc escapes: \$ -> $, \" -> ", \@ -> @, \\\\ -> \\
+        // \$ is critical: $ is the Sixel carriage return command
+        let sixel_data = sixel_data
+            .replace("\\$", "$")
+            .replace("\\\"", "\"")
+            .replace("\\@", "@")
+            .replace("\\\\", "\\");
 
          return Ok(Character {
             id: id.to_string(),
