@@ -67,30 +67,34 @@ pub async fn run() -> Result<()> {
             let size = f.size();
             let char_height = registry.current().map(|c| c.height as u16).unwrap_or(8);
 
-            // Determine if we should flash
-            let is_flashing = tick_count - last_msg_tick < 40; // 40 ticks @ 50ms = 2 seconds
-            
+            // 1. Calculate Speech State
             let elapsed = tick_count.saturating_sub(last_msg_tick);
+            let is_flashing = elapsed < 40; // 2 seconds
             let is_visible = elapsed < timeout_ticks;
             
-            // Determine grey-out level
-            let fade_color = if elapsed > fade_start_ticks && is_visible {
-                let progress = (elapsed - fade_start_ticks) as f32 / (timeout_ticks - fade_start_ticks) as f32;
-                // Grayscale range from 255 (white) to 232 (black)
-                let grey_code = 255 - (progress * 23.0) as u8;
-                Color::Indexed(grey_code)
+            let (bubble_style, connector_style) = if !is_visible || current_msg.is_empty() {
+                // Completely hidden
+                (Style::default().fg(Color::Black), Some(Style::default().fg(Color::Black)))
             } else {
-                Color::Cyan
-            };
+                let fade_color = if elapsed > fade_start_ticks {
+                    let progress = (elapsed - fade_start_ticks) as f32 / (timeout_ticks - fade_start_ticks) as f32;
+                    let grey_code = 255 - (progress * 23.0) as u8;
+                    Color::Indexed(grey_code)
+                } else {
+                    Color::Cyan
+                };
 
-            let base_color = if is_flashing {
-                let rainbow = [
-                    Color::Red, Color::LightRed, Color::Yellow, 
-                    Color::Green, Color::Cyan, Color::Blue, Color::Magenta
-                ];
-                rainbow[(tick_count / 2 % rainbow.len() as u64) as usize]
-            } else {
-                fade_color
+                let border_color = if is_flashing {
+                    let rainbow = [
+                        Color::Red, Color::LightRed, Color::Yellow, 
+                        Color::Green, Color::Cyan, Color::Blue, Color::Magenta
+                    ];
+                    rainbow[(tick_count / 2 % rainbow.len() as u64) as usize]
+                } else {
+                    fade_color
+                };
+
+                (Style::default().fg(fade_color), Some(Style::default().fg(border_color)))
             };
 
             // Calculate bubble height (estimate)
@@ -100,7 +104,7 @@ pub async fn run() -> Result<()> {
             } else {
                 1
             };
-            let bubble_height = (text_lines as u16 + 4).min(size.height / 2); // 2 padding + 2 borders
+            let bubble_height = (text_lines as u16 + 4).min(size.height / 2);
             let total_height = bubble_height + char_height;
             let v_padding = size.height.saturating_sub(total_height) / 2;
 
@@ -116,28 +120,28 @@ pub async fn run() -> Result<()> {
 
             sixel_area = main_chunks[2];
 
-            // 1. Speech Bubble (Only if visible)
+            // 2. Render Speech Bubble
             if is_visible && !current_msg.is_empty() {
-                let bubble_content = format!("\n{}\n", current_msg); // Padding
+                let border_color = connector_style.unwrap().fg.unwrap(); // Sync border with connectors
+                let bubble_content = format!("\n{}\n", current_msg);
                 let bubble = Paragraph::new(bubble_content)
                     .wrap(Wrap { trim: true })
                     .alignment(Alignment::Center)
-                    .style(Style::default().fg(fade_color))
+                    .style(bubble_style)
                     .block(Block::default()
                         .borders(Borders::ALL)
-                        .border_style(Style::default().fg(base_color))
+                        .border_style(Style::default().fg(border_color))
                         .title(Span::styled(
                             format!(" {} ", registry.current().map(|c| c.name.as_str()).unwrap_or("COACH")),
-                            Style::default().add_modifier(Modifier::BOLD).fg(base_color)
+                            Style::default().add_modifier(Modifier::BOLD).fg(border_color)
                         )));
                 
                 f.render_widget(bubble, main_chunks[1]);
             }
 
-            // 2. Character (Grid path)
+            // 3. Render Character
             if let Some(chara) = registry.current() {
                 if let CharacterKind::Grid(grid) = &chara.kind {
-                    let connector_style = if is_visible { Some(Style::default().fg(base_color)) } else { None };
                     let lines = render::render_grid(grid, connector_style);
                     let para = Paragraph::new(lines)
                         .alignment(Alignment::Left);
