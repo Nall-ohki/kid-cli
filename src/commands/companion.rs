@@ -137,7 +137,7 @@ pub async fn run() -> Result<()> {
             // 2. Character (Grid path)
             if let Some(chara) = registry.current() {
                 if let CharacterKind::Grid(grid) = &chara.kind {
-                    let connector_style = if is_visible { Some(Style::default().fg(fade_color)) } else { None };
+                    let connector_style = if is_visible { Some(Style::default().fg(base_color)) } else { None };
                     let lines = render::render_grid(grid, connector_style);
                     let para = Paragraph::new(lines)
                         .alignment(Alignment::Left);
