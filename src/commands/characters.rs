@@ -25,6 +25,7 @@ struct App {
     registry: Registry,
     list_state: ListState,
     view_mode: ViewMode,
+    preview_rect: Rect,
 }
 
 impl App {
@@ -38,6 +39,7 @@ impl App {
             registry,
             list_state,
             view_mode: ViewMode::Detail,
+            preview_rect: Rect::default(),
         }
     }
 
@@ -89,6 +91,34 @@ pub async fn run() -> Result<()> {
 
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
+
+        // 4. Render Sixel (if current is Sixel and in Detail view)
+        if app.view_mode == ViewMode::Detail {
+            if let Some(selected_index) = app.list_state.selected() {
+                if let Some(chara) = app.registry.get_by_index(selected_index) {
+                    if let CharacterKind::Sixel(data) = &chara.kind {
+                        use crossterm::cursor;
+                        let mut stdout = io::stdout();
+                        
+                        // Calculate horizontal centering
+                        let char_width = chara.width as u16;
+                        let h_padding = app.preview_rect.width.saturating_sub(char_width) / 2;
+                        
+                        let _ = execute!(
+                            stdout,
+                            cursor::MoveTo(app.preview_rect.x + h_padding, app.preview_rect.y),
+                        );
+                        
+                        // Style connectors in Sixel data (using white as default for viewer)
+                        let styled_connector = format!("\x1B[37m\\{}", "\x1B[0m");
+                        let final_data = data.replace('\u{E000}', &styled_connector);
+                        
+                        print!("{}", final_data);
+                        let _ = io::Write::flush(&mut stdout);
+                    }
+                }
+            }
+        }
 
         if event::poll(Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
@@ -199,10 +229,8 @@ fn draw_detail_view(f: &mut Frame, area: Rect, app: &mut App) {
                     f.render_widget(para, preview_chunks[1]);
                 }
                 CharacterKind::Sixel(_data) => {
-                    // Sixel in TUI is hard, we'll just show a placeholder or try to write
-                    // But ratatui will overwrite it. 
-                    // For now, we'll show a message.
-                    let para = Paragraph::new("\n\n  [Sixel Bitmap Display Not Supported in Interactive List View]\n  (Works in dedicated 'kid companion' mode)")
+                    app.preview_rect = preview_chunks[1];
+                    let para = Paragraph::new("\n\n  [Rendering Sixel Bitmap...]")
                         .alignment(Alignment::Left)
                         .style(Style::default().fg(Color::DarkGray));
                     f.render_widget(para, preview_chunks[1]);

@@ -63,39 +63,39 @@ pub async fn run() -> Result<()> {
     let fade_start_ticks = 225; // 75% of 15s
     
     loop {
+        // 1. Calculate Speech State
+        let elapsed = tick_count.saturating_sub(last_msg_tick);
+        let is_flashing = elapsed < 40; // 2 seconds
+        let is_visible = elapsed < timeout_ticks;
+        
+        let (bubble_style, connector_style) = if !is_visible || current_msg.is_empty() {
+            // Completely hidden
+            (Style::default().fg(Color::Black), Some(Style::default().fg(Color::Black)))
+        } else {
+            let fade_color = if elapsed > fade_start_ticks {
+                let progress = (elapsed - fade_start_ticks) as f32 / (timeout_ticks - fade_start_ticks) as f32;
+                let grey_code = 255 - (progress * 23.0) as u8;
+                Color::Indexed(grey_code)
+            } else {
+                Color::Cyan
+            };
+
+            let border_color = if is_flashing {
+                let rainbow = [
+                    Color::Red, Color::LightRed, Color::Yellow, 
+                    Color::Green, Color::Cyan, Color::Blue, Color::Magenta
+                ];
+                rainbow[(tick_count / 2 % rainbow.len() as u64) as usize]
+            } else {
+                fade_color
+            };
+
+            (Style::default().fg(fade_color), Some(Style::default().fg(border_color)))
+        };
+
         terminal.draw(|f| {
             let size = f.size();
             let char_height = registry.current().map(|c| c.height as u16).unwrap_or(8);
-
-            // 1. Calculate Speech State
-            let elapsed = tick_count.saturating_sub(last_msg_tick);
-            let is_flashing = elapsed < 40; // 2 seconds
-            let is_visible = elapsed < timeout_ticks;
-            
-            let (bubble_style, connector_style) = if !is_visible || current_msg.is_empty() {
-                // Completely hidden
-                (Style::default().fg(Color::Black), Some(Style::default().fg(Color::Black)))
-            } else {
-                let fade_color = if elapsed > fade_start_ticks {
-                    let progress = (elapsed - fade_start_ticks) as f32 / (timeout_ticks - fade_start_ticks) as f32;
-                    let grey_code = 255 - (progress * 23.0) as u8;
-                    Color::Indexed(grey_code)
-                } else {
-                    Color::Cyan
-                };
-
-                let border_color = if is_flashing {
-                    let rainbow = [
-                        Color::Red, Color::LightRed, Color::Yellow, 
-                        Color::Green, Color::Cyan, Color::Blue, Color::Magenta
-                    ];
-                    rainbow[(tick_count / 2 % rainbow.len() as u64) as usize]
-                } else {
-                    fade_color
-                };
-
-                (Style::default().fg(fade_color), Some(Style::default().fg(border_color)))
-            };
 
             // Calculate bubble height (estimate)
             let wrap_width = size.width.saturating_sub(4) as usize;
@@ -139,7 +139,7 @@ pub async fn run() -> Result<()> {
                 f.render_widget(bubble, main_chunks[1]);
             }
 
-            // 3. Render Character
+            // 3. Render Character (Grid path)
             if let Some(chara) = registry.current() {
                 if let CharacterKind::Grid(grid) = &chara.kind {
                     let lines = render::render_grid(grid, connector_style);
@@ -161,18 +161,41 @@ pub async fn run() -> Result<()> {
             }
         })?;
 
-        // If current is Sixel, output it now
+        // 4. Render Sixel (if current is Sixel)
         if let Some(chara) = registry.current() {
             if let CharacterKind::Sixel(data) = &chara.kind {
                 use crossterm::cursor;
                 let mut stdout = io::stdout();
+                
+                // Calculate horizontal centering
+                let char_width = chara.width as u16;
+                let h_padding = sixel_area.width.saturating_sub(char_width) / 2;
+                
                 let _ = execute!(
                     stdout,
-                    cursor::MoveTo(sixel_area.x, sixel_area.y),
+                    cursor::MoveTo(sixel_area.x + h_padding, sixel_area.y),
                 );
-                // The data might have literal \x1B, we need to resolve them
-                let resolved_data = data.replace("\\x1B", "\x1B");
-                print!("{}", resolved_data);
+
+                // Style connectors in Sixel data
+                let connector_color = connector_style.and_then(|s| s.fg).unwrap_or(ratatui::style::Color::White);
+                let ansi_color = match connector_color {
+                    ratatui::style::Color::Indexed(n) => format!("\x1B[38;5;{}m", n),
+                    ratatui::style::Color::Red => "\x1B[31m".to_string(),
+                    ratatui::style::Color::LightRed => "\x1B[91m".to_string(),
+                    ratatui::style::Color::Yellow => "\x1B[33m".to_string(),
+                    ratatui::style::Color::Green => "\x1B[32m".to_string(),
+                    ratatui::style::Color::Cyan => "\x1B[36m".to_string(),
+                    ratatui::style::Color::Blue => "\x1B[34m".to_string(),
+                    ratatui::style::Color::Magenta => "\x1B[35m".to_string(),
+                    ratatui::style::Color::White => "\x1B[37m".to_string(),
+                    ratatui::style::Color::Black => "\x1B[30m".to_string(),
+                    _ => "\x1B[37m".to_string(),
+                };
+
+                let styled_connector = format!("{}\\{}", ansi_color, "\x1B[0m");
+                let final_data = data.replace('\u{E000}', &styled_connector);
+                
+                print!("{}", final_data);
                 let _ = io::Write::flush(&mut stdout);
             }
         }

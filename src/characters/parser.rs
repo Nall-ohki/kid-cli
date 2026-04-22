@@ -51,27 +51,6 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
         return Err(anyhow::anyhow!("No character body found in {}", id));
     }
 
-    // Check for Sixel
-    let full_body = body_lines.join("\n");
-    if full_body.contains("\x1BP") || full_body.contains("\\x1BP") {
-        let mut width = 0;
-        let mut height = 0;
-        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
-        if let Some(caps) = sixel_re.captures(&full_body.replace("\\x1B", "\x1B")) {
-            width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
-            height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
-        }
-
-         return Ok(Character {
-            id: id.to_string(),
-            name,
-            source,
-            kind: CharacterKind::Sixel(full_body),
-            height: if height > 0 { (height / 10) as usize } else { body_lines.len() },
-            width: if width > 0 { (width / 5) as usize } else { 0 },
-        });
-    }
-
     // 2. Variable substitution and escape normalization
     let thoughts_replacement = match source {
         Source::CowFiles => "\u{E000}",
@@ -97,6 +76,27 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
         resolved = normalize_hex_escapes(&resolved);
         
         resolved_lines.push(resolved);
+    }
+
+    let full_body = resolved_lines.join("\n");
+    if full_body.contains("\x1BP") || full_body.contains("\\x1BP") {
+        let mut width = 0;
+        let mut height = 0;
+        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
+        let data = full_body.replace("\\x1B", "\x1B");
+        if let Some(caps) = sixel_re.captures(&data) {
+            width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
+            height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
+        }
+
+         return Ok(Character {
+            id: id.to_string(),
+            name,
+            source,
+            kind: CharacterKind::Sixel(data),
+            height: if height > 0 { (height / 10) as usize } else { resolved_lines.len() },
+            width: if width > 0 { (width / 5) as usize } else { 0 },
+        });
     }
 
     // 3. Construct Cell Grid
