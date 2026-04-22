@@ -68,25 +68,29 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
             resolved = resolved.replace(key, val);
         }
 
-        // 2. Resolve thoughts
+        // 2. Resolve thoughts (aggressive)
         resolved = resolved.replace("$thoughts", thoughts_replacement);
         resolved = resolved.replace("$t", thoughts_replacement);
 
-        // 3. Resolve escapes
+        // 3. Resolve escapes (aggressive)
         resolved = resolved.replace("\\e", "\x1B");
+        resolved = resolved.replace("\\x1b", "\x1B");
+        resolved = resolved.replace("\\x1B", "\x1B");
         resolved = normalize_unicode_escapes(&resolved);
         resolved = normalize_hex_escapes(&resolved);
         
         resolved_lines.push(resolved);
     }
 
-    // Check for Sixel in the fully resolved lines
+    // Check for Sixel (either binary ESC P or literal \x1BP)
     let full_body = resolved_lines.join("\n");
-    if full_body.contains("\x1BP") {
+    if full_body.contains("\x1BP") || full_body.contains("\\x1BP") {
+        let data = full_body.replace("\\x1b", "\x1B").replace("\\x1B", "\x1B");
+        
         let mut width = 0;
         let mut height = 0;
         let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
-        if let Some(caps) = sixel_re.captures(&full_body) {
+        if let Some(caps) = sixel_re.captures(&data) {
             width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
             height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
         }
@@ -95,7 +99,7 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
             id: id.to_string(),
             name,
             source,
-            kind: CharacterKind::Sixel(full_body),
+            kind: CharacterKind::Sixel(data),
             height: if height > 0 { (height / 10) as usize } else { resolved_lines.len() },
             width: if width > 0 { (width / 5) as usize } else { 0 },
         });
