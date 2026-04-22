@@ -178,25 +178,7 @@ fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Charac
         }
     }
 
-    let full_body = body_lines.join("\n");
-    if full_body.contains("\x1BP") || full_body.contains("\\x1BP") {
-        let mut width = 0;
-        let mut height = 0;
-        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
-        if let Some(caps) = sixel_re.captures(&full_body.replace("\\x1B", "\x1B")) {
-            width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
-            height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
-        }
-
-         return Ok(Character {
-            id: name.to_string(),
-            name: name.to_string(),
-            kind: CharacterKind::Sixel(full_body),
-            height: if height > 0 { (height / 10) as usize } else { body_lines.len() },
-            width: if width > 0 { (width / 5) as usize } else { 0 },
-        });
-    }
-
+    // Variable substitution and escape normalization FIRST (before Sixel detection)
     let mut resolved_lines = Vec::new();
     for line in body_lines {
         let mut resolved = line.to_string();
@@ -209,9 +191,31 @@ fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Charac
         resolved = resolved.replace("$thoughts", thoughts_replacement);
         resolved = resolved.replace("$t", thoughts_replacement);
         resolved = resolved.replace("\\e", "\x1B");
+        resolved = resolved.replace("\\x1b", "\x1B");
+        resolved = resolved.replace("\\x1B", "\x1B");
         resolved = normalize_unicode_escapes(&resolved);
         resolved = normalize_hex_escapes(&resolved);
         resolved_lines.push(resolved);
+    }
+
+    // Now check for Sixel on the fully-resolved data
+    let full_body = resolved_lines.join("\n");
+    if full_body.contains("\x1BP") {
+        let mut width = 0;
+        let mut height = 0;
+        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
+        if let Some(caps) = sixel_re.captures(&full_body) {
+            width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
+            height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
+        }
+
+         return Ok(Character {
+            id: name.to_string(),
+            name: name.to_string(),
+            kind: CharacterKind::Sixel(full_body),
+            height: if height > 0 { (height / 10) as usize } else { resolved_lines.len() },
+            width: if width > 0 { (width / 5) as usize } else { 0 },
+        });
     }
 
     let grid = construct_grid(&resolved_lines);
