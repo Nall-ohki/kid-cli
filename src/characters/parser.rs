@@ -61,16 +61,18 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
     for line in body_lines {
         let mut resolved = line.to_string();
         
+        // 1. Resolve variables
         let mut sorted_vars: Vec<_> = vars.iter().collect();
         sorted_vars.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
-
         for (key, val) in sorted_vars {
             resolved = resolved.replace(key, val);
         }
 
+        // 2. Resolve thoughts
         resolved = resolved.replace("$thoughts", thoughts_replacement);
         resolved = resolved.replace("$t", thoughts_replacement);
 
+        // 3. Resolve escapes
         resolved = resolved.replace("\\e", "\x1B");
         resolved = normalize_unicode_escapes(&resolved);
         resolved = normalize_hex_escapes(&resolved);
@@ -78,13 +80,13 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
         resolved_lines.push(resolved);
     }
 
+    // Check for Sixel in the fully resolved lines
     let full_body = resolved_lines.join("\n");
-    if full_body.contains("\x1BP") || full_body.contains("\\x1BP") {
+    if full_body.contains("\x1BP") {
         let mut width = 0;
         let mut height = 0;
         let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
-        let data = full_body.replace("\\x1B", "\x1B");
-        if let Some(caps) = sixel_re.captures(&data) {
+        if let Some(caps) = sixel_re.captures(&full_body) {
             width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
             height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
         }
@@ -93,7 +95,7 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
             id: id.to_string(),
             name,
             source,
-            kind: CharacterKind::Sixel(data),
+            kind: CharacterKind::Sixel(full_body),
             height: if height > 0 { (height / 10) as usize } else { resolved_lines.len() },
             width: if width > 0 { (width / 5) as usize } else { 0 },
         });
