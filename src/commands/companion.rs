@@ -176,26 +176,7 @@ pub async fn run() -> Result<()> {
                     cursor::MoveTo(sixel_area.x + h_padding, sixel_area.y),
                 );
 
-                // Style connectors in Sixel data
-                let connector_color = connector_style.and_then(|s| s.fg).unwrap_or(ratatui::style::Color::White);
-                let ansi_color = match connector_color {
-                    ratatui::style::Color::Indexed(n) => format!("\x1B[38;5;{}m", n),
-                    ratatui::style::Color::Red => "\x1B[31m".to_string(),
-                    ratatui::style::Color::LightRed => "\x1B[91m".to_string(),
-                    ratatui::style::Color::Yellow => "\x1B[33m".to_string(),
-                    ratatui::style::Color::Green => "\x1B[32m".to_string(),
-                    ratatui::style::Color::Cyan => "\x1B[36m".to_string(),
-                    ratatui::style::Color::Blue => "\x1B[34m".to_string(),
-                    ratatui::style::Color::Magenta => "\x1B[35m".to_string(),
-                    ratatui::style::Color::White => "\x1B[37m".to_string(),
-                    ratatui::style::Color::Black => "\x1B[30m".to_string(),
-                    _ => "\x1B[37m".to_string(),
-                };
-
-                let styled_connector = format!("{}\\{}", ansi_color, "\x1B[0m");
-                let final_data = data.replace('\u{E000}', &styled_connector);
-                
-                print!("{}", final_data);
+                print!("{}", data);
                 let _ = io::Write::flush(&mut stdout);
             }
         }

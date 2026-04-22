@@ -203,16 +203,27 @@ fn parse_local(name: &str, content: &str, is_cow: bool) -> anyhow::Result<Charac
     if full_body.contains("\x1BP") {
         let mut width = 0;
         let mut height = 0;
-        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
+        // The cow files use \" before raster attrs, so handle optional backslash
+        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q\\?"1;1;(\d+);(\d+)"#)?;
         if let Some(caps) = sixel_re.captures(&full_body) {
             width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
             height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
         }
 
+        // Strip connector lines and leading whitespace-only lines;
+        // keep only the actual Sixel DCS sequence
+        let sixel_data: String = full_body
+            .lines()
+            .filter(|line| line.contains("\x1BP"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        // Remove any remaining connector sentinels from the Sixel line itself
+        let sixel_data = sixel_data.replace('\u{E000}', "");
+
          return Ok(Character {
             id: name.to_string(),
             name: name.to_string(),
-            kind: CharacterKind::Sixel(full_body),
+            kind: CharacterKind::Sixel(sixel_data),
             height: if height > 0 { (height / 10) as usize } else { resolved_lines.len() },
             width: if width > 0 { (width / 5) as usize } else { 0 },
         });

@@ -109,11 +109,7 @@ pub async fn run() -> Result<()> {
                             cursor::MoveTo(app.preview_rect.x + h_padding, app.preview_rect.y),
                         );
                         
-                        // Style connectors in Sixel data (using white as default for viewer)
-                        let styled_connector = format!("\x1B[37m\\{}", "\x1B[0m");
-                        let final_data = data.replace('\u{E000}', &styled_connector);
-                        
-                        print!("{}", final_data);
+                        print!("{}", data);
                         let _ = io::Write::flush(&mut stdout);
                     }
                 }
@@ -229,11 +225,8 @@ fn draw_detail_view(f: &mut Frame, area: Rect, app: &mut App) {
                     f.render_widget(para, preview_chunks[1]);
                 }
                 CharacterKind::Sixel(_data) => {
+                    // Save area for post-draw Sixel injection
                     app.preview_rect = preview_chunks[1];
-                    let para = Paragraph::new("\n\n  [Rendering Sixel Bitmap...]")
-                        .alignment(Alignment::Left)
-                        .style(Style::default().fg(Color::DarkGray));
-                    f.render_widget(para, preview_chunks[1]);
                 }
             }
         }

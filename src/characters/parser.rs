@@ -89,17 +89,26 @@ pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Characte
         
         let mut width = 0;
         let mut height = 0;
-        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q"1;1;(\d+);(\d+)"#)?;
+        // The cow files use \" before raster attrs, so handle optional backslash
+        let sixel_re = Regex::new(r#"\x1BP[0-9;]*q\\?"1;1;(\d+);(\d+)"#)?;
         if let Some(caps) = sixel_re.captures(&data) {
             width = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
             height = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
         }
 
+        // Strip connector lines; keep only the actual Sixel DCS sequence
+        let sixel_data: String = data
+            .lines()
+            .filter(|line| line.contains("\x1BP"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let sixel_data = sixel_data.replace('\u{E000}', "");
+
          return Ok(Character {
             id: id.to_string(),
             name,
             source,
-            kind: CharacterKind::Sixel(data),
+            kind: CharacterKind::Sixel(sixel_data),
             height: if height > 0 { (height / 10) as usize } else { resolved_lines.len() },
             width: if width > 0 { (width / 5) as usize } else { 0 },
         });
