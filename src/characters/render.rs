@@ -13,18 +13,18 @@ pub fn render_grid(grid: &[Vec<Cell>], connector_style: Option<Style>) -> Vec<Li
 
 pub fn cell_to_span(cell: &Cell, connector_style: Option<Style>) -> Span<'static> {
     match cell {
-        Cell::Styled { ch, fg, bg, is_connector } => {
+        Cell::Styled { ch, fg, bg } => {
             let mut style = Style::default();
-            if *is_connector && connector_style.is_some() {
-                style = connector_style.unwrap();
-            } else {
-                if let Some(fg) = fg {
-                    style = style.fg(to_ratatui_color(fg));
-                }
-                if let Some(bg) = bg {
-                    style = style.bg(to_ratatui_color(bg));
-                }
+            if let Some(fg) = fg {
+                style = style.fg(to_ratatui_color(fg));
             }
+            if let Some(bg) = bg {
+                style = style.bg(to_ratatui_color(bg));
+            }
+            Span::styled(ch.to_string(), style)
+        }
+        Cell::Connector { ch } => {
+            let style = connector_style.unwrap_or_default();
             Span::styled(ch.to_string(), style)
         }
     }
@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_render_styled_cell() {
-        let cell = Cell::Styled { ch: 'x', fg: Some(Color::Indexed(1)), bg: None, is_connector: false };
+        let cell = Cell::Styled { ch: 'x', fg: Some(Color::Indexed(1)), bg: None };
         let span = cell_to_span(&cell, None);
         assert_eq!(span.content, "x");
         assert_eq!(span.style.fg, Some(TuiColor::Indexed(1)));
@@ -71,8 +71,8 @@ mod tests {
     #[test]
     fn test_render_grid_line_count() {
         let grid = vec![
-            vec![Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false }],
-            vec![Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false }, Cell::Styled { ch: ' ', fg: None, bg: None, is_connector: false }],
+            vec![Cell::Styled { ch: ' ', fg: None, bg: None }],
+            vec![Cell::Styled { ch: ' ', fg: None, bg: None }, Cell::Styled { ch: ' ', fg: None, bg: None }],
         ];
         let lines = render_grid(&grid, None);
         assert_eq!(lines.len(), 2);

@@ -85,7 +85,8 @@ pub enum Color {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cell {
-    Styled { ch: char, fg: Option<Color>, bg: Option<Color>, is_connector: bool },
+    Styled { ch: char, fg: Option<Color>, bg: Option<Color> },
+    Connector { ch: char },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -123,10 +124,13 @@ fn kind_to_code(kind: &CharacterKind) -> String {
 
 fn cell_to_code(cell: &Cell) -> String {
     match cell {
-        Cell::Styled { ch, fg, bg, is_connector } => {
+        Cell::Styled { ch, fg, bg } => {
             let fg_code = fg.as_ref().map_or("None".to_string(), |c| format!("Some({})", color_to_code(c)));
             let bg_code = bg.as_ref().map_or("None".to_string(), |c| format!("Some({})", color_to_code(c)));
-            format!("Cell::Styled {{ ch: {:?}, fg: {}, bg: {}, is_connector: {} }}", ch, fg_code, bg_code, is_connector)
+            format!("Cell::Styled {{ ch: {:?}, fg: {}, bg: {} }}", ch, fg_code, bg_code)
+        }
+        Cell::Connector { ch } => {
+            format!("Cell::Connector {{ ch: {:?} }}", ch)
         }
     }
 }
@@ -268,14 +272,12 @@ fn construct_grid(lines: &[String]) -> Vec<Vec<Cell>> {
                     continue;
                 }
             }
-            let mut ch = chars[pos];
-            let mut is_connector = false;
+            let ch = chars[pos];
             if ch == '\u{E000}' {
-                ch = '\\';
-                is_connector = true;
+                row.push(Cell::Connector { ch: '\\' });
+            } else {
+                row.push(Cell::Styled { ch, fg: current_fg.clone(), bg: current_bg.clone() });
             }
-
-            row.push(Cell::Styled { ch, fg: current_fg.clone(), bg: current_bg.clone(), is_connector });
             pos += 1;
         }
         grid.push(row);

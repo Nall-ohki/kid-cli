@@ -7,12 +7,15 @@ pub enum Color {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Cell {
-    /// A styled character (ASCII, Unicode, or Space)
+    /// A styled character belonging to the character art
     Styled {
         ch: char,
         fg: Option<Color>,
         bg: Option<Color>,
-        is_connector: bool,
+    },
+    /// A speech or thought bubble connector
+    Connector {
+        ch: char,
     },
 }
 
