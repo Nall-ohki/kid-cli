@@ -76,8 +76,20 @@ grep -q "data_b" "/home/$USER_B/creations/secret.txt" || { echo "FAIL: User B da
 sudo kid admin kid delete "$USER_B"
 echo "PASS: Multi-user isolation verified."
 
-# 7. Final Cleanup
-echo "--- Step 7: Final Cleanup ---"
+# 7. Verify Hooks and Daemon
+echo "--- Step 7: Verifying Hooks and Daemon ---"
+# Check binary subcommands
+/opt/kid-cli/bin/kid event --help > /dev/null 2>&1 || { echo "FAIL: 'event' subcommand missing"; exit 1; }
+/opt/kid-cli/bin/kid watch --help > /dev/null 2>&1 || { echo "FAIL: 'watch' subcommand missing"; exit 1; }
+
+# Check restricted config for hooks
+grep -q "kid event pre" /opt/kid-cli/config/zshrc_restricted.zsh || { echo "FAIL: Pre-command hook missing in config"; exit 1; }
+grep -q "kid event post" /opt/kid-cli/config/zshrc_restricted.zsh || { echo "FAIL: Post-command hook missing in config"; exit 1; }
+grep -q "kid watch --daemon" /opt/kid-cli/config/zshrc_restricted.zsh || { echo "FAIL: Daemon auto-launch missing in config"; exit 1; }
+echo "PASS: Hooks and Daemon verified."
+
+# 8. Final Cleanup
+echo "--- Step 8: Final Cleanup ---"
 sudo kid admin kid delete "$TEST_USER"
 ! id "$TEST_USER" > /dev/null 2>&1 || { echo "FAIL: User still exists after deletion"; exit 1; }
 echo "PASS: Cleanup successful."
