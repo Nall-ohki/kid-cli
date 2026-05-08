@@ -5,15 +5,19 @@ use std::fs;
 use std::path::Path;
 use crate::daemon::engine;
 
-const SOCKET_PATH: &str = "/home/kid/.kid_watch.sock";
+pub fn get_socket_path() -> Result<std::path::PathBuf> {
+    let home = home::home_dir().ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?;
+    Ok(home.join(".kid_watch.sock"))
+}
 
 pub async fn listen(primary_pane_id: String) -> Result<()> {
-    if Path::new(SOCKET_PATH).exists() {
-        fs::remove_file(SOCKET_PATH).context("Could not remove old socket file")?;
+    let socket_path = get_socket_path()?;
+    if socket_path.exists() {
+        fs::remove_file(&socket_path).context("Could not remove old socket file")?;
     }
 
-    let listener = UnixListener::bind(SOCKET_PATH).context("Could not bind to Unix socket")?;
-    println!("Listening on Unix socket: {}", SOCKET_PATH);
+    let listener = UnixListener::bind(&socket_path).context("Could not bind to Unix socket")?;
+    println!("Listening on Unix socket: {:?}", socket_path);
 
     let engine = engine::Engine::new(primary_pane_id);
 

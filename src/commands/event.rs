@@ -2,14 +2,13 @@ use tokio::net::UnixStream;
 use tokio::io::AsyncWriteExt;
 use anyhow::Result;
 
-const SOCKET_PATH: &str = "/home/kid/.kid_watch.sock";
-
 pub async fn run(event_type: &str, data: &str, pane_id: Option<&str>) -> Result<()> {
+    let socket_path = crate::daemon::socket::get_socket_path()?;
     let mut stream = None;
     let mut last_err = None;
 
     for _ in 0..5 {
-        match UnixStream::connect(SOCKET_PATH).await {
+        match UnixStream::connect(&socket_path).await {
             Ok(s) => {
                 stream = Some(s);
                 break;
@@ -23,9 +22,9 @@ pub async fn run(event_type: &str, data: &str, pane_id: Option<&str>) -> Result<
 
     let mut stream = stream.ok_or_else(|| {
         anyhow::anyhow!(
-            "Could not connect to kid watch daemon socket after retries: {}. Path: {}",
+            "Could not connect to kid watch daemon socket after retries: {}. Path: {:?}",
             last_err.map(|e| e.to_string()).unwrap_or_default(),
-            SOCKET_PATH
+            socket_path
         )
     })?;
     

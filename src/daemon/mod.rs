@@ -42,11 +42,13 @@ pub fn start() -> Result<()> {
         });
     }
 
+    let home = home::home_dir().ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?;
+    
     let child = cmd
         .arg("watch")
         .stdin(Stdio::null())
-        .stdout(fs::File::create("/tmp/kid_watch.log")?)
-        .stderr(fs::File::create("/tmp/kid_watch.err")?)
+        .stdout(fs::File::create(home.join(".kid_watch.log"))?)
+        .stderr(fs::File::create(home.join(".kid_watch.err"))?)
         .env("PATH", std::env::var("PATH").unwrap_or_default())
         .env("HOME", std::env::var("HOME").unwrap_or_default())
         .env("TMUX", std::env::var("TMUX").unwrap_or_default())
@@ -59,7 +61,8 @@ pub fn start() -> Result<()> {
 }
 
 pub fn get_pid_file() -> Result<PathBuf> {
-    Ok(PathBuf::from("/home/kid/.kid_watch.pid"))
+    let home = home::home_dir().ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?;
+    Ok(home.join(".kid_watch.pid"))
 }
 
 pub async fn run_server(primary_pane_id: String) -> Result<()> {
