@@ -18,13 +18,16 @@ KIDS=("kid" "eiya" "chie")
 for NAME in "${KIDS[@]}"; do
     if id "$NAME" >/dev/null 2>&1; then
         echo "--- User '$NAME' already exists ---"
-        read -p "Recreate environment for $NAME? (y/N): " CONFIRM
-        if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+        read -p "Recreate environment (preserve data) for $NAME? (y/N): " CONFIRM
+        if [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]]; then
+            echo "Resetting environment for $NAME (preserving data)..."
+            sudo kid admin kid reset "$NAME"
+            # Set/refresh default password
+            echo "$NAME:$NAME$NAME" | sudo chpasswd
+        else
             echo "Skipping $NAME."
-            continue
         fi
-        echo "Deleting old environment for $NAME..."
-        sudo kid admin kid delete "$NAME"
+        continue
     fi
 
     echo "--- Provisioning Kid: $NAME ---"
