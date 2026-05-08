@@ -155,6 +155,15 @@ pub fn create_kid(name: &str) -> Result<()> {
         if !status.success() {
             return Err(anyhow::anyhow!("Failed to set permissions on creations directory"));
         }
+
+        // 4. Run 'kid install' as the new user to populate apps/tools
+        styled_message(MessageLevel::Info, "Populating kid environment (apps/tools)...");
+        let status = Command::new("sudo")
+            .args(&["-u", name, "/usr/local/bin/kid", "install"])
+            .status()?;
+        if !status.success() {
+            styled_message(MessageLevel::Warn, "Environment population partially failed.");
+        }
     }
 
     styled_message(MessageLevel::Ok, &format!("User '{}' created and provisioned.", name));

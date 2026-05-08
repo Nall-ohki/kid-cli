@@ -94,7 +94,32 @@ fn install_apps(home: &std::path::Path) -> Result<()> {
         fs::create_dir_all(&app_dir)?;
         
         let wrapper_path = app_dir.join(name);
-        let content = format!("#!/bin/zsh\n# _INFRA_PATH\n{}\n", cmd);
+        
+        // Extract the launcher (first word) and the app (last word)
+        let parts: Vec<&str> = cmd.split_whitespace().collect();
+        let launcher = parts.first().unwrap_or(&"");
+        let app = parts.last().unwrap_or(&"");
+        
+        let content = format!(
+            "#!/bin/zsh\n\
+             # Use the saved infrastructure path to find system binaries\n\
+             export PATH=\"$_INFRA_PATH\"\n\n\
+             # Check for launcher and app existence\n\
+             for cmd_to_check in \"{0}\" \"{1}\"; do\n\
+               if ! command -v \"$cmd_to_check\" >/dev/null 2>&1; then\n\
+                 echo \"--------------------------------------------------\"\n\
+                 echo \"❌ ERROR: '$cmd_to_check' is not installed.\"\n\
+                 echo \"This is required for {2} to run.\"\n\
+                 echo \"Please contact an administrator to install it.\"\n\
+                 echo \"--------------------------------------------------\"\n\
+                 exit 1\n\
+               fi\n\
+             done\n\n\
+             # Launch the application\n\
+             {3}\n",
+            launcher, app, name, cmd
+        );
+        
         fs::write(&wrapper_path, content)?;
         
         #[cfg(unix)]
