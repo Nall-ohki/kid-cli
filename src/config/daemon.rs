@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub companion: CompanionConfig,
@@ -7,6 +8,7 @@ pub struct Config {
     pub stats: StatsConfig,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompanionConfig {
     pub pane_width_percent: u32,
@@ -15,12 +17,14 @@ pub struct CompanionConfig {
     pub max_feed_lines: u32,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PatternsConfig {
     pub repeated_cd_threshold: u32,
     pub repeated_fail_threshold: u32,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StatsConfig {
     pub session_milestone_minutes: Vec<u32>,

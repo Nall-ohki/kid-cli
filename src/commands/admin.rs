@@ -24,7 +24,8 @@ pub fn system_init() -> Result<()> {
         styled_message(MessageLevel::Info, "Deploying project to /opt/kid-cli...");
         // Use rsync to copy excluding build artifacts and git
         let status = Command::new("rsync")
-            .args(&["-a", "--exclude", "target", "--exclude", ".git", "./", GLOBAL_PATH])
+            .current_dir(&repo_root)
+            .args(&["-a", "--exclude", "target", "--exclude", ".git", ".", GLOBAL_PATH])
             .status()?;
         if !status.success() {
             return Err(anyhow::anyhow!("Failed to copy files to /opt/kid-cli"));
