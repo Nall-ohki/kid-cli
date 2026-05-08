@@ -1,0 +1,23 @@
+# dev/docker-compose.sim.yml
+services:
+  host-sim:
+    build:
+      context: ..
+      dockerfile: dev/sim.Dockerfile
+    container_name: kid-host-sim
+    volumes:
+      # Share the Mac Docker socket (DooD)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount the project directory
+      - ..:/opt/kid-cli
+      # Mount host SSH keys for 'gh' and 'git' cloning
+      - ${HOME}/.ssh:/home/admin/.ssh:ro
+      # Preserve zsh history in the simulator
+      - sim-zsh-history:/home/admin/.zsh_history
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    stdin_open: true
+    tty: true
+
+volumes:
+  sim-zsh-history:
