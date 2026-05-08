@@ -1,5 +1,6 @@
 pub mod install;
 pub mod help;
+pub mod event;
 pub mod msg;
 pub mod validate;
 pub mod launch;

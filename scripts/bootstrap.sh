@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Kid-CLI System Bootstrap
-# This script performs the initial setup to globalize the kid environment.
+# Ensure we are in project root
+cd "$(dirname "$0")/.."
 
 echo "=== Kid-CLI Bootstrap ==="
 
@@ -16,6 +16,8 @@ cargo build --release
 
 # 3. Run System Initialization
 echo "--- Initializing System (Requires Sudo) ---"
+# Ensure the docker socket is accessible within the simulator
+sudo chmod 666 /var/run/docker.sock || true
 sudo ./target/release/kid admin init
 
 echo ""

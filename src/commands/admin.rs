@@ -69,6 +69,9 @@ pub fn system_init() -> Result<()> {
     }
 
     let current_exe = std::env::current_exe()?;
+    if install_bin_path.exists() {
+        let _ = fs::remove_file(&install_bin_path);
+    }
     fs::copy(&current_exe, &install_bin_path)?;
     styled_message(MessageLevel::Ok, &format!("Installed binary to {}", install_bin_path.display()));
 
@@ -123,30 +126,19 @@ pub fn create_kid(name: &str) -> Result<()> {
     styled_message(MessageLevel::Info, &format!("Creating kid user: {}", name));
 
     if cfg!(target_os = "linux") {
-        // 1. Create Linux user
-        let status = Command::new("useradd")
+        // 1. Create Linux user (ignore if already exists)
+        let _ = Command::new("useradd")
             .args(&["-m", "-s", "/bin/zsh", name])
-            .status()?;
-        if !status.success() {
-            return Err(anyhow::anyhow!("Failed to create user '{}'", name));
-        }
-    } else {
-        styled_message(MessageLevel::Warn, &format!("Skipping user creation ({} is not Linux).", std::env::consts::OS));
-    }
-
-    if cfg!(target_os = "linux") {
-        // 2. Add to groups
-        let status = Command::new("usermod")
+            .status();
+        
+        // Ensure user is in groups
+        let _ = Command::new("usermod")
             .args(&["-aG", &format!("docker,{}", SYSTEM_GROUP), name])
-            .status()?;
-        if !status.success() {
-            return Err(anyhow::anyhow!("Failed to add user to groups"));
-        }
+            .status();
     }
 
     // 3. Create creations directory and .zshrc (to silence new user prompt)
-    let home_base = if cfg!(target_os = "linux") { "/home" } else { "/tmp/kid_homes" };
-    let home = format!("{}/{}", home_base, name);
+    let home = format!("/home/{}", name);
     let creations = format!("{}/creations", home);
     let zshrc = format!("{}/.zshrc", home);
     
@@ -201,9 +193,9 @@ pub fn reset_kid(name: &str) -> Result<()> {
     let backup_path = format!("/tmp/kid_backup_{}.tar.gz", name);
 
     // 1. Safety Backup
-    let home_base = if cfg!(target_os = "linux") { "/home" } else { "/tmp/kid_homes" };
+    styled_message(MessageLevel::Info, "Creating safety backup of user home...");
     let status = Command::new("tar")
-        .args(&["-czf", &backup_path, "-C", home_base, name])
+        .args(&["-czf", &backup_path, "-C", "/home", name])
         .status()?;
     if !status.success() {
         return Err(anyhow::anyhow!("Backup failed. Aborting reset for safety."));
@@ -220,9 +212,8 @@ pub fn reset_kid(name: &str) -> Result<()> {
     
     Command::new("tar").args(&["-xzf", &backup_path, "-C", &temp_extract]).status()?;
     
-    let home_base = if cfg!(target_os = "linux") { "/home" } else { "/tmp/kid_homes" };
     let src_creations = format!("{}/{}/creations/.", temp_extract, name);
-    let dst_creations = format!("{}/{}/creations/", home_base, name);
+    let dst_creations = format!("/home/{}/creations/", name);
     
     Command::new("cp").args(&["-a", &src_creations, &dst_creations]).status()?;
     
@@ -265,7 +256,7 @@ pub fn list_kids() -> Result<()> {
 }
 
 fn install_global_launcher() -> Result<()> {
-    let profile_path = if cfg!(target_os = "linux") { "/etc/zsh/zprofile" } else { "/etc/zprofile" };
+    let profile_path = "/etc/zsh/zprofile";
     let shim = format!(
         "\n# --- Kid-CLI Global Launcher ---\n\
         if [[ -t 0 && -z \"$SKIP_KID\" ]]; then\n  \

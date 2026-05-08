@@ -5,6 +5,7 @@ mod commands;
 mod terminal;
 mod dispatch;
 mod config;
+mod daemon;
 mod characters;
 
 
@@ -39,6 +40,21 @@ enum Commands {
         /// Only install safebin symlinks
         #[arg(long)]
         safebin: bool,
+    },
+    /// Start the companion daemon
+    Watch {
+        /// Run in background
+        #[arg(long)]
+        daemon: bool,
+    },
+    /// Fire an event to the daemon
+    Event {
+        /// Event type (pre, post)
+        event_type: String,
+        /// Event data (command or exit code)
+        data: String,
+        /// Originating pane ID
+        pane_id: Option<String>,
     },
     /// Browse and view character assets
     Characters,
@@ -162,6 +178,17 @@ async fn main() -> anyhow::Result<()> {
                     KidManagementCommands::List => commands::admin::list_kids(),
                 }
             }
+        }
+        Some(Commands::Watch { daemon }) => {
+            if daemon {
+                crate::daemon::start()
+            } else {
+                let pane_id = std::env::var("TMUX_PANE").unwrap_or_else(|_| "unknown".to_string());
+                crate::daemon::run_server(pane_id).await
+            }
+        }
+        Some(Commands::Event { event_type, data, pane_id }) => {
+            commands::event::run(&event_type, &data, pane_id.as_deref()).await
         }
         Some(Commands::Help { section }) => {
             commands::help::run(&section)

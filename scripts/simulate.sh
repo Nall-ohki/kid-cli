@@ -23,7 +23,11 @@ case "$1" in
   run)
     echo "--- Starting Simulator Container ---"
     $COMPOSE_CMD up -d --build
+    if [[ "$2" == "--no-enter" ]]; then
+      exit 0
+    fi
     echo "--- Entering Simulator (zsh) ---"
+    echo "ℹ  TIP: If this is a new simulator, run './scripts/init.sh' to provision kids."
     docker exec -it kid-host-sim zsh
     ;;
   *)

@@ -31,7 +31,6 @@ pub enum CharacterKind {
 pub enum Source {
     Charasay,
     CowFiles,
-    User,
 }
 
 #[derive(Debug, Clone, PartialEq)]
