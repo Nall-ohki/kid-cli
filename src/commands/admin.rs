@@ -22,9 +22,15 @@ pub fn system_init() -> Result<()> {
     let repo_root = std::env::current_dir()?;
     
     if repo_root != Path::new(GLOBAL_PATH) {
-        styled_message(MessageLevel::Info, "Deploying project to /opt/kid-cli...");
         // Use rsync to copy excluding build artifacts and git
-        let rsync_path = which("rsync").unwrap_or_else(|_| std::path::PathBuf::from("/usr/bin/rsync"));
+        let rsync_path = which("rsync")
+            .or_else(|_| which("/usr/bin/rsync"))
+            .or_else(|_| which("/usr/local/bin/rsync"))
+            .unwrap_or_else(|_| std::path::PathBuf::from("rsync"));
+
+        styled_message(MessageLevel::Info, &format!("Using rsync: {:?}", rsync_path));
+        styled_message(MessageLevel::Info, &format!("Source dir: {:?}", repo_root));
+
         let status = Command::new(rsync_path)
             .current_dir(&repo_root)
             .args(&["-a", "--exclude", "target", "--exclude", ".git", ".", GLOBAL_PATH])
@@ -35,11 +41,15 @@ pub fn system_init() -> Result<()> {
     }
 
     // 3. Create kid-users group
-    let status = Command::new("groupadd").arg("-f").arg(SYSTEM_GROUP).status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Failed to create system group"));
+    if cfg!(target_os = "linux") {
+        let status = Command::new("groupadd").arg("-f").arg(SYSTEM_GROUP).status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to create system group"));
+        }
+        styled_message(MessageLevel::Ok, &format!("System group '{}' ensured.", SYSTEM_GROUP));
+    } else {
+        styled_message(MessageLevel::Warn, &format!("Skipping group creation ({} is not Linux).", std::env::consts::OS));
     }
-    styled_message(MessageLevel::Ok, &format!("System group '{}' ensured.", SYSTEM_GROUP));
 
     // 4. Build initial image
     styled_message(MessageLevel::Info, "Building initial Docker image...");
@@ -50,15 +60,23 @@ pub fn system_init() -> Result<()> {
         return Err(anyhow::anyhow!("Failed to build initial Docker image"));
     }
 
-    // 5. Symlink binary
-    let global_binary = Path::new(GLOBAL_PATH).join("target/release/kid");
-    if global_binary.exists() {
-        if Path::new(BINARY_PATH).exists() || Path::new(BINARY_PATH).is_symlink() {
-            fs::remove_file(BINARY_PATH)?;
-        }
-        std::os::unix::fs::symlink(&global_binary, BINARY_PATH)?;
-        styled_message(MessageLevel::Ok, &format!("Symlinked binary to {}", BINARY_PATH));
+    // 5. Install and Symlink binary
+    let install_bin_dir = Path::new(GLOBAL_PATH).join("bin");
+    let install_bin_path = install_bin_dir.join("kid");
+    
+    if !install_bin_dir.exists() {
+        fs::create_dir_all(&install_bin_dir)?;
     }
+
+    let current_exe = std::env::current_exe()?;
+    fs::copy(&current_exe, &install_bin_path)?;
+    styled_message(MessageLevel::Ok, &format!("Installed binary to {}", install_bin_path.display()));
+
+    if Path::new(BINARY_PATH).exists() || Path::new(BINARY_PATH).is_symlink() {
+        let _ = fs::remove_file(BINARY_PATH);
+    }
+    std::os::unix::fs::symlink(&install_bin_path, BINARY_PATH)?;
+    styled_message(MessageLevel::Ok, &format!("Symlinked binary to {}", BINARY_PATH));
 
     // 6. Install Global Launcher in /etc/zsh/zprofile
     install_global_launcher()?;
@@ -104,38 +122,47 @@ pub fn deploy() -> Result<()> {
 pub fn create_kid(name: &str) -> Result<()> {
     styled_message(MessageLevel::Info, &format!("Creating kid user: {}", name));
 
-    // 1. Create Linux user
-    let status = Command::new("useradd")
-        .args(&["-m", "-s", "/bin/zsh", name])
-        .status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Failed to create user '{}'", name));
+    if cfg!(target_os = "linux") {
+        // 1. Create Linux user
+        let status = Command::new("useradd")
+            .args(&["-m", "-s", "/bin/zsh", name])
+            .status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to create user '{}'", name));
+        }
+    } else {
+        styled_message(MessageLevel::Warn, &format!("Skipping user creation ({} is not Linux).", std::env::consts::OS));
     }
 
-    // 2. Add to groups
-    let status = Command::new("usermod")
-        .args(&["-aG", &format!("docker,{}", SYSTEM_GROUP), name])
-        .status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Failed to add user to groups"));
+    if cfg!(target_os = "linux") {
+        // 2. Add to groups
+        let status = Command::new("usermod")
+            .args(&["-aG", &format!("docker,{}", SYSTEM_GROUP), name])
+            .status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to add user to groups"));
+        }
     }
 
     // 3. Create creations directory and .zshrc (to silence new user prompt)
-    let home = format!("/home/{}", name);
+    let home_base = if cfg!(target_os = "linux") { "/home" } else { "/tmp/kid_homes" };
+    let home = format!("{}/{}", home_base, name);
     let creations = format!("{}/creations", home);
     let zshrc = format!("{}/.zshrc", home);
     
     fs::create_dir_all(&creations)?;
     fs::write(&zshrc, "# Kid Environment Shell Config\n")?;
     
-    // Set ownership (user:kid-users)
-    let status = Command::new("chown")
-        .arg("-R")
-        .arg(&format!("{}:{}", name, SYSTEM_GROUP))
-        .arg(&home)
-        .status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Failed to set permissions on creations directory"));
+    if cfg!(target_os = "linux") {
+        // Set ownership (user:kid-users)
+        let status = Command::new("chown")
+            .arg("-R")
+            .arg(&format!("{}:{}", name, SYSTEM_GROUP))
+            .arg(&home)
+            .status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to set permissions on creations directory"));
+        }
     }
 
     styled_message(MessageLevel::Ok, &format!("User '{}' created and provisioned.", name));
@@ -154,12 +181,14 @@ pub fn delete_kid(name: &str) -> Result<()> {
         styled_message(MessageLevel::Warn, "Could not fully remove Docker resources (maybe they don't exist yet).");
     }
 
-    // 2. Remove Linux user
-    let status = Command::new("userdel")
-        .args(&["-r", name])
-        .status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Failed to delete Linux user '{}'", name));
+    if cfg!(target_os = "linux") {
+        // 2. Remove Linux user
+        let status = Command::new("userdel")
+            .args(&["-r", name])
+            .status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to delete Linux user '{}'", name));
+        }
     }
 
     styled_message(MessageLevel::Ok, &format!("User '{}' and all associated data deleted.", name));
@@ -172,9 +201,9 @@ pub fn reset_kid(name: &str) -> Result<()> {
     let backup_path = format!("/tmp/kid_backup_{}.tar.gz", name);
 
     // 1. Safety Backup
-    styled_message(MessageLevel::Info, "Creating safety backup of user home...");
+    let home_base = if cfg!(target_os = "linux") { "/home" } else { "/tmp/kid_homes" };
     let status = Command::new("tar")
-        .args(&["-czf", &backup_path, "-C", "/home", name])
+        .args(&["-czf", &backup_path, "-C", home_base, name])
         .status()?;
     if !status.success() {
         return Err(anyhow::anyhow!("Backup failed. Aborting reset for safety."));
@@ -191,8 +220,9 @@ pub fn reset_kid(name: &str) -> Result<()> {
     
     Command::new("tar").args(&["-xzf", &backup_path, "-C", &temp_extract]).status()?;
     
+    let home_base = if cfg!(target_os = "linux") { "/home" } else { "/tmp/kid_homes" };
     let src_creations = format!("{}/{}/creations/.", temp_extract, name);
-    let dst_creations = format!("/home/{}/creations/", name);
+    let dst_creations = format!("{}/{}/creations/", home_base, name);
     
     Command::new("cp").args(&["-a", &src_creations, &dst_creations]).status()?;
     
@@ -235,7 +265,7 @@ pub fn list_kids() -> Result<()> {
 }
 
 fn install_global_launcher() -> Result<()> {
-    let profile_path = "/etc/zsh/zprofile";
+    let profile_path = if cfg!(target_os = "linux") { "/etc/zsh/zprofile" } else { "/etc/zprofile" };
     let shim = format!(
         "\n# --- Kid-CLI Global Launcher ---\n\
         if [[ -t 0 && -z \"$SKIP_KID\" ]]; then\n  \
