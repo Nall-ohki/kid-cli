@@ -118,16 +118,19 @@ pub fn create_kid(name: &str) -> Result<()> {
         return Err(anyhow::anyhow!("Failed to add user to groups"));
     }
 
-    // 3. Create creations directory
+    // 3. Create creations directory and .zshrc (to silence new user prompt)
     let home = format!("/home/{}", name);
     let creations = format!("{}/creations", home);
+    let zshrc = format!("{}/.zshrc", home);
+    
     fs::create_dir_all(&creations)?;
+    fs::write(&zshrc, "# Kid Environment Shell Config\n")?;
     
     // Set ownership (user:kid-users)
     let status = Command::new("chown")
         .arg("-R")
         .arg(&format!("{}:{}", name, SYSTEM_GROUP))
-        .arg(&creations)
+        .arg(&home)
         .status()?;
     if !status.success() {
         return Err(anyhow::anyhow!("Failed to set permissions on creations directory"));
