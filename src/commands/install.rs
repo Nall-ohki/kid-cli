@@ -6,6 +6,13 @@ use std::path::Path;
 use std::os::unix::fs::symlink;
 
 pub fn run(safebin_only: bool) -> Result<()> {
+    if !is_inside_infrastructure() {
+        styled_message(MessageLevel::Info, "This command is for internal container environment setup.");
+        styled_message(MessageLevel::Info, "To initialize the system globally, use: sudo kid system-init");
+        styled_message(MessageLevel::Info, "To create a new kid environment, use: sudo kid create-kid <name>");
+        return Ok(());
+    }
+
     let config_dir = config::get_config_dir().context("Could not get config directory")?;
     
     // 1. Bootstrap TOMLs if needed (from Phase 1)
@@ -20,6 +27,11 @@ pub fn run(safebin_only: bool) -> Result<()> {
 
     styled_message(MessageLevel::Ok, "Bootstrap complete!");
     Ok(())
+}
+
+fn is_inside_infrastructure() -> bool {
+    // Check for the canonical binary path that only exists in the Docker environment
+    Path::new("/kid/bin/kid").exists()
 }
 
 fn create_structure() -> Result<()> {

@@ -6,8 +6,8 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      # Bind mount for creations so host can access them easily
-      - ./creations:/home/kid/creations
+      # Bind mount for creations in the host user's home directory
+      - ${KID_CREATIONS_DIR:-./creations}:/home/kid/creations
       # Named volumes for saving progress and history
       - tuxpaint-data:/home/kid/.tuxpaint
       - gcompris-data:/home/kid/.config/gcompris

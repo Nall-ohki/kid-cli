@@ -58,6 +58,46 @@ enum Commands {
     },
     /// Browse and view character assets
     Characters,
+
+    /// Administrative commands for system management (Requires Sudo)
+    Admin {
+        #[command(subcommand)]
+        command: AdminCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum AdminCommands {
+    /// Initialize the system globally
+    Init,
+    /// Deploy latest code and rebuild image
+    Deploy,
+    /// Manage individual kid environments
+    Kid {
+        #[command(subcommand)]
+        command: KidManagementCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum KidManagementCommands {
+    /// Create a new kid user
+    Create {
+        /// Username of the child
+        name: String,
+    },
+    /// Safely delete a kid user and their container
+    Delete {
+        /// Username of the child
+        name: String,
+    },
+    /// Wipe settings but keep creations for a kid
+    Reset {
+        /// Username of the child
+        name: String,
+    },
+    /// List all managed kid users
+    List,
 }
 
 #[tokio::main]
@@ -70,7 +110,8 @@ async fn main() -> anyhow::Result<()> {
         .map(|s| s.to_string())
         .unwrap_or(full_program_path.clone());
 
-    // eprintln!("DEBUG: program_name='{}'", program_name);
+    // Context detection
+    let is_inside = std::path::Path::new("/kid/bin/kid").exists();
 
     let is_busybox = match program_name.as_str() {
         "kid" | "target" | "kid-binary" | "companion" => false,
@@ -100,6 +141,21 @@ async fn main() -> anyhow::Result<()> {
     // 2. Direct Subcommand Dispatch
     let cli = Cli::parse();
 
+    // Permission enforcement for Admin commands
+    if let Some(Commands::Admin { .. }) = &cli.command {
+        if is_inside {
+            eprintln!("Error: Administrative commands are not allowed inside the Kid Environment.");
+            std::process::exit(1);
+        }
+        #[cfg(unix)]
+        {
+            if unsafe { libc::getuid() } != 0 {
+                eprintln!("Error: This command requires root privileges (sudo).");
+                std::process::exit(1);
+            }
+        }
+    }
+
     let res = match cli.command {
         Some(Commands::Msg { level, text }) => {
             commands::msg::run(level, &text);
@@ -110,6 +166,18 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Install { safebin }) => {
             commands::install::run(safebin)
+        }
+        Some(Commands::Admin { command }) => {
+            match command {
+                AdminCommands::Init => commands::admin::system_init(),
+                AdminCommands::Deploy => commands::admin::deploy(),
+                AdminCommands::Kid { command } => match command {
+                    KidManagementCommands::Create { name } => commands::admin::create_kid(&name),
+                    KidManagementCommands::Delete { name } => commands::admin::delete_kid(&name),
+                    KidManagementCommands::Reset { name } => commands::admin::reset_kid(&name),
+                    KidManagementCommands::List => commands::admin::list_kids(),
+                }
+            }
         }
         Some(Commands::Watch { daemon }) => {
             if daemon {
