@@ -19,13 +19,7 @@ pub async fn run(name: &str, config: &LauncherConfig, args: &[String]) -> Result
         full_cmd.push_str(&args.join(" "));
     }
 
-    // Fire discovery event using original name to ensure engine.rs matches the launcher key
-    let mut tracking_cmd = name.to_string();
-    if !args.is_empty() {
-        tracking_cmd.push(' ');
-        tracking_cmd.push_str(&args.join(" "));
-    }
-    let _ = crate::commands::event::run("exec", &tracking_cmd, None).await;
+    // Command is now ready for execution
 
     // Handle lolcat formatting
     if let LolcatMode::Simple(ref mode) = config.lolcat {
@@ -67,20 +61,10 @@ pub async fn run(name: &str, config: &LauncherConfig, args: &[String]) -> Result
             format!("{} split-window -t {} -v -p 35 \"{}\"", tmux_bin, target, full_cmd_escaped)
         };
 
-        if config.pane == "companion" {
-            // Run locally and pipe
-            let output = std::process::Command::new("/bin/sh")
-                .arg("-c")
-                .arg(format!("{} | /usr/games/lolcat", full_cmd))
-                .output()?;
-            crate::daemon::pane::show_message(&String::from_utf8_lossy(&output.stdout)).await?;
-            std::process::ExitStatus::default() // Mock success
-        } else {
-            std::process::Command::new("/bin/sh")
-                .arg("-c")
-                .arg(tmux_cmd)
-                .status()?
-        }
+        std::process::Command::new("/bin/sh")
+            .arg("-c")
+            .arg(tmux_cmd)
+            .status()?
     } else {
         // Fallback to direct execution if not in tmux, explicitly 'none', or piped
         // Use /bin/sh -c to safely handle commands with arguments (like /bin/ls -la)

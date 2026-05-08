@@ -1,18 +1,7 @@
 use anyhow::Result;
-use crate::commands::event;
 
 pub async fn run(name: &str, real_binary: &str, args: &[String]) -> Result<()> {
-    // 1. Notify daemon (state capture)
-    let full_cmd = if args.is_empty() {
-        name.to_string()
-    } else {
-        format!("{} {}", name, args.join(" "))
-    };
-    
-    // Fire-and-forget event
-    let _ = event::run("exec", &full_cmd, None).await;
-
-    // 2. Transhumanistically replace ourselves with the real binary
+    // Transhumanistically replace ourselves with the real binary
     // Using nix::unistd::execv for a true passthrough
     use nix::unistd::execv;
     use std::ffi::CString;

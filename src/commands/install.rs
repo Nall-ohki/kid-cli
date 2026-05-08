@@ -115,7 +115,6 @@ fn bootstrap_tomls(config_dir: &Path) -> Result<()> {
     let files = [
         ("commands.toml", config::commands::get_default_toml()),
         ("messages.toml", config::messages::get_default_toml()),
-        ("daemon.toml", config::daemon::get_default_toml()),
     ];
 
     for (name, content) in files {
