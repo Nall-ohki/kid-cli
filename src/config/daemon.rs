@@ -31,6 +31,7 @@ pub struct StatsConfig {
     pub command_milestones: Vec<u32>,
 }
 
+#[allow(dead_code)]
 pub fn get_default_toml() -> &'static str {
     r#"
 [companion]

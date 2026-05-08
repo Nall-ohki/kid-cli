@@ -2,6 +2,7 @@ use crate::config;
 use crate::terminal::{styled_message, MessageLevel};
 use anyhow::{Context, Result};
 use std::fs;
+use std::path::Path;
 use std::os::unix::fs::symlink;
 
 pub fn run(system: bool, user: bool) -> Result<()> {
