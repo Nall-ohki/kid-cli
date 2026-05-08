@@ -93,7 +93,7 @@ pub fn deploy() -> Result<()> {
 
     let repo_path = Path::new(GLOBAL_PATH);
     if !repo_path.exists() {
-        return Err(anyhow::anyhow!("System not initialized. Run 'system-init' first."));
+        return Err(anyhow::anyhow!("System not initialized. Run 'kid admin init' first."));
     }
 
     // 1. Pull latest

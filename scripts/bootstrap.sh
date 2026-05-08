@@ -23,4 +23,4 @@ sudo ./target/release/kid admin init
 echo ""
 echo "=== Initialization Complete! ==="
 echo "You can now manage kids using: sudo kid [command]"
-echo "Try: sudo kid create-kid <name>"
+echo "Try: sudo kid admin kid create <name>"
