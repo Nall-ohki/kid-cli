@@ -2,18 +2,29 @@
 set -e
 
 # Kid Host Simulator Launcher
-# This script automates the build and entry into the Linux simulation environment.
-
-echo "=== Kid Host Simulator ==="
+# Usage: ./scripts/simulate.sh [reset|build]
 
 # 1. Ensure we are in the project root
 cd "$(dirname "$0")/.."
 
-# 2. Start/Build the simulator
-echo "--- Starting Simulator Container ---"
-docker compose -f dev/docker-compose.sim.yml up -d --build
+COMPOSE_CMD="docker compose -f dev/docker-compose.sim.yml"
 
-# 3. Enter the simulator shell
-echo "--- Entering Simulator (zsh) ---"
-echo "Tip: Run './bootstrap.sh' once inside to globalize the install."
-docker exec -it kid-host-sim zsh
+case "$1" in
+  reset)
+    echo "--- Wiping Simulator & Volumes ---"
+    $COMPOSE_CMD down -v
+    exit 0
+    ;;
+  build)
+    echo "--- Building Simulator Image ---"
+    $COMPOSE_CMD build
+    exit 0
+    ;;
+  *)
+    # Default: Start and Enter
+    echo "--- Starting Simulator Container ---"
+    $COMPOSE_CMD up -d --build
+    echo "--- Entering Simulator (zsh) ---"
+    docker exec -it kid-host-sim zsh
+    ;;
+esac
