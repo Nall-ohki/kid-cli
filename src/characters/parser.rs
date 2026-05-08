@@ -1,8 +1,8 @@
+#![cfg(test)]
 use std::collections::HashMap;
 use regex::Regex;
 use crate::characters::types::*;
 
-#[allow(dead_code)]
 pub fn parse(id: &str, content: &str, source: Source) -> anyhow::Result<Character> {
     let lines: Vec<&str> = content.lines().collect();
     

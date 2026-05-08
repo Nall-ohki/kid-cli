@@ -1,5 +1,6 @@
 use crate::terminal::{styled_message, MessageLevel};
 use anyhow::Result;
+use which::which;
 use std::process::Command;
 use std::fs;
 use std::path::Path;
@@ -23,7 +24,8 @@ pub fn system_init() -> Result<()> {
     if repo_root != Path::new(GLOBAL_PATH) {
         styled_message(MessageLevel::Info, "Deploying project to /opt/kid-cli...");
         // Use rsync to copy excluding build artifacts and git
-        let status = Command::new("rsync")
+        let rsync_path = which("rsync").unwrap_or_else(|_| std::path::PathBuf::from("/usr/bin/rsync"));
+        let status = Command::new(rsync_path)
             .current_dir(&repo_root)
             .args(&["-a", "--exclude", "target", "--exclude", ".git", ".", GLOBAL_PATH])
             .status()?;

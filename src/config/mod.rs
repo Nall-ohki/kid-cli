@@ -1,5 +1,4 @@
 pub mod commands;
-pub mod messages;
 
 use std::fs;
 use std::path::PathBuf;

@@ -1,5 +1,6 @@
 use std::path::Path;
 use crate::characters::types::{Character, Source};
+#[cfg(test)]
 use crate::characters::parser;
 
 pub struct Registry {
@@ -19,30 +20,7 @@ impl Registry {
         Self::new(crate::characters::builtins::load_builtins())
     }
 
-    #[allow(dead_code)]
-    pub fn load_from_dir(path: &Path) -> anyhow::Result<Self> {
-        let mut characters = Vec::new();
-        if path.is_dir() {
-            for entry in std::fs::read_dir(path)? {
-                let entry = entry?;
-                let path = entry.path();
-                if let Some(ext) = path.extension() {
-                    if ext == "chara" || ext == "cow" {
-                        let name = path.file_stem().unwrap().to_string_lossy();
-                        if name.starts_with("sxl-") {
-                             // Phase 5 will handle Sixel better, for now we can skip or parse as Sixel
-                        }
-                        if let Ok(content) = std::fs::read_to_string(&path) {
-                            if let Ok(chara) = parser::parse(&name, &content, Source::User) {
-                                characters.push(chara);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Ok(Self::new(characters))
-    }
+    // Removed load_from_dir (unused in production)
 
     pub fn current(&self) -> Option<&Character> {
         self.characters.get(self.current_index)
@@ -68,10 +46,7 @@ impl Registry {
         self.current()
     }
 
-    #[allow(dead_code)]
-    pub fn by_name(&self, name: &str) -> Option<&Character> {
-        self.characters.iter().find(|c| c.name == name || c.id == name)
-    }
+    // Removed by_name (unused in production)
 
     pub fn select_by_name(&mut self, name: &str) -> bool {
         if let Some(i) = self.characters.iter().position(|c| c.name == name || c.id == name) {
