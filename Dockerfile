@@ -69,7 +69,7 @@ RUN chmod +x /kid/bin/kid
 
 # Bootstrap kid config
 USER kid
-RUN rm -rf /home/kid/.config/kid && /kid/bin/kid install
+RUN rm -rf /home/kid/.config/kid && /kid/bin/kid install --user
 
 # Hardening as root
 USER root
@@ -77,7 +77,7 @@ USER root
 RUN for cmd in sudo su ssh scp sftp wall; do \
        rm -f /usr/bin/$cmd && ln -sf /kid/bin/kid /usr/bin/$cmd; \
        done \
-    && HOME=/home/kid /kid/bin/kid install --safebin
+    && HOME=/home/kid /kid/bin/kid install --system
 
 USER kid
 WORKDIR /home/kid

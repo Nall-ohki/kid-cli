@@ -5,27 +5,29 @@ use std::fs;
 use std::path::Path;
 use std::os::unix::fs::symlink;
 
-pub fn run(safebin_only: bool) -> Result<()> {
+pub fn run(system: bool, user: bool) -> Result<()> {
     if !is_inside_infrastructure() {
         styled_message(MessageLevel::Info, "This command is for internal container environment setup.");
-        styled_message(MessageLevel::Info, "To initialize the system globally, use: sudo kid system-init");
-        styled_message(MessageLevel::Info, "To create a new kid environment, use: sudo kid create-kid <name>");
+        styled_message(MessageLevel::Info, "To initialize the system globally, use: sudo kid admin init");
+        styled_message(MessageLevel::Info, "To create a new kid environment, use: sudo kid admin kid create <name>");
         return Ok(());
     }
 
     let config_dir = config::get_config_dir().context("Could not get config directory")?;
     
-    // 1. Bootstrap TOMLs if needed (from Phase 1)
-    bootstrap_tomls(&config_dir)?;
-
-    if safebin_only {
-        return install_symlinks(&config_dir);
+    // 1. Bootstrap TOMLs if needed (System concern)
+    if system {
+        bootstrap_tomls(&config_dir)?;
+        install_symlinks(&config_dir)?;
     }
 
-    styled_message(MessageLevel::Info, "Creating directory structure...");
-    create_structure()?;
+    // 2. User-specific structure (User concern)
+    if user {
+        styled_message(MessageLevel::Info, "Creating user-specific directory structure...");
+        create_structure()?;
+    }
 
-    styled_message(MessageLevel::Ok, "Bootstrap complete!");
+    styled_message(MessageLevel::Ok, "Installation step complete!");
     Ok(())
 }
 
@@ -102,15 +104,14 @@ fn install_apps(home: &std::path::Path) -> Result<()> {
         
         let content = format!(
             "#!/bin/zsh\n\
-             # Use the saved infrastructure path to find system binaries\n\
-             export PATH=\"$_INFRA_PATH\"\n\n\
-             # Check for launcher and app existence\n\
+             # Restricted App Wrapper\n\n\
+             # Check for launcher and app existence in the allowed path\n\
              for cmd_to_check in \"{0}\" \"{1}\"; do\n\
                if ! command -v \"$cmd_to_check\" >/dev/null 2>&1; then\n\
                  echo \"--------------------------------------------------\"\n\
-                 echo \"❌ ERROR: '$cmd_to_check' is not installed.\"\n\
+                 echo \"❌ ERROR: '$cmd_to_check' is not available.\"\n\
                  echo \"This is required for {2} to run.\"\n\
-                 echo \"Please contact an administrator to install it.\"\n\
+                 echo \"Please contact an administrator.\"\n\
                  echo \"--------------------------------------------------\"\n\
                  exit 1\n\
                fi\n\
@@ -186,6 +187,23 @@ fn install_symlinks(config_dir: &Path) -> Result<()> {
     ];
     for p in emergency_proxies {
         create_symlink(kid_bin, &format!("/kid/allow/bin/{}", p))?;
+    }
+
+    // E. Real App Binaries (Symlink real binaries into the allowed path)
+    let real_apps = [
+        "tuxpaint", "cage", "gcompris-qt", "scratch", "tuxmath", "tuxtype", "klettres"
+    ];
+    let search_paths = ["/usr/bin", "/usr/games", "/usr/local/bin"];
+    
+    for app_name in real_apps {
+        for base in search_paths {
+            let full_path = format!("{}/{}", base, app_name);
+            let path = Path::new(&full_path);
+            if path.exists() {
+                create_symlink(&full_path, &format!("/kid/allow/bin/{}", app_name))?;
+                break; // Found it, move to next app
+            }
+        }
     }
 
     // E. Blocks -> /kid/restricted/bin AND their real locations

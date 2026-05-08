@@ -35,11 +35,14 @@ enum Commands {
     },
     /// Internal companion TUI display
     Companion,
-    /// Install/bootstrap the kid environment
+    /// Install/bootstrap the kid environment (internal container tool)
     Install {
-        /// Only install safebin symlinks
+        /// Install global system symlinks and configs
         #[arg(long)]
-        safebin: bool,
+        system: bool,
+        /// Install user-specific apps and directories
+        #[arg(long)]
+        user: bool,
     },
     /// Start the companion daemon
     Watch {
@@ -164,8 +167,8 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Companion) => {
             commands::companion::run().await
         }
-        Some(Commands::Install { safebin }) => {
-            commands::install::run(safebin)
+        Some(Commands::Install { system, user }) => {
+            commands::install::run(system, user)
         }
         Some(Commands::Admin { command }) => {
             match command {

@@ -51,8 +51,8 @@ pub fn system_init() -> Result<()> {
         styled_message(MessageLevel::Warn, &format!("Skipping group creation ({} is not Linux).", std::env::consts::OS));
     }
 
-    // 4. Build initial image
-    styled_message(MessageLevel::Info, "Building initial Docker image...");
+    // 4. Build initial image and run system install
+    styled_message(MessageLevel::Info, "Building initial Docker image and installing system symlinks...");
     let status = Command::new("docker")
         .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
         .status()?;
@@ -156,10 +156,10 @@ pub fn create_kid(name: &str) -> Result<()> {
             return Err(anyhow::anyhow!("Failed to set permissions on creations directory"));
         }
 
-        // 4. Run 'kid install' as the new user to populate apps/tools
+        // 4. Run 'kid install --user' as the new user to populate apps/tools
         styled_message(MessageLevel::Info, "Populating kid environment (apps/tools)...");
         let status = Command::new("sudo")
-            .args(&["-u", name, "/usr/local/bin/kid", "install"])
+            .args(&["-u", name, "/usr/local/bin/kid", "install", "--user"])
             .status()?;
         if !status.success() {
             styled_message(MessageLevel::Warn, "Environment population partially failed.");
