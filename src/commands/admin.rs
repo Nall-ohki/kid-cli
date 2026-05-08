@@ -1,8 +1,8 @@
 use crate::terminal::{styled_message, MessageLevel};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::process::Command;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 const GLOBAL_PATH: &str = "/opt/kid-cli";
 const BINARY_PATH: &str = "/usr/local/bin/kid";
@@ -18,7 +18,6 @@ pub fn system_init() -> Result<()> {
     }
 
     // 2. Copy current repo to global path if we are not already there
-    let current_exe = std::env::current_exe()?;
     let repo_root = std::env::current_dir()?;
     
     if repo_root != Path::new(GLOBAL_PATH) {
@@ -167,7 +166,6 @@ pub fn delete_kid(name: &str) -> Result<()> {
 pub fn reset_kid(name: &str) -> Result<()> {
     styled_message(MessageLevel::Info, &format!("Performing robust reset for kid: {}", name));
 
-    let home = format!("/home/{}", name);
     let backup_path = format!("/tmp/kid_backup_{}.tar.gz", name);
 
     // 1. Safety Backup

@@ -149,7 +149,7 @@ async fn main() -> anyhow::Result<()> {
         }
         #[cfg(unix)]
         {
-            if unsafe { libc::getuid() } != 0 {
+            if !nix::unistd::getuid().is_root() {
                 eprintln!("Error: This command requires root privileges (sudo).");
                 std::process::exit(1);
             }
