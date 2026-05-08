@@ -32,7 +32,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 # 4. Setup 'admin' user with passwordless sudo
 RUN useradd -m -s /bin/zsh admin \
     && usermod -aG sudo admin \
-    && echo "admin ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/admin
+    && echo "admin ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/admin \
+    && touch /home/admin/.zshrc && chown admin:admin /home/admin/.zshrc
 
 USER admin
 WORKDIR /opt/kid-cli
