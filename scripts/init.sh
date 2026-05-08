@@ -16,6 +16,17 @@ echo "--- Bootstrapping Kid-CLI System ---"
 KIDS=("kid" "eiya" "chie")
 
 for NAME in "${KIDS[@]}"; do
+    if id "$NAME" >/dev/null 2>&1; then
+        echo "--- User '$NAME' already exists ---"
+        read -p "Recreate environment for $NAME? (y/N): " CONFIRM
+        if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+            echo "Skipping $NAME."
+            continue
+        fi
+        echo "Deleting old environment for $NAME..."
+        sudo kid admin kid delete "$NAME"
+    fi
+
     echo "--- Provisioning Kid: $NAME ---"
     sudo kid admin kid create "$NAME"
     # Set default password: name + name (e.g. kidkid)
