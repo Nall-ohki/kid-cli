@@ -18,6 +18,8 @@ KIDS=("kid" "eiya" "chie")
 for NAME in "${KIDS[@]}"; do
     echo "--- Provisioning Kid: $NAME ---"
     sudo kid admin kid create "$NAME"
+    # Set default password: name + name (e.g. kidkid)
+    echo "$NAME:$NAME$NAME" | sudo chpasswd
 done
 
 echo ""
