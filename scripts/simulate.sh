@@ -20,11 +20,18 @@ case "$1" in
     $COMPOSE_CMD build
     exit 0
     ;;
-  *)
-    # Default: Start and Enter
+  run)
     echo "--- Starting Simulator Container ---"
     $COMPOSE_CMD up -d --build
     echo "--- Entering Simulator (zsh) ---"
     docker exec -it kid-host-sim zsh
+    ;;
+  *)
+    echo "Usage: $0 {run|reset|build}"
+    echo ""
+    echo "  run   - Start and enter the simulator shell"
+    echo "  reset - Wipe simulator and persistent volumes"
+    echo "  build - Force rebuild the simulator image"
+    exit 1
     ;;
 esac
