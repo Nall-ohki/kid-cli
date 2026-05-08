@@ -2,7 +2,6 @@ use crate::config;
 use crate::terminal::{styled_message, MessageLevel};
 use anyhow::{Context, Result};
 use std::fs;
-use std::path::Path;
 use std::os::unix::fs::symlink;
 
 pub fn run(system: bool, user: bool) -> Result<()> {
@@ -110,8 +109,8 @@ fn install_apps(home: &std::path::Path) -> Result<()> {
         
         // Resolve absolute paths for the components of the command
         let parts: Vec<&str> = cmd.split_whitespace().collect();
-        let launcher = parts.first().unwrap_or(&"");
-        let app = parts.last().unwrap_or(&"");
+        let launcher = *parts.first().unwrap_or(&"");
+        let app = *parts.last().unwrap_or(&"");
         
         let abs_launcher = find_abs(launcher);
         let abs_app = find_abs(app);

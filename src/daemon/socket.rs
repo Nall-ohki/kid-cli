@@ -2,7 +2,6 @@ use tokio::net::{UnixListener, UnixStream};
 use tokio::io::AsyncBufReadExt;
 use anyhow::{Result, Context};
 use std::fs;
-use std::path::Path;
 use crate::daemon::engine;
 
 pub fn get_socket_path() -> Result<std::path::PathBuf> {
