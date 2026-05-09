@@ -13,18 +13,20 @@ if [ -z "$PI_HOST" ]; then
     exit 1
 fi
 
-# 1. Build locally on Mac (Fast)
+# 1. Build and Push from Mac
+echo "--- Pushing local changes to Git ---"
+git push
+
 echo "--- Building Kid-CLI for ARM64 (Mac) ---"
 cargo build --release
-cp target/release/kid bin/kid
 
-# 2. Sync files to Pi
-echo "--- Syncing files to $PI_HOST ---"
-# We sync to a temp location then move to /opt/ to avoid permission issues during sync
-rsync -azP --exclude target --exclude .git . "$PI_HOST:/tmp/kid-cli-sync"
+# 2. Sync ONLY the binary to Pi
+echo "--- Syncing binary to $PI_HOST ---"
+rsync -azP target/release/kid "$PI_HOST:/tmp/kid-binary"
 
-echo "--- Installing on $PI_HOST ---"
-ssh -t "$PI_HOST" "sudo rsync -a /tmp/kid_cli_sync/ /opt/kid-cli/ && sudo /usr/local/bin/kid admin deploy"
+echo "--- Updating and Deploying on $PI_HOST ---"
+# Pull latest code, install the new binary, then run deploy
+ssh -t "$PI_HOST" "cd /opt/kid-cli && sudo git pull && sudo cp /tmp/kid-binary /usr/local/bin/kid && sudo /usr/local/bin/kid admin deploy"
 
 # 3. Optional: Full Docker Sync
 if [[ "$FLAG" == "--full" ]]; then
