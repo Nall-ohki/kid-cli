@@ -15,8 +15,20 @@ apt-get install -y git docker.io rsync curl
 # 2. Clone Repository to /opt/kid-cli
 GLOBAL_PATH="/opt/kid-cli"
 if [ -d "$GLOBAL_PATH" ]; then
-    echo "--- Updating existing installation at $GLOBAL_PATH ---"
-    git -C "$GLOBAL_PATH" pull
+    echo "--- Existing installation found at $GLOBAL_PATH ---"
+    read -p "Overwrite (delete and re-clone) or Update (git pull)? [o/u/Skip]: " -r ACTION < /dev/tty
+    
+    if [[ "$ACTION" == "o" || "$ACTION" == "O" ]]; then
+        echo "Deleting existing installation..."
+        rm -rf "$GLOBAL_PATH"
+        echo "Cloning fresh repository..."
+        git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
+    elif [[ "$ACTION" == "u" || "$ACTION" == "U" ]]; then
+        echo "Updating existing installation..."
+        git -C "$GLOBAL_PATH" pull
+    else
+        echo "Skipping repository sync."
+    fi
 else
     echo "--- Cloning repository to $GLOBAL_PATH ---"
     git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
