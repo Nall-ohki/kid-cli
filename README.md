@@ -10,7 +10,7 @@ Run this one-liner on a fresh Raspberry Pi OS (64-bit) to bootstrap the entire s
 curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash
 ```
 
-To skip the time-consuming Docker environment build (if already provisioned):
+To skip the time-consuming Docker environment build (if already provisioned or you wish to remote deploy):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash -s -- --skip-docker-build
 ```
