@@ -25,8 +25,10 @@ check_rust() {
 if ! check_rust; then
     echo "--- Rust $REQUIRED_VERSION not found. Installing... ---"
     "$SCRIPT_DIR/install_rust.sh"
-    # Load the new environment for this subshell
-    source "$HOME/.cargo/env"
+    # Ensure the global paths are active in this subshell
+    export RUSTUP_HOME=/usr/local/rustup
+    export CARGO_HOME=/usr/local/cargo
+    export PATH="/usr/local/cargo/bin:$PATH"
 fi
 
 # 2. Build the binary

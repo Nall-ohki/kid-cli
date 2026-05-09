@@ -1,34 +1,35 @@
 #!/bin/bash
 set -e
 
-echo "--- Installing Rust (Local User) ---"
+# Kid-CLI Global Rust Installer
+# Installs Rust 1.95.0 system-wide to /usr/local/rustup and /usr/local/cargo
 
-# 1. Check if rustup is already installed
-if ! command -v rustup >/dev/null 2>&1; then
-    echo "Installing rustup..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-    source "$HOME/.cargo/env"
-else
-    echo "rustup is already installed. Updating..."
-    rustup update stable
+REQUIRED_VERSION="1.95.0"
+
+if [ "$EUID" -ne 0 ]; then
+  echo "Error: Please run as root (sudo)."
+  exit 1
 fi
 
-# 2. Force version 1.95.0 (to match project parity)
-echo "Ensuring Rust version 1.95.0..."
-rustup install 1.95.0
-rustup default 1.95.0
+echo "--- Installing Rust ($REQUIRED_VERSION) Globally ---"
 
-# 3. Add to .zshrc if not already present
-ZSHRC="$HOME/.zshrc"
-if [ -f "$ZSHRC" ]; then
-    if ! grep -q ".cargo/env" "$ZSHRC"; then
-        echo "Adding rustup to $ZSHRC..."
-        echo '' >> "$ZSHRC"
-        echo '# Rust Toolchain' >> "$ZSHRC"
-        echo '. "$HOME/.cargo/env"' >> "$ZSHRC"
-    fi
-fi
+# 1. Set Global Installation Paths
+export RUSTUP_HOME=/usr/local/rustup
+export CARGO_HOME=/usr/local/cargo
 
-echo "--- Installation Complete! ---"
-echo "Please run: source ~/.zshrc"
-echo "Or restart your terminal to start using rustc $(rustc --version)"
+# 2. Download and Run Rustup Installer
+# -y: skip prompts
+# --no-modify-path: we handle symlinks manually for global access
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
+    -y --default-toolchain "$REQUIRED_VERSION" --no-modify-path
+
+# 3. Make toolchain available globally via symlinks
+echo "Creating global symlinks in /usr/local/bin..."
+ln -sf /usr/local/cargo/bin/rustc /usr/local/bin/rustc
+ln -sf /usr/local/cargo/bin/cargo /usr/local/bin/cargo
+ln -sf /usr/local/cargo/bin/rustup /usr/local/bin/rustup
+
+# 4. Set Permissions (Allow kid-users group to use cargo cache if needed)
+chmod -R a+rX /usr/local/rustup /usr/local/cargo
+
+echo "Rust $REQUIRED_VERSION installed globally to /usr/local/cargo"
