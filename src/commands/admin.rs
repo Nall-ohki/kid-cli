@@ -106,10 +106,12 @@ pub fn deploy() -> Result<()> {
     }
 
     // 1. Pull latest (only if it's a git repo)
+    let mut prev_hash: Option<String> = None;
+    
     if repo_path.join(".git").exists() {
         styled_message(MessageLevel::Info, "Pulling latest code from Git...");
         let output = Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["rev-parse", "HEAD"]).output()?;
-        let prev_hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        prev_hash = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
 
         let status = Command::new("git").arg("-C").arg(GLOBAL_PATH).arg("pull").status()?;
         if !status.success() {
@@ -127,7 +129,9 @@ pub fn deploy() -> Result<()> {
 
     if !status.success() {
         styled_message(MessageLevel::Error, "Build failed! Rolling back...");
-        Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["reset", "--hard", &prev_hash]).status()?;
+        if let Some(hash) = prev_hash {
+            Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["reset", "--hard", &hash]).status()?;
+        }
         return Err(anyhow::anyhow!("Deployment failed and rolled back."));
     }
 
