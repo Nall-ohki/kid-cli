@@ -11,6 +11,7 @@ command -v docker >/dev/null 2>&1 || { echo >&2 "Error: Docker is required. Plea
 # 2. Ensure Rust 1.95.0 is installed
 REQUIRED_VERSION="1.95.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/../.."
 
 check_rust() {
     if command -v rustc >/dev/null 2>&1; then
