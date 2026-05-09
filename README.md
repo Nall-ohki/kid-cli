@@ -1,78 +1,52 @@
-# Kid-Friendly Linux Learning Environment
+# 🚀 Kid-CLI
 
 A safe, educational Linux environment for children ages 3-5 on Raspberry Pi 500.
 
-## Quick Start
+## Quick Install (Raspberry Pi)
 
-On the child's Raspberry Pi:
+Run this one-liner on a fresh Raspberry Pi OS (64-bit) to bootstrap the entire system:
 
 ```bash
-# 1. Build the Docker environment
-sudo docker compose build
-
-# 2. Run the environment
-sudo docker compose up -d
-
-# 3. Access the Kid Shell
-sudo docker exec -it kid-env-kid-1 /bin/zsh -l
+curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/setup_system.sh | sudo bash
 ```
 
-> **Note:** The environment uses `--privileged` to access GPU (`/dev/dri`) and input devices (`/dev/input`) so that GUI Wayland applications (like Tux Paint) can render directly to the Raspberry Pi's display.
+## Setup & Usage
+
+### 1. Provision Kids
+After the one-liner setup is complete, use the initialization script to create the children's accounts and set their passwords:
+```bash
+sudo /opt/kid-cli/scripts/init.sh
+```
+
+### 2. Updating the System
+If you want to pull the latest code and refresh the educational environment:
+```bash
+sudo kid admin deploy
+```
+
+### 3. Simulation (Development)
+To test the environment on your local machine (Mac/Linux) without hardware:
+```bash
+./scripts/simulate.sh run
+```
 
 ## What's Included
 
 ### User Environment
-- **User**: `kid` with zsh shell
+- **User Isolation**: Isolated Docker container per user
+- **UI**: Automatic tmux session management with restricted shell
 - **Theme**: Vibrant cyberpunk bullettrain prompt
-- **Session**: Auto-launches tmux, exits on tmux quit
-- **Git Protection**: Repository set to read-only
 
 ### Educational Software
-- **Tux Paint** - Digital art (~/apps/art/tuxpaint)
-- **KLettres** - Alphabet learning (~/apps/letters/klettres)
-- **Tux Math** - Math games (~/apps/math/tuxmath)
-- **Tux Typing** - Typing practice (~/apps/typing/tuxtype)
-- **GCompris** - Educational suite (~/apps/learning/gcompris)
-- **Scratch** - Visual programming (~/apps/programming/scratch)
+- **Tux Paint** - Digital art
+- **KLettres** - Alphabet learning
+- **Tux Math** - Math games
+- **Tux Typing** - Typing practice
+- **GCompris** - Full educational suite
+- **Scratch** - Visual programming
+- **CMatrix/Nyancat** - Fun terminal toys
 
-### Directory Structure
-```
-~/apps/
-  tuxpaint/
-  klettres/
-  tuxmath/
-  tuxtype/
-  gcompris/
-  scratch/
-~/creations/
-  pictures/     # Saved artwork
-  programs/     # Scratch projects
-  games/        # Other creations
-```
-
-## Platform Support
-
-- **Primary**: Raspberry Pi OS (Debian-based)
-
-## Configuration Files
-
-All configs are managed by the `kid` CLI:
-
-- **ZSH**: `config/zshrc.zsh`, `config/prompt.zsh`
-- **Tmux**: `config/tmux.conf`
-
-## Installation
-
-The environment is bootstrapped via the Rust CLI tool:
-
-```bash
-/kid/bin/kid install
-```
-
-This command:
-1. Creates the directory structure (`~/apps`, `~/creations`).
-2. Symlinks the shell and tmux configurations.
-3. Installs educational application wrappers.
-4. (Optional) With `--safebin`, creates the security proxies in `/kid/wrap/bin`.
-
-
+## Hardware Requirements
+- **Raspberry Pi 5 / 400 / 4** (8GB recommended)
+- **Raspberry Pi OS (64-bit)**
+- **GitHub CLI (gh)** - Authenticated for repo access
