@@ -1,6 +1,6 @@
 use crate::terminal::{styled_message, MessageLevel};
 use anyhow::Result;
-use which::which;
+// use which::which;
 use std::process::Command;
 use std::fs;
 use std::path::Path;
