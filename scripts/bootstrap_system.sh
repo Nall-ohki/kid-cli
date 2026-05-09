@@ -48,15 +48,14 @@ else
     git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
 fi
 
-# 3. Modular Internal Setup
-echo "--- Installing Full System Dependencies ---"
-bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
 
 echo "--- Building Kid-CLI ---"
-bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
+FLAG=""
+if [[ "$*" == *"--skip-docker-build"* ]]; then
+    FLAG="--skip-docker-build"
+fi
+bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh" $FLAG
 
-echo "--- Initializing System (Global) ---"
-sudo "$GLOBAL_PATH/target/release/kid" admin init
 
 echo ""
 echo "=== Setup Complete! ==="

@@ -32,6 +32,14 @@ fi
 # 2. Build the binary
 echo "--- Compiling Kid-CLI ($REQUIRED_VERSION) ---"
 cargo build --release
+# 3. Run System Initialization
+echo "--- Initializing System ---"
+FLAG=""
+if [[ "$*" == *"--skip-docker-build"* ]]; then
+    FLAG="--skip-docker-build"
+fi
+
+sudo ./target/release/kid admin init $FLAG
 
 echo ""
 echo "=== Initialization Complete! ==="
