@@ -14,6 +14,18 @@ if [ -z "$PI_HOST" ]; then
 fi
 
 # 1. Build and Push from Mac
+FORCE=false
+if [[ "$*" == *"--force"* ]] || [[ "$*" == *"-f"* ]]; then
+    FORCE=true
+fi
+
+if [ "$FORCE" = false ]; then
+    if [[ -n $(git status --porcelain) ]]; then
+        echo "Error: You have uncommitted changes. Please commit them or use --force to ignore."
+        exit 1
+    fi
+fi
+
 echo "--- Pushing local changes to Git ---"
 git push
 
