@@ -6,6 +6,21 @@ set -e
 # curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/setup_system.sh | sudo bash
 
 echo "=== Kid-CLI Global Setup ==="
+echo ""
+echo "!!! WARNING !!!"
+echo "This script will perform the following system-wide actions:"
+echo "1. Install system dependencies (Git, Docker, Rsync, etc.)"
+echo "2. Install the Rust toolchain (version 1.95.0)"
+echo "3. Create a global installation at /opt/kid-cli"
+echo "4. Create a system group 'kid-users'"
+echo "5. Install a global symlink at /usr/local/bin/kid"
+echo ""
+read -p "Are you sure you want to proceed? (y/N): " -r CONFIRM < /dev/tty
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+fi
+echo ""
 
 # 1. Minimal Bootstrap (Need git to proceed)
 if ! command -v git >/dev/null 2>&1; then
