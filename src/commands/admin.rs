@@ -31,13 +31,8 @@ pub fn system_init(skip_build: bool) -> Result<()> {
             ));
         }
 
-        // Use gh to clone the repo to the global path
-        let gh_path = which("gh")
-            .or_else(|_| which("/usr/bin/gh"))
-            .or_else(|_| which("/usr/local/bin/gh"))
-            .map_err(|_| anyhow::anyhow!("'gh' CLI is required but not found. Please install it and login."))?;
-
-        styled_message(MessageLevel::Info, "Cloning repository to /opt/kid-cli using gh...");
+        // Use git to clone the repo to the global path
+        styled_message(MessageLevel::Info, "Cloning repository to /opt/kid-cli using git...");
         
         // Remove existing dir if it's not a git repo to allow clean clone
         if Path::new(GLOBAL_PATH).exists() && !Path::new(GLOBAL_PATH).join(".git").exists() {
@@ -46,8 +41,8 @@ pub fn system_init(skip_build: bool) -> Result<()> {
         }
 
         if !Path::new(GLOBAL_PATH).exists() {
-            let status = Command::new(gh_path)
-                .args(&["repo", "clone", "Nall-ohki/kid-cli", GLOBAL_PATH])
+            let status = Command::new("git")
+                .args(&["clone", "https://github.com/Nall-ohki/kid-cli.git", GLOBAL_PATH])
                 .status()?;
             if !status.success() {
                 return Err(anyhow::anyhow!("Failed to clone repo to /opt/kid-cli"));
