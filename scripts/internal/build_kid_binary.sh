@@ -33,12 +33,6 @@ fi
 echo "--- Compiling Kid-CLI ($REQUIRED_VERSION) ---"
 cargo build --release
 
-# 3. Run System Initialization
-echo "--- Initializing System (Requires Sudo) ---"
-# Ensure the docker socket is accessible within the simulator
-sudo chmod 666 /var/run/docker.sock || true
-sudo ./target/release/kid admin init
-
 echo ""
 echo "=== Initialization Complete! ==="
 echo "You can now manage kids using: sudo kid [command]"

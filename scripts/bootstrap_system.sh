@@ -54,8 +54,11 @@ fi
 echo "--- Installing Full System Dependencies ---"
 bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
 
-echo "--- Building Kid-CLI & Initializing System ---"
+echo "--- Building Kid-CLI ---"
 bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
+
+echo "--- Initializing System (Global) ---"
+sudo "$GLOBAL_PATH/target/release/kid" admin init
 
 echo ""
 echo "=== Setup Complete! ==="

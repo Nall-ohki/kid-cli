@@ -21,6 +21,9 @@ cd "$SCRIPT_DIR/.."
 echo "--- Building Kid-CLI System ---"
 "$SCRIPT_DIR/internal/build_kid_binary.sh"
 
+echo "--- Initializing System ---"
+sudo ./target/release/kid admin init
+
 # 3. Create the initial users
 # Default kid if none provided as arguments
 KIDS=("${@:-kid}")
