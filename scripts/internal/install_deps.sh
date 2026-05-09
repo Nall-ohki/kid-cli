@@ -11,10 +11,7 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# 1. Update Package List
-apt-get update
-
-# 2. Install Required Packages
+# 1. Define required packages
 PACKAGES=(
   "git"
   "docker.io"
@@ -25,10 +22,27 @@ PACKAGES=(
   "libssl-dev"
 )
 
-echo "Installing packages: ${PACKAGES[*]}..."
-apt-get install -y "${PACKAGES[@]}"
+# 2. Identify missing packages
+MISSING_PACKAGES=()
+for pkg in "${PACKAGES[@]}"; do
+    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+        MISSING_PACKAGES+=("$pkg")
+    fi
+done
+
+# 2. Install only if needed
+if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+    echo "Installing missing packages: ${MISSING_PACKAGES[*]}..."
+    apt-get update
+    apt-get install -y "${MISSING_PACKAGES[@]}"
+else
+    echo "All system packages are already installed."
+fi
 
 # 3. Ensure Docker is running
-systemctl enable --now docker
+if ! systemctl is-active --quiet docker; then
+    echo "Starting Docker service..."
+    systemctl enable --now docker
+fi
 
 echo "--- System Dependencies Installed ---"
