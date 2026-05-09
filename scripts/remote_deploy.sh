@@ -46,11 +46,13 @@ fi
 echo "--- Pushing local changes to Git ---"
 git push
 
-echo "--- Building Kid-CLI for ARM64 (Mac) ---"
-cargo build --release
+echo "--- Building Kid-CLI for Linux ARM64 (via Docker) ---"
+# We use the rust image to build a Linux binary on your Mac
+docker run --rm -v "$(pwd)":/usr/src/myapp -w /usr/src/myapp rust:bookworm \
+    cargo build --release
 
 if [ ! -f "target/release/kid" ]; then
-    echo "Error: Build failed! No binary found at target/release/kid"
+    echo "Error: Build failed!"
     exit 1
 fi
 
