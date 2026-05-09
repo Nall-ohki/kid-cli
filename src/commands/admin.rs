@@ -105,14 +105,18 @@ pub fn deploy() -> Result<()> {
         return Err(anyhow::anyhow!("System not initialized. Run 'kid admin init' first."));
     }
 
-    // 1. Pull latest
-    styled_message(MessageLevel::Info, "Pulling latest code...");
-    let output = Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["rev-parse", "HEAD"]).output()?;
-    let prev_hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    // 1. Pull latest (only if it's a git repo)
+    if repo_path.join(".git").exists() {
+        styled_message(MessageLevel::Info, "Pulling latest code from Git...");
+        let output = Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["rev-parse", "HEAD"]).output()?;
+        let prev_hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
-    let status = Command::new("git").arg("-C").arg(GLOBAL_PATH).arg("pull").status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Git pull failed"));
+        let status = Command::new("git").arg("-C").arg(GLOBAL_PATH).arg("pull").status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Git pull failed"));
+        }
+    } else {
+        styled_message(MessageLevel::Info, "Local deployment detected (skipping git pull).");
     }
 
     // 2. Rebuild
