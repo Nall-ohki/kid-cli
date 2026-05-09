@@ -9,7 +9,7 @@ const GLOBAL_PATH: &str = "/opt/kid-cli";
 const BINARY_PATH: &str = "/usr/local/bin/kid";
 const SYSTEM_GROUP: &str = "kid-users";
 
-pub fn system_init() -> Result<()> {
+pub fn system_init(skip_build: bool) -> Result<()> {
     styled_message(MessageLevel::Info, "Initializing Kid-CLI System globally...");
 
     // 1. Create global directory
@@ -69,12 +69,16 @@ pub fn system_init() -> Result<()> {
     }
 
     // 4. Build initial image and run system install
-    styled_message(MessageLevel::Info, "Building initial Docker image and installing system symlinks...");
-    let status = Command::new("docker")
-        .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
-        .status()?;
-    if !status.success() {
-        return Err(anyhow::anyhow!("Failed to build initial Docker image"));
+    if !skip_build {
+        styled_message(MessageLevel::Info, "Building initial Docker image and installing system symlinks...");
+        let status = Command::new("docker")
+            .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
+            .status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to build initial Docker image"));
+        }
+    } else {
+        styled_message(MessageLevel::Info, "Skipping initial Docker build.");
     }
 
     // 5. Install and Symlink binary
@@ -105,7 +109,7 @@ pub fn system_init() -> Result<()> {
     Ok(())
 }
 
-pub fn deploy() -> Result<()> {
+pub fn deploy(skip_build: bool) -> Result<()> {
     styled_message(MessageLevel::Info, "Deploying updates...");
 
     let repo_path = Path::new(GLOBAL_PATH);
@@ -130,17 +134,21 @@ pub fn deploy() -> Result<()> {
     }
 
     // 2. Rebuild
-    styled_message(MessageLevel::Info, "Rebuilding Docker image...");
-    let status = Command::new("docker")
-        .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
-        .status()?;
-
-    if !status.success() {
-        styled_message(MessageLevel::Error, "Build failed! Rolling back...");
-        if let Some(hash) = prev_hash {
-            Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["reset", "--hard", &hash]).status()?;
+    if !skip_build {
+        styled_message(MessageLevel::Info, "Rebuilding Docker image...");
+        let status = Command::new("docker")
+            .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
+            .status()?;
+    
+        if !status.success() {
+            styled_message(MessageLevel::Error, "Build failed! Rolling back...");
+            if let Some(hash) = prev_hash {
+                Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["reset", "--hard", &hash]).status()?;
+            }
+            return Err(anyhow::anyhow!("Deployment failed and rolled back."));
         }
-        return Err(anyhow::anyhow!("Deployment failed and rolled back."));
+    } else {
+        styled_message(MessageLevel::Info, "Skipping Docker rebuild.");
     }
 
     styled_message(MessageLevel::Ok, "Deployment successful!");

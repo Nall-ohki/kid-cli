@@ -72,9 +72,17 @@ enum Commands {
 #[derive(Subcommand)]
 enum AdminCommands {
     /// Initialize the system globally
-    Init,
+    Init {
+        /// Skip the initial Docker image build
+        #[arg(long)]
+        skip_build: bool,
+    },
     /// Deploy latest code and rebuild image
-    Deploy,
+    Deploy {
+        /// Skip the Docker image rebuild
+        #[arg(long)]
+        skip_build: bool,
+    },
     /// Manage individual kid environments
     Kid {
         #[command(subcommand)]
@@ -172,8 +180,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Admin { command }) => {
             match command {
-                AdminCommands::Init => commands::admin::system_init(),
-                AdminCommands::Deploy => commands::admin::deploy(),
+                AdminCommands::Init { skip_build } => commands::admin::system_init(skip_build),
+                AdminCommands::Deploy { skip_build } => commands::admin::deploy(skip_build),
                 AdminCommands::Kid { command } => match command {
                     KidManagementCommands::Create { name } => commands::admin::create_kid(&name),
                     KidManagementCommands::Delete { name } => commands::admin::delete_kid(&name),
