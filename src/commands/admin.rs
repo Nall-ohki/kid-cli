@@ -31,21 +31,29 @@ pub fn system_init() -> Result<()> {
             ));
         }
 
-        // Use rsync to copy excluding build artifacts and git
-        let rsync_path = which("rsync")
-            .or_else(|_| which("/usr/bin/rsync"))
-            .or_else(|_| which("/usr/local/bin/rsync"))
-            .unwrap_or_else(|_| std::path::PathBuf::from("rsync"));
+        // Use gh to clone the repo to the global path
+        let gh_path = which("gh")
+            .or_else(|_| which("/usr/bin/gh"))
+            .or_else(|_| which("/usr/local/bin/gh"))
+            .map_err(|_| anyhow::anyhow!("'gh' CLI is required but not found. Please install it and login."))?;
 
-        styled_message(MessageLevel::Info, &format!("Using rsync: {:?}", rsync_path));
-        styled_message(MessageLevel::Info, &format!("Source dir: {:?}", repo_root));
+        styled_message(MessageLevel::Info, "Cloning repository to /opt/kid-cli using gh...");
+        
+        // Remove existing dir if it's not a git repo to allow clean clone
+        if Path::new(GLOBAL_PATH).exists() && !Path::new(GLOBAL_PATH).join(".git").exists() {
+            styled_message(MessageLevel::Warn, "Removing existing non-git directory at /opt/kid-cli...");
+            fs::remove_dir_all(GLOBAL_PATH)?;
+        }
 
-        let status = Command::new(rsync_path)
-            .current_dir(&repo_root)
-            .args(&["-a", "--exclude", "target", "--exclude", ".git", ".", GLOBAL_PATH])
-            .status()?;
-        if !status.success() {
-            return Err(anyhow::anyhow!("Failed to copy files to /opt/kid-cli"));
+        if !Path::new(GLOBAL_PATH).exists() {
+            let status = Command::new(gh_path)
+                .args(&["repo", "clone", "Nall-ohki/kid-cli", GLOBAL_PATH])
+                .status()?;
+            if !status.success() {
+                return Err(anyhow::anyhow!("Failed to clone repo to /opt/kid-cli"));
+            }
+        } else {
+            styled_message(MessageLevel::Info, "/opt/kid-cli already exists and is a git repo.");
         }
     }
 
