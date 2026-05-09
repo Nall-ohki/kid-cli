@@ -22,6 +22,15 @@ pub fn system_init() -> Result<()> {
     let repo_root = std::env::current_dir()?;
     
     if repo_root != Path::new(GLOBAL_PATH) {
+        // Safety check: ensure we are in the project root by checking for Cargo.toml
+        if !repo_root.join("Cargo.toml").exists() {
+            return Err(anyhow::anyhow!(
+                "Error: Current directory ({:?}) does not look like the Kid-CLI project root.\n\
+                 Please 'cd' into the project folder before running 'admin init'.",
+                repo_root
+            ));
+        }
+
         // Use rsync to copy excluding build artifacts and git
         let rsync_path = which("rsync")
             .or_else(|_| which("/usr/bin/rsync"))
