@@ -27,7 +27,7 @@ case "$1" in
       exit 0
     fi
     echo "--- Entering Simulator (zsh) ---"
-    echo "ℹ  TIP: If this is a new simulator, run './scripts/init.sh' to provision kids."
+    echo "ℹ  TIP: If this is a new simulator, run './scripts/manage_kids.sh [names...]' to provision kids."
     docker exec -it kid-host-sim zsh
     ;;
   *)

@@ -35,7 +35,7 @@ if [[ "$KID_NAME" == "--sim" ]] || [[ "$FLAG" == "--sim" ]]; then
     # Bootstrap & Init (Inside simulator)
     docker exec kid-host-sim /opt/kid-cli/scripts/init.sh
     
-    # Ensure THIS specific kid exists (in case it's not kid/eiya/chie)
+    # Ensure THIS specific kid exists (in case it's not 'kid')
     docker exec kid-host-sim sudo kid admin kid create "$KID_NAME" || true
     
     # Hand off to standard login

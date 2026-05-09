@@ -10,7 +10,7 @@ echo "=== Kid-CLI Global Setup ==="
 # 1. Install System Dependencies
 echo "--- Installing System Dependencies ---"
 apt-get update
-apt-get install -y git docker.io rsync curl
+apt-get install -y git docker.io rsync curl build-essential
 
 # 2. Clone Repository to /opt/kid-cli
 GLOBAL_PATH="/opt/kid-cli"
@@ -34,19 +34,13 @@ else
     git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
 fi
 
-# 3. Build and Initialize
-echo "--- Bootstrapping System ---"
-cd "$GLOBAL_PATH"
+# 3. Internal Toolchain & Bootstrap
+echo "--- Setting up Rust toolchain ---"
+"$GLOBAL_PATH/scripts/internal/install_rust.sh"
 
-# Ensure we have the local kid binary ready (pre-compiled)
-# Or build it if we are on a different architecture
-if [ ! -f "bin/kid" ]; then
-    echo "Warning: No pre-compiled binary found. You will need to install Rust and build manually."
-else
-    chmod +x bin/kid
-    ./bin/kid admin init --skip-build
-fi
+echo "--- Bootstrapping System ---"
+"$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
 
 echo ""
 echo "=== Setup Complete! ==="
-echo "You can now provision kids by running: sudo /opt/kid-cli/scripts/init.sh"
+echo "You can now provision kids by running: sudo /opt/kid-cli/scripts/manage_kids.sh"

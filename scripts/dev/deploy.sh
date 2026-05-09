@@ -2,7 +2,7 @@
 set -e
 
 # Kid-CLI Remote Deployer (Runs on Mac)
-# Usage: ./scripts/remote_deploy.sh <pi_hostname_or_ip> [--full]
+# Usage: ./scripts/dev/deploy.sh <pi_hostname_or_ip> [--full]
 
 PI_HOST=$1
 FLAG=$2
