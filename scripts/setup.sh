@@ -7,10 +7,11 @@ set -e
 
 echo "=== Kid-CLI Global Setup ==="
 
-# 1. Install System Dependencies
-echo "--- Installing System Dependencies ---"
-apt-get update
-apt-get install -y git docker.io rsync curl build-essential
+# 1. Minimal Bootstrap (Need git to proceed)
+if ! command -v git >/dev/null 2>&1; then
+    echo "--- Installing Git (Minimal Bootstrap) ---"
+    apt-get update && apt-get install -y git
+fi
 
 # 2. Clone Repository to /opt/kid-cli
 GLOBAL_PATH="/opt/kid-cli"
@@ -34,12 +35,12 @@ else
     git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
 fi
 
-# 3. Internal Toolchain & Bootstrap
-echo "--- Setting up Rust toolchain ---"
-"$GLOBAL_PATH/scripts/internal/install_rust.sh"
+# 3. Modular Internal Setup
+echo "--- Installing Full System Dependencies ---"
+bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
 
-echo "--- Bootstrapping System ---"
-"$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
+echo "--- Building Kid-CLI & Initializing System ---"
+bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
 
 echo ""
 echo "=== Setup Complete! ==="
