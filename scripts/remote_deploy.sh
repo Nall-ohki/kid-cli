@@ -13,15 +13,32 @@ if [ -z "$PI_HOST" ]; then
     exit 1
 fi
 
-# 1. Build and Push from Mac
+# 1. Pre-flight Checks
 FORCE=false
 if [[ "$*" == *"--force"* ]] || [[ "$*" == *"-f"* ]]; then
     FORCE=true
 fi
 
+echo "--- Checking connectivity to $PI_HOST ---"
+if ! ssh -q -o ConnectTimeout=5 "$PI_HOST" exit; then
+    echo "Error: Cannot reach $PI_HOST via SSH. Check your connection/IP."
+    exit 1
+fi
+
 if [ "$FORCE" = false ]; then
+    # Check for uncommitted changes
     if [[ -n $(git status --porcelain) ]]; then
         echo "Error: You have uncommitted changes. Please commit them or use --force to ignore."
+        exit 1
+    fi
+
+    # Check branch parity
+    LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    REMOTE_BRANCH=$(ssh "$PI_HOST" "cd /opt/kid-cli && git rev-parse --abbrev-ref HEAD" 2>/dev/null || echo "unknown")
+    
+    if [ "$REMOTE_BRANCH" != "unknown" ] && [ "$LOCAL_BRANCH" != "$REMOTE_BRANCH" ]; then
+        echo "Error: Branch mismatch! Mac is on '$LOCAL_BRANCH', but Pi is on '$REMOTE_BRANCH'."
+        echo "Please switch branches or use --force."
         exit 1
     fi
 fi
@@ -31,6 +48,11 @@ git push
 
 echo "--- Building Kid-CLI for ARM64 (Mac) ---"
 cargo build --release
+
+if [ ! -f "target/release/kid" ]; then
+    echo "Error: Build failed! No binary found at target/release/kid"
+    exit 1
+fi
 
 # 2. Sync ONLY the binary to Pi
 echo "--- Syncing binary to $PI_HOST ---"
