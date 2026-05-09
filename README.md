@@ -27,10 +27,10 @@ sudo kid admin deploy
 ### 3. Development & Simulation
 To test the environment on your local machine (Mac/Linux) or deploy from your dev box:
 - **Simulator**: `./scripts/dev/simulate.sh run`
-- **Remote Deploy**: `./scripts/dev/deploy.sh <pi_ip_address>`
+- **Remote Deploy**: `./scripts/dev/deploy_remote.sh <pi_ip_address>`
 
 ## Project Structure
 - `scripts/bootstrap_system.sh`: Master system installer (one-liner).
 - `scripts/manage_kids.sh`: Interactive kid account manager.
-- `scripts/dev/`: Developer tools (deployment, simulation).
+- `scripts/dev/`: Developer tools (deployment_remote, simulation).
 - `scripts/internal/`: Automation helpers (dependency install, binary building).
