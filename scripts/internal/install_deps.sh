@@ -14,13 +14,19 @@ fi
 # 1. Define required packages
 PACKAGES=(
   "git"
-  "docker.io"
   "rsync"
   "curl"
   "build-essential"
   "pkg-config"
   "libssl-dev"
 )
+
+# Decide on Docker package
+if apt-cache policy docker-ce >/dev/null 2>&1; then
+    PACKAGES+=("docker-ce" "docker-ce-cli" "containerd.io")
+else
+    PACKAGES+=("docker.io")
+fi
 
 # 2. Identify missing packages
 MISSING_PACKAGES=()

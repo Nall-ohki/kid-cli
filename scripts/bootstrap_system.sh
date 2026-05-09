@@ -22,11 +22,9 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
 fi
 echo ""
 
-# 1. Minimal Bootstrap (Need git to proceed)
-if ! command -v git >/dev/null 2>&1; then
-    echo "--- Installing Git (Minimal Bootstrap) ---"
-    apt-get update && apt-get install -y git
-fi
+# 1. System Dependencies (Modulal install from internal/install_deps.sh)
+echo "--- Installing System Dependencies ---"
+curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/internal/install_deps.sh | bash
 
 # 2. Clone Repository to /opt/kid-cli
 GLOBAL_PATH="/opt/kid-cli"
