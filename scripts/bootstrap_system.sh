@@ -65,23 +65,26 @@ if [ -d "$GLOBAL_PATH" ]; then
         sudo rm -rf "$GLOBAL_PATH"
         echo "Cloning fresh repository..."
         sudo git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
+        sudo chown -R $(id -u):$(id -g) "$GLOBAL_PATH"
     elif [[ "$ACTION" == "u" || "$ACTION" == "U" ]]; then
         echo "Updating existing installation..."
         sudo git -C "$GLOBAL_PATH" pull
+        sudo chown -R $(id -u):$(id -g) "$GLOBAL_PATH"
     else
         echo "Skipping repository sync."
     fi
 else
     echo "--- Cloning repository to $GLOBAL_PATH ---"
     sudo git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
+    sudo chown -R $(id -u):$(id -g) "$GLOBAL_PATH"
 fi
 
 # 2. System Dependencies & Build
 echo "--- Installing System Dependencies ---"
-sudo bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
+bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
 
 echo "--- Building Kid-CLI ---"
-sudo bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
+bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
 
 
 echo ""
