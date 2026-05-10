@@ -50,11 +50,7 @@ fi
 
 
 echo "--- Building Kid-CLI ---"
-FLAG=""
-if [[ "$*" == *"--skip-docker-build"* ]]; then
-    FLAG="--skip-docker-build"
-fi
-bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh" $FLAG
+bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
 
 
 echo ""

@@ -9,7 +9,7 @@ const GLOBAL_PATH: &str = "/opt/kid-cli";
 const BINARY_PATH: &str = "/usr/local/bin/kid";
 const SYSTEM_GROUP: &str = "kid-users";
 
-pub fn system_init(skip_build: bool) -> Result<()> {
+pub fn system_init() -> Result<()> {
     styled_message(MessageLevel::Info, "Initializing Kid-CLI System globally...");
 
     // 1. Create global directory
@@ -18,65 +18,34 @@ pub fn system_init(skip_build: bool) -> Result<()> {
         styled_message(MessageLevel::Ok, &format!("Created {}", GLOBAL_PATH));
     }
 
-    // 2. Copy current repo to global path if we are not already there
+    // 2. Sync Repository
     let repo_root = std::env::current_dir()?;
-    
     if repo_root != Path::new(GLOBAL_PATH) {
-        // Safety check: ensure we are in the project root by checking for Cargo.toml
         if !repo_root.join("Cargo.toml").exists() {
             return Err(anyhow::anyhow!(
-                "Error: Current directory ({:?}) does not look like the Kid-CLI project root.\n\
-                 Please 'cd' into the project folder before running 'admin init'.",
-                repo_root
+                "Error: Current directory does not look like the Kid-CLI project root."
             ));
         }
 
-        // Use git to clone the repo to the global path
-        styled_message(MessageLevel::Info, "Cloning repository to /opt/kid-cli using git...");
-        
-        // Remove existing dir if it's not a git repo to allow clean clone
+        styled_message(MessageLevel::Info, "Ensuring repository at /opt/kid-cli...");
         if Path::new(GLOBAL_PATH).exists() && !Path::new(GLOBAL_PATH).join(".git").exists() {
-            styled_message(MessageLevel::Warn, "Removing existing non-git directory at /opt/kid-cli...");
             fs::remove_dir_all(GLOBAL_PATH)?;
         }
 
         if !Path::new(GLOBAL_PATH).exists() {
-            let status = Command::new("git")
+            Command::new("git")
                 .args(&["clone", "https://github.com/Nall-ohki/kid-cli.git", GLOBAL_PATH])
                 .status()?;
-            if !status.success() {
-                return Err(anyhow::anyhow!("Failed to clone repo to /opt/kid-cli"));
-            }
-        } else {
-            styled_message(MessageLevel::Info, "/opt/kid-cli already exists and is a git repo.");
         }
     }
 
     // 3. Create kid-users group
     if cfg!(target_os = "linux") {
-        let status = Command::new("groupadd").arg("-f").arg(SYSTEM_GROUP).status()?;
-        if !status.success() {
-            return Err(anyhow::anyhow!("Failed to create system group"));
-        }
+        Command::new("groupadd").arg("-f").arg(SYSTEM_GROUP).status()?;
         styled_message(MessageLevel::Ok, &format!("System group '{}' ensured.", SYSTEM_GROUP));
-    } else {
-        styled_message(MessageLevel::Warn, &format!("Skipping group creation ({} is not Linux).", std::env::consts::OS));
     }
 
-    // 4. Build initial image and run system install
-    if !skip_build {
-        styled_message(MessageLevel::Info, "Building initial Docker image and installing system symlinks...");
-        let status = Command::new("docker")
-            .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
-            .status()?;
-        if !status.success() {
-            return Err(anyhow::anyhow!("Failed to build initial Docker image"));
-        }
-    } else {
-        styled_message(MessageLevel::Info, "Skipping initial Docker build.");
-    }
-
-    // 5. Install and Symlink binary
+    // 4. Install and Symlink binary
     let install_bin_dir = Path::new(GLOBAL_PATH).join("bin");
     let install_bin_path = install_bin_dir.join("kid");
     
@@ -97,56 +66,31 @@ pub fn system_init(skip_build: bool) -> Result<()> {
     std::os::unix::fs::symlink(&install_bin_path, BINARY_PATH)?;
     styled_message(MessageLevel::Ok, &format!("Symlinked binary to {}", BINARY_PATH));
 
-    // 6. Install Global Launcher in /etc/zsh/zprofile
+    // 5. Install Global Launcher in /etc/zsh/zprofile
     install_global_launcher()?;
 
     styled_message(MessageLevel::Ok, "System initialization complete!");
+    styled_message(MessageLevel::Info, "Note: Docker image will be built JIT on first kid login.");
     Ok(())
 }
 
-pub fn deploy(skip_build: bool) -> Result<()> {
-    styled_message(MessageLevel::Info, "Deploying updates...");
+pub fn deploy() -> Result<()> {
+    styled_message(MessageLevel::Info, "Deploying updates to /opt/kid-cli...");
 
     let repo_path = Path::new(GLOBAL_PATH);
     if !repo_path.exists() {
         return Err(anyhow::anyhow!("System not initialized. Run 'kid admin init' first."));
     }
 
-    // 1. Pull latest (only if it's a git repo)
-    let mut prev_hash: Option<String> = None;
-    
     if repo_path.join(".git").exists() {
         styled_message(MessageLevel::Info, "Pulling latest code from Git...");
-        let output = Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["rev-parse", "HEAD"]).output()?;
-        prev_hash = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
-
         let status = Command::new("git").arg("-C").arg(GLOBAL_PATH).arg("pull").status()?;
         if !status.success() {
             return Err(anyhow::anyhow!("Git pull failed"));
         }
-    } else {
-        styled_message(MessageLevel::Info, "Local deployment detected (skipping git pull).");
     }
 
-    // 2. Rebuild
-    if !skip_build {
-        styled_message(MessageLevel::Info, "Rebuilding Docker image...");
-        let status = Command::new("docker")
-            .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
-            .status()?;
-    
-        if !status.success() {
-            styled_message(MessageLevel::Error, "Build failed! Rolling back...");
-            if let Some(hash) = prev_hash {
-                Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["reset", "--hard", &hash]).status()?;
-            }
-            return Err(anyhow::anyhow!("Deployment failed and rolled back."));
-        }
-    } else {
-        styled_message(MessageLevel::Info, "Skipping Docker rebuild.");
-    }
-
-    styled_message(MessageLevel::Ok, "Deployment successful!");
+    styled_message(MessageLevel::Ok, "Deployment successful! Changes will take effect on next container start.");
     Ok(())
 }
 
@@ -292,6 +236,80 @@ pub fn list_kids() -> Result<()> {
     Ok(())
 }
 
+pub fn system_status() -> Result<()> {
+    use crate::terminal::styled_message;
+    use crate::terminal::MessageLevel;
+
+    println!("\n====================================================");
+    println!("          KID-CLI SYSTEM STATUS REPORT             ");
+    println!("====================================================\n");
+
+    // 1. Core Installation
+    println!("--- Core System ---");
+    let global_exists = Path::new(GLOBAL_PATH).exists();
+    if global_exists {
+        styled_message(MessageLevel::Ok, &format!("Global Path: {} [Exists]", GLOBAL_PATH));
+        if Path::new(GLOBAL_PATH).join(".git").exists() {
+            let output = Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["rev-parse", "--short", "HEAD"]).output()?;
+            let hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            println!("    └─ Version: {}", hash);
+        }
+    } else {
+        styled_message(MessageLevel::Error, &format!("Global Path: {} [Missing]", GLOBAL_PATH));
+    }
+
+    let bin_exists = Path::new(BINARY_PATH).exists();
+    if bin_exists {
+        styled_message(MessageLevel::Ok, &format!("Binary Link: {} [OK]", BINARY_PATH));
+    } else {
+        styled_message(MessageLevel::Warn, &format!("Binary Link: {} [Missing from /usr/local/bin]", BINARY_PATH));
+    }
+
+    // 2. Dependencies
+    println!("\n--- Dependencies ---");
+    check_dep("git", &["--version"]);
+    check_dep("docker", &["--version"]);
+    check_dep("rustc", &["--version"]);
+
+    if cfg!(target_os = "linux") {
+        let group_check = Command::new("getent").arg("group").arg(SYSTEM_GROUP).output()?;
+        if group_check.status.success() {
+            styled_message(MessageLevel::Ok, &format!("System Group: '{}' [Exists]", SYSTEM_GROUP));
+        } else {
+            styled_message(MessageLevel::Error, &format!("System Group: '{}' [Missing]", SYSTEM_GROUP));
+        }
+    }
+
+    // 3. Docker Image Status
+    println!("\n--- Docker Assets ---");
+    let img_check = Command::new("docker").args(&["images", "-q", "kid-cli-kid"]).output()?;
+    if !img_check.stdout.is_empty() {
+        styled_message(MessageLevel::Ok, "Base Image: 'kid-cli-kid' [Ready]");
+    } else {
+        styled_message(MessageLevel::Warn, "Base Image: 'kid-cli-kid' [Not Built - will build JIT]");
+    }
+
+    // 4. Managed Kids
+    println!("\n--- Managed Kids ---");
+    list_kids()?;
+
+    println!("\n====================================================");
+    Ok(())
+}
+
+fn check_dep(cmd: &str, args: &[&str]) {
+    let output = Command::new(cmd).args(args).output();
+    match output {
+        Ok(out) if out.status.success() => {
+            let version = String::from_utf8_lossy(&out.stdout).split('\n').next().unwrap_or("").to_string();
+            styled_message(MessageLevel::Ok, &format!("{}: {}", cmd, version));
+        }
+        _ => {
+            styled_message(MessageLevel::Error, &format!("{}: Not found or error", cmd));
+        }
+    }
+}
+
 fn install_global_launcher() -> Result<()> {
     let profile_path = "/etc/zsh/zprofile";
     let shim = format!(
@@ -299,6 +317,7 @@ fn install_global_launcher() -> Result<()> {
         if [[ -t 0 && -z \"$SKIP_KID\" ]]; then\n  \
           if id -nG | grep -q \"{0}\"; then\n    \
             export KID_CREATIONS_DIR=\"$HOME/creations\"\n    \
+            # JIT build/start via docker compose\n    \
             docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" up -d >/dev/null 2>&1\n    \
             exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" exec kid /bin/zsh -l\n  \
           fi\n\
