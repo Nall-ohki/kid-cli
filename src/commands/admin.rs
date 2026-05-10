@@ -2,6 +2,7 @@ use crate::terminal::{styled_message, MessageLevel};
 use anyhow::Result;
 // use which::which;
 use std::process::Command;
+use std::os::unix::process::CommandExt;
 use std::fs;
 use std::path::Path;
 
@@ -74,7 +75,7 @@ pub fn system_init() -> Result<()> {
     Ok(())
 }
 
-pub fn deploy(image_path: Option<String>) -> Result<()> {
+pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
     styled_message(MessageLevel::Info, "Deploying updates to /opt/kid-cli...");
 
     let repo_path = Path::new(GLOBAL_PATH);
@@ -83,15 +84,53 @@ pub fn deploy(image_path: Option<String>) -> Result<()> {
     }
 
     // 1. Update Code
+    let mut changed = false;
     if repo_path.join(".git").exists() {
         styled_message(MessageLevel::Info, "Pulling latest code from Git...");
-        let status = Command::new("git").arg("-C").arg(GLOBAL_PATH).arg("pull").status()?;
-        if !status.success() {
+        let output = Command::new("git")
+            .arg("-C").arg(GLOBAL_PATH)
+            .arg("pull")
+            .output()?;
+        
+        if !output.status.success() {
             return Err(anyhow::anyhow!("Git pull failed"));
+        }
+        
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        if !stdout.contains("Already up to date.") {
+            changed = true;
         }
     }
 
-    // 2. Optional: Load Image
+    // 2. Self-Update (Rebuild Binary)
+    if changed && !no_rebuild {
+        styled_message(MessageLevel::Info, "Code changed. Rebuilding Kid-CLI binary...");
+        let status = Command::new("cargo")
+            .arg("build")
+            .arg("--release")
+            .status()?;
+        
+        if status.success() {
+            styled_message(MessageLevel::Ok, "Binary rebuilt. Delegating to new version...");
+            
+            // Sync the new binary to the global path
+            fs::copy("target/release/kid", "/opt/kid-cli/bin/kid")?;
+            
+            // Re-exec ourselves with --no-rebuild to continue the deploy
+            let mut args: Vec<String> = std::env::args().collect();
+            args.push("--no-rebuild".to_string());
+            
+            let err = Command::new(&args[0])
+                .args(&args[1..])
+                .exec();
+            
+            return Err(anyhow::Error::from(err).context("Failed to delegate to new binary"));
+        } else {
+            styled_message(MessageLevel::Warn, "Binary rebuild failed. Continuing with current version.");
+        }
+    }
+
+    // 3. Optional: Load Image
     if let Some(path) = image_path {
         styled_message(MessageLevel::Info, &format!("Loading Docker image from {}...", path));
         let status = Command::new("docker")

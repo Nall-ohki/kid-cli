@@ -78,6 +78,9 @@ enum AdminCommands {
         /// Optional path to a pre-built Docker image tarball to load
         #[arg(long)]
         image: Option<String>,
+        /// Internal flag to prevent infinite recursion during self-update
+        #[arg(long, hide = true)]
+        no_rebuild: bool,
     },
     /// Explicitly build the Docker environment image
     Build,
@@ -181,7 +184,7 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Admin { command }) => {
             match command {
                 AdminCommands::Init => commands::admin::system_init(),
-                AdminCommands::Deploy { image } => commands::admin::deploy(image),
+                AdminCommands::Deploy { image, no_rebuild } => commands::admin::deploy(image, no_rebuild),
                 AdminCommands::Build => commands::admin::build_docker(),
                 AdminCommands::Status => commands::admin::system_status(),
                 AdminCommands::Kid { command } => match command {
