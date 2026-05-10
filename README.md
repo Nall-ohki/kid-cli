@@ -10,10 +10,8 @@ Run this one-liner on a fresh Raspberry Pi OS (64-bit) to bootstrap the entire s
 curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash
 ```
 
-To skip the time-consuming Docker environment build (if already provisioned or you wish to remote deploy):
-```bash
-curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash -s -- --skip-docker-build
-```
+> [!NOTE]
+> The Docker environment builds **Just-In-Time (JIT)** when a kid logs in for the first time. To build it manually ahead of time, run `sudo kid admin build`.
 
 ## Setup & Usage
 
@@ -23,8 +21,14 @@ After the one-liner bootstrap is complete, use the management script to create t
 sudo /opt/kid-cli/scripts/manage_kids.sh
 ```
 
-### 2. Updating the System
-If you want to pull the latest code and refresh the educational environment:
+### 2. Check System Health
+You can view a detailed status report of dependencies, kid accounts, and Docker images:
+```bash
+sudo kid admin status
+```
+
+### 3. Updating the System
+Pull the latest code and re-build the administrative tools. The educational environment will update automatically on the next login.
 ```bash
 sudo kid admin deploy
 ```
