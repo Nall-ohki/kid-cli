@@ -122,6 +122,11 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
             let src_binary = format!("{}/target/release/kid", GLOBAL_PATH);
             let dest_binary = format!("{}/bin/kid", GLOBAL_PATH);
 
+            // Unlink the old binary first to avoid "Text file busy"
+            if Path::new(&dest_binary).exists() {
+                let _ = fs::remove_file(&dest_binary);
+            }
+
             // Sync the new binary to the global path
             fs::copy(&src_binary, &dest_binary)?;
             
