@@ -370,15 +370,26 @@ pub fn system_status() -> Result<()> {
 }
 
 fn check_dep(cmd: &str, args: &[&str]) {
+    let envs = [
+        ("RUSTUP_HOME", "/usr/local/rustup"),
+        ("CARGO_HOME", "/usr/local/cargo"),
+    ];
+
     // 1. Try standard PATH
-    let mut output = Command::new(cmd).args(args).output();
+    let mut output = Command::new(cmd)
+        .args(args)
+        .envs(envs.iter().cloned())
+        .output();
 
     // 2. If failed, try common absolute paths (e.g. for /usr/local/bin under sudo)
     if output.is_err() || !output.as_ref().unwrap().status.success() {
         let common_paths = ["/usr/local/bin", "/usr/bin", "/bin"];
         for path in common_paths {
             let full_cmd = format!("{}/{}", path, cmd);
-            if let Ok(out) = Command::new(&full_cmd).args(args).output() {
+            if let Ok(out) = Command::new(&full_cmd)
+                .args(args)
+                .envs(envs.iter().cloned())
+                .output() {
                 if out.status.success() {
                     output = Ok(out);
                     break;
