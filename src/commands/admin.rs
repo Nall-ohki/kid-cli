@@ -74,7 +74,7 @@ pub fn system_init() -> Result<()> {
     Ok(())
 }
 
-pub fn deploy() -> Result<()> {
+pub fn deploy(image_path: Option<String>) -> Result<()> {
     styled_message(MessageLevel::Info, "Deploying updates to /opt/kid-cli...");
 
     let repo_path = Path::new(GLOBAL_PATH);
@@ -82,6 +82,7 @@ pub fn deploy() -> Result<()> {
         return Err(anyhow::anyhow!("System not initialized. Run 'kid admin init' first."));
     }
 
+    // 1. Update Code
     if repo_path.join(".git").exists() {
         styled_message(MessageLevel::Info, "Pulling latest code from Git...");
         let status = Command::new("git").arg("-C").arg(GLOBAL_PATH).arg("pull").status()?;
@@ -90,7 +91,33 @@ pub fn deploy() -> Result<()> {
         }
     }
 
+    // 2. Optional: Load Image
+    if let Some(path) = image_path {
+        styled_message(MessageLevel::Info, &format!("Loading Docker image from {}...", path));
+        let status = Command::new("docker")
+            .args(&["load", "-i", &path])
+            .status()?;
+        if !status.success() {
+            return Err(anyhow::anyhow!("Failed to load Docker image"));
+        }
+        styled_message(MessageLevel::Ok, "Docker image loaded successfully.");
+    }
+
     styled_message(MessageLevel::Ok, "Deployment successful! Changes will take effect on next container start.");
+    Ok(())
+}
+
+pub fn build_docker() -> Result<()> {
+    styled_message(MessageLevel::Info, "Building Docker environment image...");
+    let status = Command::new("docker")
+        .args(&["compose", "-f", &format!("{}/docker-compose.yml", GLOBAL_PATH), "build"])
+        .status()?;
+
+    if !status.success() {
+        return Err(anyhow::anyhow!("Docker build failed"));
+    }
+
+    styled_message(MessageLevel::Ok, "Docker build complete!");
     Ok(())
 }
 

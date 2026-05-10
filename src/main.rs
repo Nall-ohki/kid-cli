@@ -74,7 +74,13 @@ enum AdminCommands {
     /// Initialize the system globally
     Init,
     /// Deploy latest code (updates /opt/kid-cli)
-    Deploy,
+    Deploy {
+        /// Optional path to a pre-built Docker image tarball to load
+        #[arg(long)]
+        image: Option<String>,
+    },
+    /// Explicitly build the Docker environment image
+    Build,
     /// Show detailed system and environment status
     Status,
     /// Manage individual kid environments
@@ -175,7 +181,8 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Admin { command }) => {
             match command {
                 AdminCommands::Init => commands::admin::system_init(),
-                AdminCommands::Deploy => commands::admin::deploy(),
+                AdminCommands::Deploy { image } => commands::admin::deploy(image),
+                AdminCommands::Build => commands::admin::build_docker(),
                 AdminCommands::Status => commands::admin::system_status(),
                 AdminCommands::Kid { command } => match command {
                     KidManagementCommands::Create { name } => commands::admin::create_kid(&name),
