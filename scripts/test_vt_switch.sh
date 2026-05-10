@@ -18,19 +18,40 @@ if ! command -v mlterm &> /dev/null; then
     sudo apt-get update && sudo apt-get install -y mlterm-common mlterm-tiny
 fi
 
-# 2. Check if we are already inside mlterm
+# 2. Check for HD Terminal
+USE_HD=true
 if [[ "$TERM" != "mlterm" ]]; then
     echo "--- Currently in a standard TTY ---"
-    echo "Launching mlterm (HD Terminal)..."
-    echo "NOTE: If this fails, make sure you are on the physical console."
-    echo ""
-    # Try to launch mlterm. If it fails, report it.
-    if ! exec mlterm; then
-        echo "Error: Failed to launch mlterm. Are you in a desktop environment or SSH?"
-        exit 1
+    echo "Attempting to launch mlterm (HD Terminal)..."
+    
+    # Check if we are in a GUI (which would block mlterm-fb)
+    if [ -n "$WAYLAND_DISPLAY" ] || [ -n "$DISPLAY" ]; then
+        echo "!!! GUI DETECTED: mlterm-fb cannot run while a desktop is active."
+        echo "Falling back to Standard TTY mode for the switch test..."
+        USE_HD=false
+    else
+        # Try to launch mlterm. We use a subshell check instead of exec so we don't lose the shell.
+        if command -v mlterm > /dev/null; then
+             echo "Handoff to mlterm... (if screen blanks and returns to prompt, mlterm failed)"
+             # If we are in tmux, mlterm might fail. We'll try to run it.
+             # We won't 'exec' yet so we can catch the failure.
+             if ! mlterm --help > /dev/null 2>&1; then
+                echo "Warning: mlterm binary exists but is failing. Falling back..."
+                USE_HD=false
+             fi
+        else
+             USE_HD=false
+        fi
     fi
+fi
+
+if [ "$USE_HD" = true ] && [[ "$TERM" != "mlterm" ]]; then
+    echo "Entering HD Mode..."
+    exec mlterm
     exit
 fi
+
+echo "--- PROCEEDING IN $([ "$USE_HD" = true ] && echo "HD" || echo "STANDARD") MODE ---"
 
 # 3. We are now inside the HD Terminal!
 echo "===================================================="
