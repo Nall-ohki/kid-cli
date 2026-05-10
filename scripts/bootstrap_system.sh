@@ -3,7 +3,7 @@ set -e
 
 # Kid-CLI Global System Setup
 # This script is intended to be run as root:
-# curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/setup_system.sh | sudo bash
+# curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash
 
 echo "=== Kid-CLI Global Setup ==="
 echo ""
@@ -22,11 +22,7 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
 fi
 echo ""
 
-# 1. System Dependencies (Modulal install from internal/install_deps.sh)
-echo "--- Installing System Dependencies ---"
-curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/internal/install_deps.sh | bash
-
-# 2. Clone Repository to /opt/kid-cli
+# 1. Clone Repository to /opt/kid-cli
 GLOBAL_PATH="/opt/kid-cli"
 if [ -d "$GLOBAL_PATH" ]; then
     echo "--- Existing installation found at $GLOBAL_PATH ---"
@@ -48,6 +44,9 @@ else
     git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
 fi
 
+# 2. System Dependencies & Build
+echo "--- Installing System Dependencies ---"
+bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
 
 echo "--- Building Kid-CLI ---"
 bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
