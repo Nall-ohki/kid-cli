@@ -5,10 +5,15 @@ set -e
 # This script ensures the correct Rust toolchain is present, 
 # compiles the binary, and performs global system initialization.
 
-# 1. Ensure Dependencies
+# 1. Ensure Global Rust Environment
+export RUSTUP_HOME=/usr/local/rustup
+export CARGO_HOME=/usr/local/cargo
+export PATH="/usr/local/cargo/bin:$PATH"
+
+# 2. Ensure Dependencies
 command -v docker >/dev/null 2>&1 || { echo >&2 "Error: Docker is required. Please install it first."; exit 1; }
 
-# 2. Ensure Rust 1.95.0 is installed
+# 3. Ensure Rust 1.95.0 is installed
 REQUIRED_VERSION="1.95.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR/../.."
@@ -26,10 +31,6 @@ check_rust() {
 if ! check_rust; then
     echo "--- Rust $REQUIRED_VERSION not found. Installing... ---"
     "$SCRIPT_DIR/install_rust.sh"
-    # Ensure the global paths are active in this subshell
-    export RUSTUP_HOME=/usr/local/rustup
-    export CARGO_HOME=/usr/local/cargo
-    export PATH="/usr/local/cargo/bin:$PATH"
 fi
 
 # 2. Build the binary
