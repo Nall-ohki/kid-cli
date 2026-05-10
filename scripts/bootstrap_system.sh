@@ -78,10 +78,10 @@ fi
 
 # 2. System Dependencies & Build
 echo "--- Installing System Dependencies ---"
-bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
+sudo bash "$GLOBAL_PATH/scripts/internal/install_deps.sh"
 
 echo "--- Building Kid-CLI ---"
-bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
+sudo bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
 
 
 echo ""
