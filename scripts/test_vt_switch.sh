@@ -76,9 +76,10 @@ for i in {5..1}; do
 done'"
 
 echo "--- Executing openvt handoff to TTY 2 ---"
-# -s: switch, -w: wait, -c 2: TTY2
-if ! sudo openvt -s -w -c 2 -- "$GAME_CMD"; then
+# -s: switch, -w: wait, -c 2: TTY2, -f: force (important if a login prompt is there)
+if ! sudo openvt --verbose --force --switch --wait --c 2 -- "$GAME_CMD"; then
     echo "Error: openvt failed. Make sure you have sudo permissions and are on a real console."
+    echo "Diagnostic: Try running 'sudo chvt 2' manually to test basic switching."
     exit 1
 fi
 
