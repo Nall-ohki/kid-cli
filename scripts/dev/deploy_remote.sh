@@ -46,22 +46,8 @@ fi
 echo "--- Pushing local changes to Git ---"
 git push
 
-echo "--- Building Kid-CLI for Linux ARM64 (via Docker) ---"
-# We use the rust image to build a Linux binary on your Mac
-docker run --rm -v "$(pwd)":/usr/src/myapp -w /usr/src/myapp rust:bookworm \
-    cargo build --release
-
-if [ ! -f "target/release/kid" ]; then
-    echo "Error: Build failed!"
-    exit 1
-fi
-
-# 2. Sync binary to Pi
-echo "--- Syncing binary to $PI_HOST ---"
-rsync -azP target/release/kid "$PI_HOST:/tmp/kid-binary"
-
-# 3. Handle Full Docker Sync
-DEPLOY_CMD="sudo /usr/local/bin/kid admin deploy"
+# 2. Handle Full Docker Sync
+IMAGE_FLAG=""
 if [[ "$FLAG" == "--full" ]]; then
     echo "--- [FULL] Building and Exporting Docker Image (Slow) ---"
     docker build -t kid-cli-kid:latest .
@@ -69,11 +55,11 @@ if [[ "$FLAG" == "--full" ]]; then
     
     echo "--- [FULL] Syncing Image to $PI_HOST ---"
     rsync -azP kid-env.tar.gz "$PI_HOST:/tmp/kid-env.tar.gz"
-    DEPLOY_CMD="$DEPLOY_CMD --image /tmp/kid-env.tar.gz"
+    IMAGE_FLAG="--image /tmp/kid-env.tar.gz"
 fi
 
 echo "--- Updating and Deploying on $PI_HOST ---"
-ssh -t "$PI_HOST" "sudo cp /tmp/kid-binary /usr/local/bin/kid && $DEPLOY_CMD && sudo rm -f /tmp/kid-binary /tmp/kid-env.tar.gz"
+ssh -t "$PI_HOST" "sudo kid admin deploy $IMAGE_FLAG && sudo rm -f /tmp/kid-env.tar.gz"
 
 echo ""
 echo "=== Remote Deployment Complete! ==="

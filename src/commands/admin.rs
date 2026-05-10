@@ -84,28 +84,31 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
     }
 
     // 1. Update Code
-    let mut changed = false;
     if repo_path.join(".git").exists() {
         styled_message(MessageLevel::Info, "Pulling latest code from Git...");
-        let output = Command::new("git")
+        let status = Command::new("git")
             .arg("-C").arg(GLOBAL_PATH)
             .arg("pull")
-            .output()?;
+            .status()?;
         
-        if !output.status.success() {
+        if !status.success() {
             return Err(anyhow::anyhow!("Git pull failed"));
-        }
-        
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        if !stdout.contains("Already up to date.") {
-            changed = true;
         }
     }
 
-    // 2. Self-Update (Rebuild Binary)
-    if changed && !no_rebuild {
-        styled_message(MessageLevel::Info, "Code changed. Rebuilding Kid-CLI binary...");
+    // 2. Smart Rebuild Detection
+    let current_hash = env!("GIT_HASH");
+    let head_output = Command::new("git")
+        .arg("-C").arg(GLOBAL_PATH)
+        .args(&["rev-parse", "HEAD"])
+        .output()?;
+    let head_hash = String::from_utf8_lossy(&head_output.stdout).trim().to_string();
+
+    if head_hash != current_hash && head_hash != "unknown" && !no_rebuild {
+        styled_message(MessageLevel::Info, &format!("Version mismatch (Local: {} vs Repo: {}). Rebuilding...", &current_hash[..7], &head_hash[..7]));
+        
         let status = Command::new("cargo")
+            .current_dir(GLOBAL_PATH)
             .arg("build")
             .arg("--release")
             .status()?;
@@ -128,6 +131,8 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
         } else {
             styled_message(MessageLevel::Warn, "Binary rebuild failed. Continuing with current version.");
         }
+    } else if head_hash == current_hash {
+        styled_message(MessageLevel::Info, "Binary is already up-to-date with repository HEAD.");
     }
 
     // 3. Optional: Load Image
@@ -142,7 +147,7 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
         styled_message(MessageLevel::Ok, "Docker image loaded successfully.");
     }
 
-    styled_message(MessageLevel::Ok, "Deployment successful! Changes will take effect on next container start.");
+    styled_message(MessageLevel::Ok, "Deployment successful!");
     Ok(())
 }
 
@@ -312,14 +317,12 @@ pub fn system_status() -> Result<()> {
 
     // 1. Core Installation
     println!("--- Core System ---");
+    println!("    └─ Version:   {}", env!("GIT_HASH"));
+    println!("    └─ Built:     {}", env!("BUILD_TIME"));
+
     let global_exists = Path::new(GLOBAL_PATH).exists();
     if global_exists {
         styled_message(MessageLevel::Ok, &format!("Global Path: {} [Exists]", GLOBAL_PATH));
-        if Path::new(GLOBAL_PATH).join(".git").exists() {
-            let output = Command::new("git").arg("-C").arg(GLOBAL_PATH).args(&["rev-parse", "--short", "HEAD"]).output()?;
-            let hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            println!("    └─ Version: {}", hash);
-        }
     } else {
         styled_message(MessageLevel::Error, &format!("Global Path: {} [Missing]", GLOBAL_PATH));
     }
