@@ -109,6 +109,9 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
         
         let status = Command::new("cargo")
             .current_dir(GLOBAL_PATH)
+            .env("RUSTUP_HOME", "/usr/local/rustup")
+            .env("CARGO_HOME", "/usr/local/cargo")
+            .env("PATH", "/usr/local/cargo/bin:/usr/local/bin:/usr/bin:/bin")
             .arg("build")
             .arg("--release")
             .status()?;
