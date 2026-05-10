@@ -6,11 +6,6 @@ set -e
 
 echo "--- Checking System Dependencies ---"
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Error: Please run as root (sudo)."
-  exit 1
-fi
-
 # 1. Define required packages
 PACKAGES=(
   "git"
@@ -39,8 +34,8 @@ done
 # 2. Install only if needed
 if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
     echo "Installing missing packages: ${MISSING_PACKAGES[*]}..."
-    apt-get update
-    apt-get install -y "${MISSING_PACKAGES[@]}"
+    sudo apt-get update
+    sudo apt-get install -y "${MISSING_PACKAGES[@]}"
 else
     echo "All system packages are already installed."
 fi
@@ -48,7 +43,7 @@ fi
 # 3. Ensure Docker is running
 if ! systemctl is-active --quiet docker; then
     echo "Starting Docker service..."
-    systemctl enable --now docker
+    sudo systemctl enable --now docker
 fi
 
 echo "--- System Dependencies Installed ---"

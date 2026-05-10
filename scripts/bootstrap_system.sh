@@ -2,8 +2,7 @@
 set -e
 
 # Kid-CLI Global System Setup
-# This script is intended to be run as root:
-# curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash
+# curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | bash
 
 echo "=== Kid-CLI Global Setup ==="
 echo ""
@@ -30,18 +29,18 @@ if [ -d "$GLOBAL_PATH" ]; then
     
     if [[ "$ACTION" == "o" || "$ACTION" == "O" ]]; then
         echo "Deleting existing installation..."
-        rm -rf "$GLOBAL_PATH"
+        sudo rm -rf "$GLOBAL_PATH"
         echo "Cloning fresh repository..."
-        git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
+        sudo git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
     elif [[ "$ACTION" == "u" || "$ACTION" == "U" ]]; then
         echo "Updating existing installation..."
-        git -C "$GLOBAL_PATH" pull
+        sudo git -C "$GLOBAL_PATH" pull
     else
         echo "Skipping repository sync."
     fi
 else
     echo "--- Cloning repository to $GLOBAL_PATH ---"
-    git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
+    sudo git clone https://github.com/Nall-ohki/kid-cli.git "$GLOBAL_PATH"
 fi
 
 # 2. System Dependencies & Build

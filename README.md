@@ -7,7 +7,7 @@ A safe, educational Linux environment for children ages 3-5 on Raspberry Pi 500.
 Run this one-liner on a fresh Raspberry Pi OS (64-bit) to bootstrap the entire system:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | bash
 ```
 
 > [!NOTE]
