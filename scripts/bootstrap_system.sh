@@ -4,6 +4,9 @@ set -e
 # Kid-CLI Global System Setup
 # curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | bash
 
+# Ensure we have sudo access upfront
+sudo -v
+
 echo "=== Kid-CLI Global Setup ==="
 echo ""
 echo "!!! WARNING !!!"
