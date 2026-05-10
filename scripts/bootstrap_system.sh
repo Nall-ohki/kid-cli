@@ -4,8 +4,33 @@ set -e
 # Kid-CLI Global System Setup
 # curl -fsSL https://raw.githubusercontent.com/Nall-ohki/kid-cli/main/scripts/bootstrap_system.sh | bash
 
-# Ensure we have sudo access upfront
-sudo -v
+# Check for -y flag
+ASSUME_YES=false
+if [[ "$*" == *"-y"* ]] || [[ "$*" == *"--yes"* ]]; then
+    ASSUME_YES=true
+fi
+
+# Helper for interactive prompts that works with curl | bash
+prompt_confirm() {
+    if [ "$ASSUME_YES" = true ]; then return 0; fi
+    
+    local message="$1"
+    local response
+    
+    # Try to find a valid TTY for input
+    if [ -c /dev/tty ]; then
+        read -p "$message (y/N): " -r response < /dev/tty
+    else
+        echo "Error: No interactive terminal found. Use -y to bypass prompts."
+        exit 1
+    fi
+
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
 echo "=== Kid-CLI Global Setup ==="
 echo ""
@@ -17,8 +42,8 @@ echo "3. Create a global installation at /opt/kid-cli"
 echo "4. Create a system group 'kid-users'"
 echo "5. Install a global symlink at /usr/local/bin/kid"
 echo ""
-read -p "Are you sure you want to proceed? (y/N): " -r CONFIRM < /dev/tty
-if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+
+if ! prompt_confirm "Are you sure you want to proceed?"; then
     echo "Aborted."
     exit 1
 fi
@@ -28,7 +53,12 @@ echo ""
 GLOBAL_PATH="/opt/kid-cli"
 if [ -d "$GLOBAL_PATH" ]; then
     echo "--- Existing installation found at $GLOBAL_PATH ---"
-    read -p "Overwrite (delete and re-clone) or Update (git pull)? [o/u/Skip]: " -r ACTION < /dev/tty
+    
+    if [ "$ASSUME_YES" = true ]; then
+        ACTION="u"
+    else
+        read -p "Overwrite (delete and re-clone) or Update (git pull)? [o/u/Skip]: " -r ACTION < /dev/tty
+    fi
     
     if [[ "$ACTION" == "o" || "$ACTION" == "O" ]]; then
         echo "Deleting existing installation..."
@@ -56,4 +86,4 @@ bash "$GLOBAL_PATH/scripts/internal/build_kid_binary.sh"
 
 echo ""
 echo "=== Setup Complete! ==="
-echo "You can now provision kids by running: sudo /opt/kid-cli/scripts/manage_kids.sh"
+echo "You can now provision kids by running: sudo kid admin kid create <name>"
