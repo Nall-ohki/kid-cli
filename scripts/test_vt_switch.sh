@@ -2,9 +2,19 @@
 # scripts/test_vt_switch.sh
 # Tests a real HD terminal emulator (mlterm-fb) with a game "push/pop" transition.
 
+set -e
+
+# 0. Check for SSH
+if [ -n "$SSH_CONNECTION" ]; then
+    echo "!!! WARNING: YOU ARE CONNECTED VIA SSH !!!"
+    echo "Virtual Terminal switching (chvt/openvt) only affects the PHYSICAL monitor."
+    echo "You will not see the screen change in this SSH window."
+    echo ""
+fi
+
 # 1. Install mlterm-fb if missing
 if ! command -v mlterm &> /dev/null; then
-    echo "Installing mlterm (HD Terminal with Sixel support)..."
+    echo "--- Installing mlterm (HD Terminal) ---"
     sudo apt-get update && sudo apt-get install -y mlterm-common mlterm-tiny
 fi
 
@@ -12,27 +22,28 @@ fi
 if [[ "$TERM" != "mlterm" ]]; then
     echo "--- Currently in a standard TTY ---"
     echo "Launching mlterm (HD Terminal)..."
-    echo "Once inside, run this script again: ./scripts/test_vt_switch.sh"
+    echo "NOTE: If this fails, make sure you are on the physical console."
     echo ""
-    # Launch mlterm on the framebuffer. 
-    # Note: On some Pi setups, you may need 'mlterm-fb' binary specifically.
-    exec mlterm
+    # Try to launch mlterm. If it fails, report it.
+    if ! exec mlterm; then
+        echo "Error: Failed to launch mlterm. Are you in a desktop environment or SSH?"
+        exit 1
+    fi
     exit
 fi
 
 # 3. We are now inside the HD Terminal!
 echo "===================================================="
 echo "   SUCCESS: YOU ARE NOW IN A HIGH-RES TERMINAL     "
-echo "   (Check your font quality and Unicode/Sixels)     "
 echo "===================================================="
 echo ""
 echo "TESTING THE 'PUSH/POP' FEATURE:"
 echo "1. We will 'push' this terminal session to the background."
-echo "2. We will switch to TTY2 to launch a game."
+echo "2. We will switch to TTY2 to launch a 'game'."
 echo "3. We will then 'pop' back to this exact HD state."
 echo ""
 echo "Press Enter to start the push/pop..."
-read
+read -r
 
 # Define a "Game" on TTY2
 GAME_CMD="bash -c '
@@ -43,9 +54,12 @@ for i in {5..1}; do
     sleep 1; 
 done'"
 
-# Execute the handoff
+echo "--- Executing openvt handoff to TTY 2 ---"
 # -s: switch, -w: wait, -c 2: TTY2
-sudo openvt -s -w -c 2 -- "$GAME_CMD"
+if ! sudo openvt -s -w -c 2 -- "$GAME_CMD"; then
+    echo "Error: openvt failed. Make sure you have sudo permissions and are on a real console."
+    exit 1
+fi
 
 echo ""
 echo "--- POPPED BACK TO HD TERMINAL ---"
