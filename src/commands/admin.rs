@@ -119,14 +119,18 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
         if status.success() {
             styled_message(MessageLevel::Ok, "Binary rebuilt. Delegating to new version...");
             
+            let src_binary = format!("{}/target/release/kid", GLOBAL_PATH);
+            let dest_binary = format!("{}/bin/kid", GLOBAL_PATH);
+
             // Sync the new binary to the global path
-            fs::copy("target/release/kid", "/opt/kid-cli/bin/kid")?;
+            fs::copy(&src_binary, &dest_binary)?;
             
             // Re-exec ourselves with --no-rebuild to continue the deploy
+            // We use the absolute path to the global binary to be safe
             let mut args: Vec<String> = std::env::args().collect();
             args.push("--no-rebuild".to_string());
             
-            let err = Command::new(&args[0])
+            let err = Command::new(&dest_binary)
                 .args(&args[1..])
                 .exec();
             
