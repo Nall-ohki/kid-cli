@@ -367,7 +367,23 @@ pub fn system_status() -> Result<()> {
 }
 
 fn check_dep(cmd: &str, args: &[&str]) {
-    let output = Command::new(cmd).args(args).output();
+    // 1. Try standard PATH
+    let mut output = Command::new(cmd).args(args).output();
+
+    // 2. If failed, try common absolute paths (e.g. for /usr/local/bin under sudo)
+    if output.is_err() || !output.as_ref().unwrap().status.success() {
+        let common_paths = ["/usr/local/bin", "/usr/bin", "/bin"];
+        for path in common_paths {
+            let full_cmd = format!("{}/{}", path, cmd);
+            if let Ok(out) = Command::new(&full_cmd).args(args).output() {
+                if out.status.success() {
+                    output = Ok(out);
+                    break;
+                }
+            }
+        }
+    }
+
     match output {
         Ok(out) if out.status.success() => {
             let version = String::from_utf8_lossy(&out.stdout).split('\n').next().unwrap_or("").to_string();
