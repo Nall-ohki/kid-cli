@@ -1,0 +1,18 @@
+services:
+  kid-host-sim:
+    container_name: kid-host-sim
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/opt/kid-cli
+      - kid-sim-data:/var/lib/kid-cli
+    environment:
+      - SIMULATOR=true
+    privileged: true
+    tty: true
+    stdin_open: true
+    command: /bin/zsh
+
+volumes:
+  kid-sim-data:

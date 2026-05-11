@@ -5,9 +5,12 @@ set -e
 # Usage: ./scripts/simulate.sh [reset|build]
 
 # 1. Ensure we are in the project root
-cd "$(dirname "$0")/.."
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$ROOT_DIR"
 
-COMPOSE_CMD="docker compose -f dev/docker-compose.sim.yml"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.sim.yml"
+COMPOSE_CMD="docker compose -f $COMPOSE_FILE"
 
 case "$1" in
   reset)
