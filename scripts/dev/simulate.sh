@@ -25,6 +25,8 @@ case "$1" in
     ;;
   run)
     echo "--- Starting Simulator Container ---"
+    # Ensure any existing container with this name is removed to avoid conflicts
+    docker rm -f kid-host-sim >/dev/null 2>&1 || true
     $COMPOSE_CMD up -d --build
     if [[ "$2" == "--no-enter" ]]; then
       exit 0
