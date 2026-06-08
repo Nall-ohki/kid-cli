@@ -1,4 +1,4 @@
-use std::{io::{self, BufRead, BufReader}, time::Duration, fs::{self, OpenOptions}};
+use std::{io, time::Duration, fs::{self, OpenOptions}};
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -41,12 +41,13 @@ pub async fn run() -> Result<()> {
     nix::unistd::mkfifo(pipe_path, nix::sys::stat::Mode::S_IRWXU)?;
 
     tokio::spawn(async move {
+        use std::io::Read;
         loop {
-            if let Ok(file) = OpenOptions::new().read(true).open(pipe_path) {
-                let reader = BufReader::new(file);
-                for line in reader.lines() {
-                    if let Ok(l) = line {
-                        let _ = tx.send(l).await;
+            if let Ok(mut file) = OpenOptions::new().read(true).open(pipe_path) {
+                let mut content = String::new();
+                if file.read_to_string(&mut content).is_ok() {
+                    if !content.is_empty() {
+                        let _ = tx.send(content).await;
                     }
                 }
             }

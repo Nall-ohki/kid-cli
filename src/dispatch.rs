@@ -21,6 +21,18 @@ pub async fn handle_busybox(full_name: &str, args: &[String]) -> Result<()> {
         "home" => return commands::validate::home(),
         "exit" => return commands::validate::exit(),
         "clear" => return commands::validate::clear(),
+        "msg-pipe" | "kid-msg-pipe" => {
+            use std::io::{self, Read};
+            let mut buffer = String::new();
+            if io::stdin().read_to_string(&mut buffer).is_ok() {
+                let pipe_path = "/tmp/kid_companion_pipe";
+                if let Ok(mut file) = std::fs::OpenOptions::new().write(true).open(pipe_path) {
+                    use std::io::Write;
+                    let _ = write!(file, "{}", buffer);
+                }
+            }
+            return Ok(());
+        }
         _ => {}
     }
 
@@ -48,7 +60,8 @@ pub async fn handle_busybox(full_name: &str, args: &[String]) -> Result<()> {
         ("echo", "/usr/bin/echo"), ("whoami", "/usr/bin/whoami"), ("date", "/usr/bin/date"),
         ("clear", "/usr/bin/clear"), ("reset", "/usr/bin/reset"), ("groups", "/usr/bin/groups"),
         ("id", "/usr/bin/id"), ("cal", "/usr/bin/cal"), ("man", "/usr/bin/man"),
-        ("touch", "/usr/bin/touch"), ("file", "/usr/bin/file"), ("less", "/usr/bin/less")
+        ("touch", "/usr/bin/touch"), ("file", "/usr/bin/file"), ("less", "/usr/bin/less"),
+        ("uv", "/usr/local/bin/uv")
     ];
 
     for (cmd_name, real_path) in emergency_fallbacks {
@@ -71,7 +84,6 @@ mod tests {
         // in the current implementation. 
         // For now, we verify that hardcoded validators work.
         // We'll need a way to mock Config::load for deeper tests.
-        assert!(handle_busybox("cd", &["/tmp".to_string()]).await.is_err()); // /tmp probably exists, but returns Ok(())?
-        // Wait, cd() returns Ok(()) if it succeeds.
+        assert!(handle_busybox("cd", &["/non_existent_directory_for_test".to_string()]).await.is_err());
     }
 }

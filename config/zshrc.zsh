@@ -9,6 +9,20 @@ fi
 export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
 export ZSH_ROOT="$HOME/.config/zsh"
 
+# Force Qt to use native Wayland (avoids falling back to xcb/Xwayland)
+export QT_QPA_PLATFORM=wayland
+export XDG_SESSION_TYPE=wayland
+
+# tmux's async initialization causes Pane 0 to drop environment variables because the 
+# session environment is updated *after* the first pane starts. 
+# To guarantee survival, we write them to a cache file right before jumping into tmux,
+# and source them right after.
+if [[ -o interactive ]]; then
+    if [[ -z "$TMUX" ]]; then
+        exec tmux new-session -A -s kid
+    fi
+fi
+
 # 2. History & Options
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=10000

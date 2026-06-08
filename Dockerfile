@@ -23,8 +23,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Layer 1: System packages (Heavy lifting)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    zsh tmux cage xwayland git curl ca-certificates sudo gnupg \
-    tuxpaint klettres gcompris-qt tuxmath tuxtype scratch \
+    zsh tmux cage foot kbd xwayland git curl ca-certificates sudo gnupg \
+    tuxpaint klettres gcompris-qt tuxmath tuxtype scratch xvfb x11vnc qtwayland5 \
     sl cowsay figlet nyancat cmatrix lolcat \
     vim less file libgl1-mesa-dri rsync \
     locales procps \
@@ -44,7 +44,7 @@ RUN install -m 0755 -d /etc/apt/keyrings \
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
-RUN curl -LsSf https://astral.sh/uv/install.sh | BINDIR=/usr/local/bin sh
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" UV_NO_MODIFY_PATH=1 sh
 ENV PATH="/kid/bin:/home/kid/.local/bin:${PATH}"
 
 # Layer 3: The Kid User + /kid runtime directories

@@ -61,6 +61,14 @@ enum Commands {
     },
     /// Browse and view character assets
     Characters,
+    /// Explicitly launch an application via the kid unified launcher
+    Launch {
+        /// Application name
+        name: String,
+        /// Any remaining arguments
+        #[arg(last = true)]
+        args: Vec<String>,
+    },
 
     /// Administrative commands for system management (Requires Sudo)
     Admin {
@@ -211,6 +219,15 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Characters) => {
             commands::characters::run().await
+        }
+        Some(Commands::Launch { name, args }) => {
+            let config_dir = config::get_config_dir()?;
+            let commands_config = config::commands::Config::load(config_dir.join("commands.toml"))?;
+            if let Some(launcher) = commands_config.launchers.get(&name) {
+                commands::launch::run(&name, launcher, &args).await
+            } else {
+                Err(anyhow::anyhow!("Application '{}' is not registered in the launchers config.", name))
+            }
         }
         None => {
             // If called as 'kid' without command, show interactive help

@@ -83,66 +83,26 @@ fn create_structure() -> Result<()> {
 
 fn install_apps(home: &std::path::Path) -> Result<()> {
     let apps = [
-        ("tuxpaint", "cage -s -- tuxpaint"),
-        ("gcompris", "gcompris-qt"),
-        ("scratch", "scratch"),
-        ("tuxmath", "tuxmath"),
-        ("tuxtype", "tuxtype"),
-        ("klettres", "klettres"),
+        "tuxpaint",
+        "gcompris",
+        "scratch",
+        "tuxmath",
+        "tuxtype",
+        "klettres",
     ];
 
-    let search_paths = ["/usr/bin", "/usr/games", "/usr/local/bin"];
-    let find_abs = |cmd: &str| -> String {
-        for base in search_paths {
-            let full = format!("{}/{}", base, cmd);
-            if Path::new(&full).exists() {
-                return full;
-            }
-        }
-        cmd.to_string()
-    };
-
-    for (name, cmd) in apps {
+    for name in apps {
         let app_dir = home.join("apps").join(name);
         fs::create_dir_all(&app_dir)?;
         
         let wrapper_path = app_dir.join(name);
         
-        // Resolve absolute paths for the components of the command
-        let parts: Vec<&str> = cmd.split_whitespace().collect();
-        let launcher = *parts.first().unwrap_or(&"");
-        let app = *parts.last().unwrap_or(&"");
-        
-        let abs_launcher = find_abs(launcher);
-        let abs_app = find_abs(app);
-        
-        // Rebuild the command with absolute paths
-        let mut final_cmd = cmd.to_string();
-        if !abs_launcher.is_empty() && abs_launcher != launcher {
-            final_cmd = final_cmd.replace(launcher, &abs_launcher);
-        }
-        // If app is different from launcher, replace it too
-        if !abs_app.is_empty() && abs_app != app && app != launcher {
-            final_cmd = final_cmd.replace(app, &abs_app);
-        }
-
         let content = format!(
             "#!/bin/zsh\n\
              # Restricted App Wrapper\n\n\
-             # Check for launcher and app existence\n\
-             for cmd_to_check in \"{0}\" \"{1}\"; do\n\
-               if [[ ! -x \"$cmd_to_check\" ]]; then\n\
-                 echo \"--------------------------------------------------\"\n\
-                 echo \"❌ ERROR: '$cmd_to_check' is not available.\"\n\
-                 echo \"This is required for {2} to run.\"\n\
-                 echo \"Please contact an administrator.\"\n\
-                 echo \"--------------------------------------------------\"\n\
-                 exit 1\n\
-               fi\n\
-             done\n\n\
-             # Launch the application\n\
-             {3}\n",
-            abs_launcher, abs_app, name, final_cmd
+             # Delegate to the unified kid-cli launcher\n\
+             exec /kid/bin/kid launch {}\n",
+            name
         );
         
         fs::write(&wrapper_path, content)?;
@@ -235,7 +195,7 @@ fn install_symlinks(config_dir: &Path) -> Result<()> {
     }
 
     // E. Legacy Symlinks -> /kid/bin
-    let legacy = ["kid-run", "kid-error", "kid-warn", "kid-ls", "help"];
+    let legacy = ["kid-run", "kid-error", "kid-warn", "kid-ls", "help", "kid-msg-pipe"];
     for l in legacy {
         create_symlink(kid_bin, &format!("/kid/bin/{}", l))?;
     }

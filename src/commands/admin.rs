@@ -425,28 +425,38 @@ fn install_global_launcher() -> Result<()> {
         if [[ -t 0 && -z \"$SKIP_KID\" ]]; then\n  \
           if id -nG | grep -q \"{0}\"; then\n    \
             export KID_CREATIONS_DIR=\"$HOME/creations\"\n    \
-            # JIT build/start via docker compose\n    \
-            docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" up -d >/dev/null 2>&1\n    \
-            exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" exec kid /bin/zsh -l\n  \
+            if [[ -z \"$SSH_CONNECTION\" && -z \"$DISPLAY\" && -z \"$WAYLAND_DISPLAY\" ]]; then\n      \
+              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" run --rm kid cage foot\n    \
+            else\n      \
+              docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" up -d >/dev/null 2>&1\n      \
+              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" exec kid /bin/zsh -l\n    \
+            fi\n  \
           fi\n\
         fi\n",
         SYSTEM_GROUP, GLOBAL_PATH
     );
 
-    let content = if Path::new(profile_path).exists() {
+    let mut content = if Path::new(profile_path).exists() {
         fs::read_to_string(profile_path)?
     } else {
         String::new()
     };
 
-    if !content.contains("Kid-CLI Global Launcher") {
-        let mut file = fs::OpenOptions::new().append(true).create(true).open(profile_path)?;
-        use std::io::Write;
-        file.write_all(shim.as_bytes())?;
-        styled_message(MessageLevel::Ok, &format!("Installed global launcher in {}", profile_path));
-    } else {
-        styled_message(MessageLevel::Info, "Global launcher already present.");
+    if let Some(start_idx) = content.find("# --- Kid-CLI Global Launcher ---") {
+        if let Some(end_idx) = content[start_idx..].find("\nfi\nfi\n") {
+            let actual_end = start_idx + end_idx + 7;
+            content.replace_range(start_idx..actual_end, "");
+        } else if let Some(end_idx) = content[start_idx..].find("fi\nfi") {
+            let actual_end = start_idx + end_idx + 5;
+            content.replace_range(start_idx..actual_end, "");
+        } else {
+            content.truncate(start_idx);
+        }
     }
+
+    content.push_str(&shim);
+    fs::write(profile_path, content)?;
+    styled_message(MessageLevel::Ok, &format!("Installed/updated global launcher in {}", profile_path));
 
     Ok(())
 }

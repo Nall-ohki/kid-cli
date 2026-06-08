@@ -29,12 +29,15 @@ pub async fn run(name: &str, config: &LauncherConfig, args: &[String]) -> Result
     }
 
     // Handle persist
-    if config.persist {
+    if config.persist && config.pane != "companion" {
         full_cmd = format!("{}; echo \"\"; echo \"Press Enter to close...\"; read dummy", full_cmd);
     }
 
 
-    // 2. Open tmux pane/popup and run command
+    // 1. Notify the daemon of application start
+    let _ = crate::commands::event::run("app_start", name, None).await;
+
+    // 2. Open tmux pane/popup or run directly/GUI-mode
     // CRITICAL: If stdin is NOT a TTY (e.g. echo test | say), we MUST run directly
     // because tmux split-window cannot inherit stdin easily.
     use std::os::unix::io::AsRawFd;
@@ -42,37 +45,60 @@ pub async fn run(name: &str, config: &LauncherConfig, args: &[String]) -> Result
     let has_tmux = std::env::var("TMUX").is_ok() && !is_pipe && config.pane != "none";
     let tmux_bin = "/usr/bin/tmux";
 
-    let status = if has_tmux {
+    let infra_path = std::env::var("_INFRA_PATH").unwrap_or_else(|_| "/usr/bin:/bin:/usr/local/bin:/usr/games".to_string());
+
+    let execution_result = if config.gui {
+        let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
+        
+        let gui_cmd = if has_display {
+            // We are already inside a graphical session (e.g. kid's native cage, or a desktop environment)
+            // Just run the app directly, it will attach to the existing display server automatically.
+            full_cmd.clone()
+        } else {
+            // We are in a raw TTY or SSH session. Start a Wayland compositor (cage) to host the graphical app.
+            format!("/usr/bin/cage -s -d -- {}", full_cmd)
+        };
+
+        std::process::Command::new("/bin/sh")
+            .env("PATH", &infra_path)
+            .arg("-c")
+            .arg(gui_cmd)
+            .status()
+    } else if has_tmux {
         let full_cmd_escaped = full_cmd.replace("\"", "\\\"");
         let target = std::env::var("TMUX_PANE").unwrap_or_else(|_| "kid".to_string());
         
         let tmux_cmd = if config.pane == "popup" {
-            format!("{} display-popup -t {} -E -w 80% -h 80% \"{}\"", tmux_bin, target, full_cmd_escaped)
+            format!("{} display-popup -t {} -E -w 80% -h 80% \"PATH=\\\"{}\\\" {}\"", tmux_bin, target, infra_path, full_cmd_escaped)
         } else if config.pane == "companion" {
-             // Redirection mode: Run command and pipe output to kid companion
-             // Instead of a shell, we just send text to the coach.
-             format!("{} | /kid/bin/kid-msg-pipe", full_cmd)
+             if config.persist {
+                 format!("( PATH=\"{}\" {} ; echo \"\" ; echo \"Press Enter to close...\" ) | /kid/bin/kid-msg-pipe ; read dummy", infra_path, full_cmd)
+             } else {
+                 format!("PATH=\"{}\" {} | /kid/bin/kid-msg-pipe", infra_path, full_cmd)
+             }
         } else if config.pane == "bottom" {
-            // Explicitly split at the full width of the bottom and select it
-            // -d flag ensures focus stays on the user pane
-            format!("{} split-window -d -t {} -v -f -p 35 \"{}\"", tmux_bin, target, full_cmd_escaped)
+            format!("{} split-window -d -t {} -v -f -p 35 \"PATH=\\\"{}\\\" {}\"", tmux_bin, target, infra_path, full_cmd_escaped)
         } else {
-            // Standard vertical split
-            format!("{} split-window -t {} -v -p 35 \"{}\"", tmux_bin, target, full_cmd_escaped)
+            format!("{} split-window -t {} -v -p 35 \"PATH=\\\"{}\\\" {}\"", tmux_bin, target, infra_path, full_cmd_escaped)
         };
 
         std::process::Command::new("/bin/sh")
+            .env("PATH", &infra_path)
             .arg("-c")
             .arg(tmux_cmd)
-            .status()?
+            .status()
     } else {
-        // Fallback to direct execution if not in tmux, explicitly 'none', or piped
-        // Use /bin/sh -c to safely handle commands with arguments (like /bin/ls -la)
         std::process::Command::new("/bin/sh")
+            .env("PATH", &infra_path)
             .arg("-c")
             .arg(full_cmd)
-            .status()?
+            .status()
     };
+
+    // 3. Notify the daemon of application stop
+    let _ = crate::commands::event::run("app_stop", name, None).await;
+
+    let status = execution_result?;
 
     if status.success() {
         Ok(())

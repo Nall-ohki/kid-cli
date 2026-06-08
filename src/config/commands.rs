@@ -41,6 +41,8 @@ pub struct LauncherConfig {
     pub persist: bool,
     #[serde(default)]
     pub builtin: bool,
+    #[serde(default)]
+    pub gui: bool,
 }
 
 impl Default for LauncherConfig {
@@ -51,6 +53,7 @@ impl Default for LauncherConfig {
             lolcat: LolcatMode::default(),
             persist: false,
             builtin: false,
+            gui: false,
         }
     }
 }
@@ -126,6 +129,48 @@ pane = "popup"
 lolcat = "never"
 persist = true
 
+[launchers.tuxpaint]
+binary = "tuxpaint"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
+[launchers.gcompris]
+binary = "gcompris-qt"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
+[launchers.scratch]
+binary = "scratch"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
+[launchers.tuxmath]
+binary = "tuxmath"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
+[launchers.tuxtype]
+binary = "tuxtype"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
+[launchers.klettres]
+binary = "klettres"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
 [passthroughs]
 ls    = "/bin/ls"
 cat   = "/usr/bin/cat"
@@ -153,6 +198,7 @@ rm    = "/bin/rm"
 mv    = "/bin/mv"
 cp    = "/bin/cp"
 sl    = "/usr/games/sl"
+uv    = "/usr/local/bin/uv"
 
 [blocks]
 commands = ["sudo", "ssh", "curl", "wget", "su", "scp", "sftp", "wall"]

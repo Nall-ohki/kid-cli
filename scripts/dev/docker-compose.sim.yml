@@ -12,7 +12,9 @@ services:
     privileged: true
     tty: true
     stdin_open: true
-    command: /bin/zsh
+    ports:
+      - "5900:5900"
+    command: sleep infinity
 
 volumes:
   kid-sim-data:

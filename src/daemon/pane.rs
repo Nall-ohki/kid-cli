@@ -14,10 +14,16 @@ pub async fn show_message(text: &str) -> Result<()> {
     let text = text.to_string();
     tokio::task::spawn_blocking(move || {
         use std::io::Write;
-        // Optimization: if we can't open for writing, it might mean the reader isn't there yet.
-        // We'll try with a short timeout or just fail silently to avoid hanging.
-        if let Ok(mut file) = std::fs::OpenOptions::new().write(true).open(pipe_path) {
-            let _ = writeln!(file, "{}", text);
+        use std::thread::sleep;
+        use std::time::Duration;
+        
+        for _ in 0..15 {
+            if let Ok(mut file) = std::fs::OpenOptions::new().write(true).open(pipe_path) {
+                if writeln!(file, "{}", text).is_ok() {
+                    break;
+                }
+            }
+            sleep(Duration::from_millis(100));
         }
     });
 

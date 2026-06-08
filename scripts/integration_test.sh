@@ -17,7 +17,7 @@ echo "=== Starting Integration Test ==="
 
 # 1. Bootstrap
 echo "--- Step 1: Bootstrapping ---"
-"$SCRIPT_DIR/bootstrap.sh"
+"$SCRIPT_DIR/bootstrap_system.sh" -y
 
 # 2. Create User
 echo "--- Step 2: Creating Test User ---"

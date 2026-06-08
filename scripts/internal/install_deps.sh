@@ -14,6 +14,10 @@ PACKAGES=(
   "build-essential"
   "pkg-config"
   "libssl-dev"
+  "cage"
+  "foot"
+  "fonts-noto-cjk"
+  "fonts-font-awesome"
 )
 
 # Decide on Docker package
@@ -41,9 +45,13 @@ else
 fi
 
 # 3. Ensure Docker is running
-if ! systemctl is-active --quiet docker; then
-    echo "Starting Docker service..."
-    sudo systemctl enable --now docker
+if [ -d /run/systemd/system ]; then
+    if ! systemctl is-active --quiet docker; then
+        echo "Starting Docker service..."
+        sudo systemctl enable --now docker
+    fi
+else
+    echo "Systemd not detected. Skipping Docker service start/enable."
 fi
 
 echo "--- System Dependencies Installed ---"

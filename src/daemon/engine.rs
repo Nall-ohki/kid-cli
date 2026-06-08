@@ -55,6 +55,9 @@ impl Engine {
             let mut state = self.state.lock().await;
             match event_type {
                 "pre" => {
+                    if state.active_app.is_some() {
+                        return Ok(());
+                    }
                     state.last_command = Some(data.to_string());
                     
                     let cmd_name = data.split_whitespace().next().unwrap_or(data);
@@ -70,6 +73,9 @@ impl Engine {
                     }
                 }
                 "exec" => {
+                    if state.active_app.is_some() {
+                        return Ok(());
+                    }
                     // 1. UPDATE STATS
                     let cmd_name = data.split_whitespace().next().unwrap_or(data).to_string();
                     
@@ -124,7 +130,39 @@ impl Engine {
                     }
                 }
                 "post" => {
+                    if state.active_app.is_some() {
+                        return Ok(());
+                    }
                     state.last_exit_code = Some(data.parse().unwrap_or(0));
+                }
+                "app_start" => {
+                    state.active_app = Some(data.to_string());
+                    let cmd_name = data.to_string();
+                    if let Some(s) = state.stats.commands.get_mut(&cmd_name) {
+                        s.count += 1;
+                        s.last_run = chrono::Utc::now();
+                    } else {
+                        state.stats.commands.insert(cmd_name, crate::daemon::stats::CommandStats {
+                            count: 1,
+                            last_run: chrono::Utc::now(),
+                        });
+                    }
+                    let _ = state.stats.save();
+                    
+                    if is_primary {
+                        let _ = crate::daemon::pane::ensure_companion_pane();
+                        effects::trigger_discovery(&self.messages_config, &format!("launch {}", data), None).await?;
+                        state.update_last_message_time();
+                        state.last_message_is_discovery = true;
+                    }
+                }
+                "app_stop" => {
+                    state.active_app = None;
+                    if is_primary {
+                        effects::trigger_greeting(&self.messages_config, cwd, None).await?;
+                        state.update_last_message_time();
+                        state.last_message_is_discovery = false;
+                    }
                 }
                 _ => {}
             }

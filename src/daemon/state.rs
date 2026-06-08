@@ -8,6 +8,7 @@ pub struct State {
     pub last_message_time: Option<Instant>,
     pub last_message_is_discovery: bool,
     pub cooldown: Duration,
+    pub active_app: Option<String>,
 }
 
 impl State {
@@ -19,6 +20,7 @@ impl State {
             last_message_time: None,
             last_message_is_discovery: false,
             cooldown: Duration::from_secs(30), // 30 second cooldown by default
+            active_app: None,
         }
     }
 
