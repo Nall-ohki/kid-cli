@@ -15,20 +15,28 @@ pub async fn monitor_inputs() {
             let path_str = format!("/dev/input/event{}", i);
             let path = Path::new(&path_str);
             if path.exists() {
-                if let Ok(device) = Device::open(path) {
-                    // Only care about devices that have keys (like F12)
-                    if device.supported_keys().map_or(false, |keys| keys.contains(KeyCode::KEY_F12)) {
-                        devices.push(device);
+                match Device::open(path) {
+                    Ok(device) => {
+                        if device.supported_keys().map_or(false, |keys| keys.contains(KeyCode::KEY_F12)) {
+                            println!("Found suitable device: {} at {}", device.name().unwrap_or("Unknown"), path_str);
+                            devices.push(device);
+                        }
+                    }
+                    Err(e) => {
+                        // Could be permission denied
+                        // println!("Failed to open {}: {}", path_str, e);
                     }
                 }
             }
         }
 
         if devices.is_empty() {
-            // No suitable devices found yet (maybe permissions or none connected), sleep and retry
+            // println!("No F12 devices found, rescanning in 5s...");
             sleep(Duration::from_secs(5)).await;
             continue;
         }
+        
+        println!("Started listening on {} devices", devices.len());
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(32);
 
@@ -83,12 +91,16 @@ pub async fn monitor_inputs() {
                     }
                 }
             } else {
-                match rx.recv().await {
-                    Some(true) => {
+                match tokio::time::timeout(Duration::from_secs(5), rx.recv()).await {
+                    Ok(Some(true)) => {
                         is_pressed = true;
                     }
-                    Some(false) => {}
-                    None => {
+                    Ok(Some(false)) => {}
+                    Ok(None) => {
+                        break;
+                    }
+                    Err(_) => {
+                        // Timeout reached while idle, break to rescan devices (hotplug support)
                         break;
                     }
                 }

@@ -65,7 +65,7 @@ case "$1" in
     ;;
   killapp)
     echo "--- Simulating F12 Kiosk Exit (Hold 5.5s) ---"
-    docker exec -u root kid-host-sim python3 -c 'import evdev; import time; ui = evdev.UInput(); ui.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_F12, 1); ui.syn(); time.sleep(5.5); ui.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_F12, 0); ui.syn(); ui.close()'
+    docker exec -u root kid-host-sim python3 -c 'import evdev, time; devs = [evdev.InputDevice(path) for path in evdev.list_devices()]; dev = next((d for d in devs if evdev.ecodes.KEY_F12 in d.capabilities().get(evdev.ecodes.EV_KEY, [])), None); assert dev, "No keyboard found"; print(f"Injecting into {dev.name}..."); dev.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_F12, 1); dev.write(evdev.ecodes.EV_SYN, evdev.ecodes.SYN_REPORT, 0); time.sleep(5.5); dev.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_F12, 0); dev.write(evdev.ecodes.EV_SYN, evdev.ecodes.SYN_REPORT, 0); print("Done")'
     echo "--- Done ---"
     exit 0
     ;;
