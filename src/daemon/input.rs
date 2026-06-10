@@ -36,37 +36,22 @@ pub async fn monitor_inputs() {
         for mut device in devices {
             let tx = tx.clone();
             tokio::task::spawn_blocking(move || {
-                let mut f12_pressed_time: Option<Instant> = None;
-                
                 loop {
-                    // fetch_events blocks until events are available
                     match device.fetch_events() {
                         Ok(events) => {
                             for event in events {
                                 match event.destructure() {
                                     EventSummary::Key(_, KeyCode::KEY_F12, 1) => {
-                                        // Key down
-                                        f12_pressed_time = Some(Instant::now());
+                                        let _ = tx.blocking_send(true); // Key Down
                                     }
                                     EventSummary::Key(_, KeyCode::KEY_F12, 0) => {
-                                        // Key up
-                                        f12_pressed_time = None;
+                                        let _ = tx.blocking_send(false); // Key Up
                                     }
                                     _ => {}
                                 }
                             }
-                            
-                            // Check if F12 has been held for 5 seconds
-                            if let Some(pressed_time) = f12_pressed_time {
-                                if pressed_time.elapsed() >= Duration::from_secs(5) {
-                                    let _ = tx.blocking_send(());
-                                    // Reset to avoid spamming
-                                    f12_pressed_time = None;
-                                }
-                            }
                         }
                         Err(_) => {
-                            // Device disconnected or error
                             break;
                         }
                     }
@@ -74,10 +59,40 @@ pub async fn monitor_inputs() {
             });
         }
 
-        // Wait for a trigger
-        if rx.recv().await.is_some() {
-            println!("Panic Hotkey (F12) detected! Executing Kiosk Exit.");
-            execute_kiosk_exit();
+        // Process events asynchronously with a timeout
+        let mut is_pressed = false;
+        loop {
+            if is_pressed {
+                match tokio::time::timeout(Duration::from_secs(5), rx.recv()).await {
+                    Ok(Some(false)) => {
+                        // Key released before 5 seconds
+                        is_pressed = false;
+                    }
+                    Ok(Some(true)) => {
+                        // Another key down (autorepeat or multiple keyboards), ignore
+                    }
+                    Ok(None) => {
+                        // Channels closed
+                        break;
+                    }
+                    Err(_) => {
+                        // Timeout reached! F12 has been held for 5 seconds
+                        println!("Panic Hotkey (F12) detected! Executing Kiosk Exit.");
+                        execute_kiosk_exit();
+                        is_pressed = false; // Reset state
+                    }
+                }
+            } else {
+                match rx.recv().await {
+                    Some(true) => {
+                        is_pressed = true;
+                    }
+                    Some(false) => {}
+                    None => {
+                        break;
+                    }
+                }
+            }
         }
         
         // If we reach here, we need to rescan devices (maybe one was unplugged and threw an error)
