@@ -63,12 +63,19 @@ case "$1" in
       docker exec -it kid-host-sim zsh
     fi
     ;;
+  killapp)
+    echo "--- Simulating F12 Kiosk Exit (Hold 5.5s) ---"
+    docker exec -u root kid-host-sim python3 -c 'import evdev; import time; ui = evdev.UInput(); ui.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_F12, 1); ui.syn(); time.sleep(5.5); ui.write(evdev.ecodes.EV_KEY, evdev.ecodes.KEY_F12, 0); ui.syn(); ui.close()'
+    echo "--- Done ---"
+    exit 0
+    ;;
   *)
-    echo "Usage: $0 {run|reset|build}"
+    echo "Usage: $0 {run|reset|build|killapp}"
     echo ""
-    echo "  run   - Start and enter the simulator shell"
-    echo "  reset - Wipe simulator and persistent volumes"
-    echo "  build - Force rebuild the simulator image"
+    echo "  run     - Start and enter the simulator shell"
+    echo "  reset   - Wipe simulator and persistent volumes"
+    echo "  build   - Force rebuild the simulator image"
+    echo "  killapp - Inject an F12 virtual hardware keypress to test the global kiosk exit"
     exit 1
     ;;
 esac
