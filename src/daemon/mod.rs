@@ -5,6 +5,7 @@ pub mod state;
 pub mod effects;
 pub mod stats;
 pub mod brain;
+pub mod input;
 
 use std::fs;
 use std::path::PathBuf;
@@ -76,6 +77,9 @@ pub async fn run_server(primary_pane_id: String) -> Result<()> {
             .arg("User")
             .status();
     }
+
+    // Start the global evdev kiosk exit monitor
+    tokio::spawn(input::monitor_inputs());
 
     // This will be called by 'kid watch' (without --daemon)
     // or by the background process

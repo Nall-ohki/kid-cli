@@ -24,6 +24,7 @@ clap_lex = "=1.0.1"
 indexmap = "=2.2.6"
 unicode-segmentation = "=1.12.0"
 regex = "1.10"
+evdev = { version = "0.13.2", features = ["tokio"] }
 
 [dev-dependencies]
 tempfile = "3.10"

@@ -146,6 +146,9 @@ fn configure_mame(home: &Path) -> Result<()> {
             <port type="UI_CONFIGURE">
                 <newseq type="standard">NONE</newseq>
             </port>
+            <port type="UI_CANCEL">
+                <newseq type="standard">NONE</newseq>
+            </port>
             <port type="UI_TOGGLE_UI">
                 <newseq type="standard">NONE</newseq>
             </port>
@@ -163,7 +166,9 @@ fn configure_retroarch(home: &Path) -> Result<()> {
     fs::create_dir_all(&retroarch_dir)?;
 
     let cfg_path = retroarch_dir.join("retroarch.cfg");
-    let cfg_content = "menu_driver = \"null\"\ninput_menu_toggle = \"nul\"\ninput_driver = \"sdl2\"\n";
+    let cfg_content = "menu_driver = \"null\"\n\
+                       input_menu_toggle = \"nul\"\n\
+                       input_driver = \"sdl2\"\n";
     fs::write(&cfg_path, cfg_content)?;
 
     let mouse_cfg_path = retroarch_dir.join("mouse.cfg");
