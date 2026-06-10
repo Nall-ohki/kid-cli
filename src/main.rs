@@ -61,6 +61,8 @@ enum Commands {
     },
     /// Browse and view character assets
     Characters,
+    /// Manually trigger the global panic/kiosk exit logic
+    Panic,
     /// Explicitly launch an application via the kid unified launcher
     Launch {
         /// Application name
@@ -219,6 +221,10 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Characters) => {
             commands::characters::run().await
+        }
+        Some(Commands::Panic) => {
+            crate::daemon::input::execute_kiosk_exit();
+            Ok(())
         }
         Some(Commands::Launch { name, args }) => {
             let config_dir = config::get_config_dir()?;
