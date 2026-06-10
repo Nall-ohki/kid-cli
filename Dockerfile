@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mame retroarch libretro-bsnes-mercury-performance \
     sl cowsay figlet nyancat cmatrix lolcat \
     vim less file libgl1-mesa-dri rsync \
-    locales procps \
+    locales procps python3-evdev \
     && rm -rf /var/lib/apt/lists/* \
     && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
     && locale-gen en_US.UTF-8
