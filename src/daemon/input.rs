@@ -113,10 +113,12 @@ pub async fn monitor_inputs() {
 }
 
 fn execute_kiosk_exit() {
+    println!("Panic Hotkey (F12) detected! Executing Kiosk Exit.");
     let targets = ["retroarch", "mame", "gcompris-qt", "scratch", "tuxpaint", "tuxmath", "tuxtype", "klettres"];
     for target in targets.iter() {
-        let _ = std::process::Command::new("killall")
+        let _ = std::process::Command::new("pkill")
             .arg("-9")
+            .arg("-f")
             .arg(target)
             .status();
     }
