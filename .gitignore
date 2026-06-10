@@ -18,3 +18,4 @@ integration-tests/.venv/
 # Kid CLI
 tmp_repos/
 scratch/
+assets/roms/

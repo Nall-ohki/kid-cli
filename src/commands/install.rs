@@ -24,7 +24,9 @@ pub fn run(system: bool, user: bool) -> Result<()> {
     // 2. User-specific structure (User concern)
     if user {
         styled_message(MessageLevel::Info, "Creating user-specific directory structure...");
-        create_structure()?;
+        bootstrap_tomls(&config_dir)?;
+        let commands_config = config::commands::Config::load(config_dir.join("commands.toml"))?;
+        create_structure(&commands_config)?;
     }
 
     styled_message(MessageLevel::Ok, "Installation step complete!");
@@ -36,7 +38,7 @@ fn is_inside_infrastructure() -> bool {
     Path::new("/kid/bin/kid").exists()
 }
 
-fn create_structure() -> Result<()> {
+fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
     let home = home::home_dir().context("Could not get home directory")?;
     
     let dirs = [
@@ -76,22 +78,28 @@ fn create_structure() -> Result<()> {
         symlink(&target_tmux, &tmux_conf)?;
         styled_message(MessageLevel::Ok, "Linked ~/.tmux.conf");
     }
-    install_apps(&home)?;
+    install_apps(&home, commands_config)?;
+    configure_mame(&home)?;
+    configure_retroarch(&home)?;
 
     Ok(())
 }
 
-fn install_apps(home: &std::path::Path) -> Result<()> {
-    let apps = [
-        "tuxpaint",
-        "gcompris",
-        "scratch",
-        "tuxmath",
-        "tuxtype",
-        "klettres",
-    ];
+fn install_apps(home: &std::path::Path, commands_config: &config::commands::Config) -> Result<()> {
+    let mut apps = Vec::new();
+    
+    for (name, launcher) in &commands_config.launchers {
+        if launcher.enabled && launcher.gui {
+            apps.push(name.clone());
+        }
+    }
+    for (name, game) in &commands_config.games {
+        if game.enabled {
+            apps.push(name.clone());
+        }
+    }
 
-    for name in apps {
+    for name in &apps {
         let app_dir = home.join("apps").join(name);
         fs::create_dir_all(&app_dir)?;
         
@@ -118,6 +126,52 @@ fn install_apps(home: &std::path::Path) -> Result<()> {
         styled_message(MessageLevel::Ok, &format!("Installed app wrapper: ~/apps/{}/{}", name, name));
     }
     
+    Ok(())
+}
+
+fn configure_mame(home: &Path) -> Result<()> {
+    let mame_dir = home.join(".mame");
+    let cfg_dir = mame_dir.join("cfg");
+    fs::create_dir_all(&cfg_dir)?;
+
+    let ini_path = mame_dir.join("mame.ini");
+    let ini_content = "uimodekey NONE\n";
+    fs::write(&ini_path, ini_content)?;
+
+    let cfg_path = cfg_dir.join("default.cfg");
+    let cfg_content = r#"<?xml version="1.0"?>
+<mameconfig version="10">
+    <system name="default">
+        <input>
+            <port type="UI_CONFIGURE">
+                <newseq type="standard">NONE</newseq>
+            </port>
+            <port type="UI_TOGGLE_UI">
+                <newseq type="standard">NONE</newseq>
+            </port>
+        </input>
+    </system>
+</mameconfig>"#;
+    fs::write(&cfg_path, cfg_content)?;
+
+    styled_message(MessageLevel::Ok, "Installed MAME kiosk configuration");
+    Ok(())
+}
+
+fn configure_retroarch(home: &Path) -> Result<()> {
+    let retroarch_dir = home.join(".config").join("retroarch");
+    fs::create_dir_all(&retroarch_dir)?;
+
+    let cfg_path = retroarch_dir.join("retroarch.cfg");
+    let cfg_content = "menu_driver = \"null\"\ninput_menu_toggle = \"nul\"\ninput_driver = \"sdl2\"\n";
+    fs::write(&cfg_path, cfg_content)?;
+
+    let mouse_cfg_path = retroarch_dir.join("mouse.cfg");
+    // Libretro device 2 = Mouse. Device 258 = Joypad w/ Analog. Port 1 is index 0.
+    let mouse_cfg_content = "input_player1_mouse_index = \"0\"\ninput_libretro_device_p1 = \"2\"\n";
+    fs::write(&mouse_cfg_path, mouse_cfg_content)?;
+
+    styled_message(MessageLevel::Ok, "Installed RetroArch kiosk configuration");
     Ok(())
 }
 
@@ -155,9 +209,16 @@ fn install_symlinks(config_dir: &Path) -> Result<()> {
         create_symlink(kid_bin, &format!("/kid/wrap/bin/{}", v))?;
     }
 
-    // B, C. Launchers and Passthroughs -> /kid/wrap/bin
-    for name in commands_config.launchers.keys() {
-        create_symlink(kid_bin, &format!("/kid/wrap/bin/{}", name))?;
+    // B, C. Launchers, Games, and Passthroughs -> /kid/wrap/bin
+    for (name, launcher) in &commands_config.launchers {
+        if launcher.enabled {
+            create_symlink(kid_bin, &format!("/kid/wrap/bin/{}", name))?;
+        }
+    }
+    for (name, game) in &commands_config.games {
+        if game.enabled {
+            create_symlink(kid_bin, &format!("/kid/wrap/bin/{}", name))?;
+        }
     }
     for name in commands_config.passthroughs.keys() {
         create_symlink(kid_bin, &format!("/kid/wrap/bin/{}", name))?;

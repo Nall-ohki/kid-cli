@@ -9,6 +9,10 @@ pub struct Config {
     pub launchers: HashMap<String, LauncherConfig>,
     pub passthroughs: HashMap<String, String>,
     pub blocks: BlockConfig,
+    #[serde(default)]
+    pub systems: HashMap<String, SystemConfig>,
+    #[serde(default)]
+    pub games: HashMap<String, GameConfig>,
 }
 
 impl Config {
@@ -30,11 +34,31 @@ mod tests {
         assert!(config.launchers.contains_key("matrix"));
         assert!(config.passthroughs.contains_key("ls"));
         assert!(config.blocks.commands.contains(&"sudo".to_string()));
+        assert!(config.systems.contains_key("snes"));
+        assert!(config.games.contains_key("mario_paint"));
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SystemConfig {
+    pub template: String,
+    pub rom_dir: String,
+}
+
+pub fn default_enabled() -> bool { true }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GameConfig {
+    pub system: String,
+    pub rom: String,
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LauncherConfig {
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
     pub binary: Option<String>,
     pub pane: String,
     pub lolcat: LolcatMode,
@@ -48,6 +72,7 @@ pub struct LauncherConfig {
 impl Default for LauncherConfig {
     fn default() -> Self {
         Self {
+            enabled: true,
             binary: None,
             pane: "none".to_string(),
             lolcat: LolcatMode::default(),
@@ -136,6 +161,42 @@ lolcat = "never"
 persist = false
 gui = true
 
+[systems.apple2gs]
+template = "mame apple2gs -rompath {rom_dir} -skip_gameinfo -nowindow -flop3 {rom_path}"
+rom_dir = "/kid/emulation/disks/apple2gs"
+
+[systems.snes]
+template = "retroarch -L /usr/lib/*/libretro/bsnes_mercury_performance_libretro.so --config /home/kid/.config/retroarch/retroarch.cfg {rom_path}"
+rom_dir = "/kid/emulation/disks/snes"
+
+[systems.snes-mouse]
+template = "retroarch -L /usr/lib/*/libretro/bsnes_mercury_performance_libretro.so --config /home/kid/.config/retroarch/retroarch.cfg --appendconfig /home/kid/.config/retroarch/mouse.cfg {rom_path}"
+rom_dir = "/kid/emulation/disks/snes"
+
+[games.num_munchers]
+system = "apple2gs"
+rom = "num_munchers.woz"
+
+[games.word_munchers]
+system = "apple2gs"
+rom = "word_munchers.woz"
+
+[games.fraction_munchers]
+system = "apple2gs"
+rom = "fraction_munchers.woz"
+
+[games.oregon]
+system = "apple2gs"
+rom = "oregon.woz"
+
+[games.odell]
+system = "apple2gs"
+rom = "odell.woz"
+
+[games.mario_paint]
+system = "snes-mouse"
+rom = "mario_paint.sfc"
+
 [launchers.gcompris]
 binary = "gcompris-qt"
 pane = "none"
@@ -149,6 +210,7 @@ pane = "none"
 lolcat = "never"
 persist = false
 gui = true
+enabled = false
 
 [launchers.tuxmath]
 binary = "tuxmath"

@@ -18,6 +18,9 @@ PACKAGES=(
   "foot"
   "fonts-noto-cjk"
   "fonts-font-awesome"
+  "mame"
+  "retroarch"
+  "libretro-bsnes-mercury-performance"
 )
 
 # Decide on Docker package

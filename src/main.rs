@@ -223,10 +223,33 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Launch { name, args }) => {
             let config_dir = config::get_config_dir()?;
             let commands_config = config::commands::Config::load(config_dir.join("commands.toml"))?;
+            
             if let Some(launcher) = commands_config.launchers.get(&name) {
+                if !launcher.enabled {
+                    return Err(anyhow::anyhow!("Command '{}' is currently disabled.", name));
+                }
                 commands::launch::run(&name, launcher, &args).await
+            } else if let Some(game) = commands_config.games.get(&name) {
+                if !game.enabled {
+                    return Err(anyhow::anyhow!("Game '{}' is currently disabled.", name));
+                }
+                if let Some(system) = commands_config.systems.get(&game.system) {
+                    let rom_path = format!("{}/{}", system.rom_dir, game.rom);
+                    let binary = system.template
+                        .replace("{rom_dir}", &system.rom_dir)
+                        .replace("{rom_path}", &rom_path);
+
+                    let mut launcher = config::commands::LauncherConfig::default();
+                    launcher.binary = Some(binary);
+                    launcher.gui = true;
+                    launcher.pane = "none".to_string();
+                    
+                    commands::launch::run(&name, &launcher, &args).await
+                } else {
+                    Err(anyhow::anyhow!("System '{}' not found for game '{}'", game.system, name))
+                }
             } else {
-                Err(anyhow::anyhow!("Application '{}' is not registered in the launchers config.", name))
+                Err(anyhow::anyhow!("Application '{}' is not registered in the launchers or games config.", name))
             }
         }
         None => {

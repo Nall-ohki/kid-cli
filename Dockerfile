@@ -25,6 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     zsh tmux cage foot kbd xwayland git curl ca-certificates sudo gnupg \
     tuxpaint klettres gcompris-qt tuxmath tuxtype scratch xvfb x11vnc qtwayland5 \
+    mame retroarch libretro-bsnes-mercury-performance \
     sl cowsay figlet nyancat cmatrix lolcat \
     vim less file libgl1-mesa-dri rsync \
     locales procps \
@@ -53,7 +54,8 @@ RUN getent group render || groupadd render \
     && useradd -m -s /bin/zsh -c "Kid User" kid \
     && usermod -aG render,video,tty,input kid \
     && echo "kid ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kid \
-    && mkdir -p /kid/bin /kid/wrap/bin /kid/allow/bin /kid/tools /kid/restricted/bin
+    && mkdir -p /kid/bin /kid/wrap/bin /kid/allow/bin /kid/tools /kid/restricted/bin /kid/emulation/disks \
+    && chown kid:kid /kid/emulation/disks
 
 USER kid
 WORKDIR /home/kid
@@ -61,6 +63,9 @@ WORKDIR /home/kid
 # Layer 4: Configuration Migration (Move to hidden .config/zsh)
 RUN mkdir -p /home/kid/.config/zsh
 COPY --chown=kid:kid config/ /home/kid/.config/zsh/
+
+# Layer 5: Assets and ROMs
+COPY --chown=kid:kid assets/roms/ /kid/emulation/disks/
 
 # Layer 7: Final Assembly & Hardening
 USER root

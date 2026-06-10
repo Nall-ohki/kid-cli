@@ -8,6 +8,7 @@ services:
     volumes:
       # Bind mount for creations in the host user's home directory
       - ${KID_CREATIONS_DIR:-./creations}:/home/kid/creations
+      - ~/pers/roms:/kid/emulation/disks
       # Named volumes for saving progress and history
       - tuxpaint-data:/home/kid/.tuxpaint
       - gcompris-data:/home/kid/.config/gcompris

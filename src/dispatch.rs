@@ -38,7 +38,32 @@ pub async fn handle_busybox(full_name: &str, args: &[String]) -> Result<()> {
 
     // B. Launchers (TOML)
     if let Some(launcher) = commands_config.launchers.get(name) {
+        if !launcher.enabled {
+            return Err(anyhow::anyhow!("Command '{}' is currently disabled.", name));
+        }
         return commands::launch::run(name, launcher, args).await;
+    }
+
+    // B2. Games (TOML)
+    if let Some(game) = commands_config.games.get(name) {
+        if !game.enabled {
+            return Err(anyhow::anyhow!("Game '{}' is currently disabled.", name));
+        }
+        if let Some(system) = commands_config.systems.get(&game.system) {
+            let rom_path = format!("{}/{}", system.rom_dir, game.rom);
+            let binary = system.template
+                .replace("{rom_dir}", &system.rom_dir)
+                .replace("{rom_path}", &rom_path);
+
+            let mut launcher = config::commands::LauncherConfig::default();
+            launcher.binary = Some(binary);
+            launcher.gui = true;
+            launcher.pane = "none".to_string();
+            
+            return commands::launch::run(name, &launcher, args).await;
+        } else {
+            return Err(anyhow::anyhow!("System '{}' not found for game '{}'", game.system, name));
+        }
     }
 
     // C. Passthroughs (TOML)
