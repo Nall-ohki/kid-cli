@@ -1,5 +1,5 @@
 use evdev::{Device, KeyCode, EventSummary};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use std::path::Path;
 use tokio::time::sleep;
 
@@ -22,7 +22,7 @@ pub async fn monitor_inputs() {
                             devices.push(device);
                         }
                     }
-                    Err(e) => {
+                    Err(_) => {
                         // Could be permission denied
                         // println!("Failed to open {}: {}", path_str, e);
                     }
