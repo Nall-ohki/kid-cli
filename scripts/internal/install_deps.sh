@@ -18,6 +18,7 @@ PACKAGES=(
   "foot"
   "fonts-noto-cjk"
   "fonts-font-awesome"
+  "fonts-noto-color-emoji"
   "mame"
   "retroarch"
   "libretro-bsnes-mercury-performance"

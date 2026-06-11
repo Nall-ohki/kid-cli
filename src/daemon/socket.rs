@@ -19,6 +19,7 @@ pub async fn listen(primary_pane_id: String) -> Result<()> {
     println!("Listening on Unix socket: {:?}", socket_path);
 
     let engine = engine::Engine::new(primary_pane_id);
+    engine.spawn_idle_loop();
 
     loop {
         match listener.accept().await {

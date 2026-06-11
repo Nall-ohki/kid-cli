@@ -68,7 +68,7 @@ def test_dir_007c_kid_binary_exists(run_in_kid_env):
     assert rc == 0
 
 def test_dir_008_tools_exists(run_in_kid_env):
-    rc, out, err = run_in_kid_env("test -d /home/kid/tools")
+    rc, out, err = run_in_kid_env("test -d /home/kid/.tools")
     assert rc == 0
 
 def test_dir_009_no_legacy_category_dirs(run_in_kid_env):

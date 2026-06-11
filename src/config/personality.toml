@@ -1,0 +1,413 @@
+# ── Timing ──────────────────────────────────────────────────────
+[timing]
+idle_threshold_secs   = 60
+sleep_threshold_secs  = 90
+message_cooldown_secs = 30
+mood_decay_secs       = 200
+
+# ── Mood ────────────────────────────────────────────────────────
+[mood]
+default = "neutral"
+options = ["energetic", "neutral", "sympathetic", "sleepy", "bored"]
+
+# ── Idle Chatter ────────────────────────────────────────────────
+
+[[rules]]
+trigger = "idle"
+conditions = { mood = "neutral" }
+responses = [
+  "It's quiet in here... type 'ls' if you want to look around!",
+  "I'm getting bored! Try typing 'help' to see what we can do.",
+  "Did you know? Computers count starting from zero. Weird, right?",
+  "Hey! You can type 'cal' to see a calendar. Try it!",
+  "I wonder what's in the 'apps' folder... you could type 'cd apps'!",
+  "Fun fact: The first computer bug was a real moth stuck in a machine! 🦟",
+  "Type 'whoami' to see what the computer calls you!",
+  "You know what's cool? Try 'echo hello' and watch what happens!",
+]
+set_mood = "bored"
+
+[[rules]]
+trigger = "idle"
+conditions = { mood = "bored" }
+responses = [
+  "Helloooo? Is anyone there? 👀",
+  "I've been sitting here so long I forgot what a command looks like.",
+  "*taps hoof impatiently*",
+  "If you type something, I promise I won't judge. Probably.",
+  "I spy with my little eye... a blinking cursor.",
+]
+
+[[rules]]
+trigger = "sleep"
+responses = [
+  "zZzZz... 💤",
+  "*snore* ...moo... *snore*",
+  "zZz... dreaming of electric sheep... zZz",
+]
+set_mood = "sleepy"
+
+[[rules]]
+trigger = "wake"
+conditions = { mood = "sleepy" }
+responses = [
+  "Huh? Wha? Oh! You're back! I was having a great dream about a meadow. 🌻",
+  "*yawn* Welcome back! I was just resting my eyes, honest!",
+  "I'm awake! I'm awake! ...how long was I out? 😴",
+]
+set_mood = "neutral"
+
+[[rules]]
+trigger = "wake"
+conditions = { mood = "bored" }
+responses = [
+  "Finally! I thought you'd never come back!",
+  "Oh! A command! I was starting to forget what those look like.",
+  "You're here! Quick, type something before I fall asleep again!",
+]
+set_mood = "neutral"
+
+# ── Time-of-Day Awareness ──────────────────────────────────────
+
+[[rules]]
+trigger = "time:06:00-09:00"
+conditions = { chance = 0.3 }
+responses = [
+  "Good morning! ☀️ Ready for a new day of exploring?",
+  "Rise and shine! What shall we discover today?",
+  "Morning! The computer has been waiting for you!",
+]
+
+[[rules]]
+trigger = "time:12:00-13:00"
+conditions = { chance = 0.2 }
+responses = [
+  "Lunchtime! 🍕 ...I mean, for you. I eat bytes.",
+  "Is it lunch already? Time flies when you're computing!",
+]
+
+[[rules]]
+trigger = "time:20:00-23:59"
+conditions = { chance = 0.3 }
+responses = [
+  "It's getting late! Maybe time to wrap up soon? 🌙",
+  "The moon is out... shouldn't you be heading to bed?",
+  "Even computers need rest sometimes!",
+]
+
+# ── Error Handling ──────────────────────────────────────────────
+
+[[rules]]
+trigger = "error"
+conditions = { chance = 0.6 }
+responses = [
+  "Oops! That didn't work. Don't worry, everyone makes mistakes!",
+  "Hmm, that command wasn't happy. Try 'help' if you're stuck!",
+  "That's OK! Even expert programmers get errors all the time.",
+  "No worries! Try 'ls' to see what's around, or 'help' for ideas.",
+]
+
+[[rules]]
+trigger = "error_streak"
+conditions = { streak = 3 }
+responses = [
+  "Hey, looks like things are being tricky. Want to try 'help'?",
+  "Three in a row! Sometimes it helps to try 'ls' and see what's around.",
+  "Don't give up! Type 'help' and I'll show you what commands work here.",
+]
+set_mood = "sympathetic"
+
+# ── Energetic Mood ──────────────────────────────────────────────
+
+[[rules]]
+trigger = "random"
+conditions = { mood = "energetic", chance = 0.15 }
+responses = [
+  "You're on a roll! 🔥",
+  "Look at you go! Command after command!",
+  "Speedy! You're getting really good at this!",
+  "Someone's been practicing!",
+]
+
+[[rules]]
+trigger = "random"
+conditions = { mood = "sympathetic", chance = 0.1 }
+responses = [
+  "Remember, you can always type 'help' if you need ideas!",
+  "Take your time, there's no rush. 🌸",
+]
+
+# ── Milestones (high priority — before exec: rules) ────────────
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 1 }
+responses = ["First time using `{cmd}`! How exciting! ✨"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 5 }
+responses = ["You've used `{cmd}` 5 times now! Getting the hang of it? 👍"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 10 }
+responses = ["Double digits! `{cmd}` count is at {count}! 🚀"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 25 }
+responses = ["Quarter century! You've run `{cmd}` {count} times!"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 50 }
+responses = ["`{cmd}` is becoming a real habit! {count} times! 🏗️"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 100 }
+responses = ["💯! You've used `{cmd}` {count} times! You're a pro!"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 500 }
+responses = ["500 uses of `{cmd}`! You're an absolute master! 🏆"]
+
+[[rules]]
+trigger = "milestone"
+conditions = { min_count = 1000 }
+responses = ["🌋 1,000! You've used `{cmd}` a thousand times! Legend!"]
+
+# ── Absence (high priority — before exec: rules) ───────────────
+
+[[rules]]
+trigger = "absence"
+conditions = { after_days = 7 }
+responses = [
+  "A whole week without `{cmd}`! Did you miss it?",
+  "It's been {days} days since you used `{cmd}`! Welcome back to it! 👋",
+]
+
+# ── Contextual: Directory Reactions ─────────────────────────────
+
+[[rules]]
+trigger = "cd:~"
+responses = [
+  "Home sweet home! 🏠",
+  "Back to base! Everything starts here.",
+  "Welcome home! Type 'ls' to see what's here.",
+]
+
+[[rules]]
+trigger = "cd:*/apps"
+responses = [
+  "The app folder! Lots of fun things to try in here. Type 'ls'!",
+  "Ooh, apps! I wonder which one you'll pick today!",
+]
+
+[[rules]]
+trigger = "cd:*/apps/gcompris"
+responses = [
+  "GCompris! It has tons of learning games inside. Type 'gcompris' to start! 🎮",
+]
+
+[[rules]]
+trigger = "cd:*/apps/tuxpaint"
+responses = [
+  "Tux Paint! You can draw anything you want! Type 'tuxpaint' to start! 🎨",
+]
+
+[[rules]]
+trigger = "cd:*/creations"
+responses = [
+  "Your creations folder! Everything you make gets saved here. ✨",
+  "This is YOUR space. All your work lives here!",
+]
+
+[[rules]]
+trigger = "cd:*/emulation"
+responses = [
+  "The emulation zone! Old-school games live here. 🕹️",
+  "Retro games! Some of these are older than your parents!",
+]
+
+# ── Contextual: Command Reactions ───────────────────────────────
+
+[[rules]]
+trigger = "exec:clear"
+conditions = { chance = 0.5 }
+responses = [
+  "Ahhh, much better. I love a clean screen! ✨",
+  "Squeaky clean!",
+  "Fresh start! The screen is all yours.",
+]
+
+[[rules]]
+trigger = "exec:ls"
+conditions = { chance = 0.15 }
+responses = [
+  "Looking around! Folders are usually blue — you can 'cd' into them.",
+  "Good idea! Always good to see what's here.",
+]
+
+[[rules]]
+trigger = "exec:cal"
+conditions = { chance = 0.5 }
+responses = [
+  "A calendar! Can you find today's date?",
+  "Time flies when you're having fun with computers! 📅",
+]
+
+[[rules]]
+trigger = "exec:rm"
+conditions = { chance = 0.7 }
+responses = [
+  "Nom nom nom... that data was tasty. 🍽️",
+  "Poof! Gone! Make sure you meant to do that!",
+  "Deleting stuff? Bold move!",
+]
+
+[[rules]]
+trigger = "exec:cat"
+conditions = { chance = 0.3 }
+responses = [
+  "Let's see what's inside!",
+  "Reading files is like opening presents! 📖",
+]
+
+[[rules]]
+trigger = "exec:echo"
+conditions = { chance = 0.3 }
+responses = [
+  "Echo! Echo! ...echo... 🗣️",
+  "The computer is repeating after you!",
+]
+
+[[rules]]
+trigger = "exec:date"
+conditions = { chance = 0.5 }
+responses = [
+  "Time check! ⏰",
+  "Did you know computers track time down to the nanosecond?",
+]
+
+[[rules]]
+trigger = "exec:whoami"
+conditions = { chance = 0.5 }
+responses = [
+  "You're you, of course! But the computer knows you by your username. 🤔",
+  "That's a deep question. The computer has an answer though!",
+]
+
+[[rules]]
+trigger = "exec:pwd"
+conditions = { chance = 0.4 }
+responses = [
+  "Where are we? Let's find out!",
+  "Lost? This command always knows where you are! 🧭",
+]
+
+[[rules]]
+trigger = "exec:nano"
+conditions = { chance = 0.5 }
+responses = [
+  "Editing a file! Press Ctrl+X when you're done. 📝",
+  "You're writing! The computer is your notebook now.",
+]
+
+[[rules]]
+trigger = "exec:head"
+conditions = { chance = 0.3 }
+responses = [
+  "Just the beginning! Like reading the first page of a book.",
+]
+
+[[rules]]
+trigger = "exec:tail"
+conditions = { chance = 0.3 }
+responses = [
+  "Skipping to the end! Spoiler alert! 📖",
+]
+
+[[rules]]
+trigger = "exec:wc"
+conditions = { chance = 0.4 }
+responses = [
+  "Counting words! The computer is great at counting.",
+]
+
+[[rules]]
+trigger = "exec:grep"
+conditions = { chance = 0.3 }
+responses = [
+  "Searching! Like a detective looking for clues! 🔍",
+]
+
+[[rules]]
+trigger = "exec:mkdir"
+conditions = { chance = 0.5 }
+responses = [
+  "Making a new folder! A fresh place to put things. 📁",
+  "Building! Every folder is like a new room in your digital house.",
+]
+
+[[rules]]
+trigger = "exec:touch"
+conditions = { chance = 0.4 }
+responses = [
+  "Creating a new file! It starts empty — a blank canvas. ✨",
+]
+
+[[rules]]
+trigger = "exec:cp"
+conditions = { chance = 0.3 }
+responses = [
+  "Copy! Now there are two of them!",
+  "Duplicating... computers are great at making copies!",
+]
+
+[[rules]]
+trigger = "exec:mv"
+conditions = { chance = 0.3 }
+responses = [
+  "Moving things around! Like rearranging your room. 🏗️",
+]
+
+# ── App Launch/Stop ─────────────────────────────────────────────
+
+[[rules]]
+trigger = "app_start:gcompris"
+responses = [
+  "GCompris time! Have fun with the games! 🎮",
+  "Learning AND having fun? That's the best combo!",
+]
+
+[[rules]]
+trigger = "app_start:tuxpaint"
+responses = [
+  "Art time! Make something beautiful! 🎨",
+  "Tux Paint! I bet you'll make something amazing!",
+]
+
+[[rules]]
+trigger = "app_start:tuxmath"
+responses = [
+  "Math time! You've got this! 🧮",
+  "Numbers! Show those math problems who's boss!",
+]
+
+[[rules]]
+trigger = "app_start:tuxtype"
+responses = [
+  "Typing practice! Speed and accuracy! ⌨️",
+  "Let's see those fingers fly!",
+]
+
+[[rules]]
+trigger = "app_stop"
+responses = [
+  "Welcome back! How was it?",
+  "You're back! Ready for more adventures?",
+  "Back to the command line! What's next?",
+]

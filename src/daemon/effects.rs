@@ -4,6 +4,16 @@ use crate::config::messages::Config;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+/// Primary message delivery — used by the personality system.
+/// Sends a message with mood metadata to the companion pane.
+/// The companion parses "MOOD:<mood>:<message>" to style the speech bubble.
+pub async fn show_companion_message(text: &str, mood: &str) -> Result<()> {
+    let formatted = format!("MOOD:{}:{}", mood, text);
+    pane::show_message(&formatted).await
+}
+
+/// Legacy: trigger a greeting message based on cwd context.
+/// Kept for backward compatibility during personality migration.
 pub async fn trigger_greeting(config: &Config, cwd: &str, insight: Option<String>) -> Result<()> {
     // 0. If we have a contextual brain insight, it takes TOP priority
     if let Some(msg) = insight {
@@ -36,6 +46,8 @@ pub async fn trigger_greeting(config: &Config, cwd: &str, insight: Option<String
     Ok(())
 }
 
+/// Legacy: trigger a discovery message for launcher commands.
+/// Kept for backward compatibility during personality migration.
 pub async fn trigger_discovery(config: &Config, cmd: &str, insight: Option<String>) -> Result<()> {
     // Brain insight takes priority for discovery too
     if let Some(msg) = insight {

@@ -115,11 +115,23 @@ pub async fn monitor_inputs() {
 pub fn execute_kiosk_exit() {
     println!("Panic Hotkey (F12) detected! Executing Kiosk Exit.");
     let targets = ["retroarch", "mame", "gcompris-qt", "scratch", "tuxpaint", "tuxmath", "tuxtype", "klettres"];
+    
+    let mut app_killed = false;
     for target in targets.iter() {
-        let _ = std::process::Command::new("pkill")
+        if let Ok(status) = std::process::Command::new("pkill")
             .arg("-9")
             .arg("-f")
             .arg(target)
-            .status();
+            .status() 
+        {
+            if status.success() {
+                app_killed = true;
+            }
+        }
+    }
+
+    if !app_killed {
+        println!("No apps running, clearing screen.");
+        let _ = crate::commands::validate::clear();
     }
 }

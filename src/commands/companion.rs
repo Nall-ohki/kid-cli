@@ -18,6 +18,61 @@ use crate::characters::{registry::Registry, render, types::CharacterKind};
 
 const WELCOME_MSG: &str = "Hello! I am your AI coach. How can I help you today?";
 
+/// Mood-based color scheme for the speech bubble.
+fn mood_color(mood: &str) -> Color {
+    match mood {
+        "energetic"   => Color::Yellow,
+        "sympathetic"  => Color::LightMagenta,
+        "sleepy"       => Color::DarkGray,
+        "bored"        => Color::Gray,
+        _              => Color::Cyan, // neutral / default
+    }
+}
+
+/// Mood-based flash colors for new message animation.
+fn mood_flash_colors(mood: &str) -> &'static [Color] {
+    match mood {
+        "energetic" => &[
+            Color::Yellow, Color::LightYellow, Color::Red,
+            Color::LightRed, Color::Magenta,
+        ],
+        "sympathetic" => &[
+            Color::LightMagenta, Color::Magenta, Color::LightCyan,
+            Color::Cyan,
+        ],
+        "sleepy" => &[
+            Color::DarkGray, Color::Gray,
+        ],
+        "bored" => &[
+            Color::Gray, Color::DarkGray, Color::White,
+        ],
+        _ => &[ // neutral — rainbow
+            Color::Red, Color::LightRed, Color::Yellow,
+            Color::Green, Color::Cyan, Color::Blue, Color::Magenta,
+        ],
+    }
+}
+
+/// Parse a pipe message that may contain a mood prefix.
+/// Format: "MOOD:<mood>:<message>" or just "<message>"
+fn parse_mood_message(raw: &str) -> (&str, String) {
+    for line in raw.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("MOOD:") {
+            if let Some(colon_pos) = rest.find(':') {
+                let mood = &rest[..colon_pos];
+                let message = rest[colon_pos + 1..].to_string();
+                return (mood, message);
+            }
+        }
+        return ("neutral", line.to_string());
+    }
+    ("neutral", String::new())
+}
+
 pub async fn run() -> Result<()> {
     // Setup terminal
     enable_raw_mode()?;
@@ -56,6 +111,7 @@ pub async fn run() -> Result<()> {
     });
 
     let mut current_msg = WELCOME_MSG.to_string();
+    let mut current_mood = "neutral".to_string();
     let mut tick_count = 0u64;
     let mut last_msg_tick = 0u64;
     let mut sixel_area = Rect::default();
@@ -69,6 +125,9 @@ pub async fn run() -> Result<()> {
         let is_flashing = elapsed < 40; // 2 seconds
         let is_visible = elapsed < timeout_ticks;
         
+        let base_color = mood_color(&current_mood);
+        let flash_colors = mood_flash_colors(&current_mood);
+
         let (bubble_style, connector_style) = if !is_visible || current_msg.is_empty() {
             // Completely hidden
             (Style::default().fg(Color::Black), Some(Style::default().fg(Color::Black)))
@@ -78,15 +137,11 @@ pub async fn run() -> Result<()> {
                 let grey_code = 255 - (progress * 23.0) as u8;
                 Color::Indexed(grey_code)
             } else {
-                Color::Cyan
+                base_color
             };
 
             let border_color = if is_flashing {
-                let rainbow = [
-                    Color::Red, Color::LightRed, Color::Yellow, 
-                    Color::Green, Color::Cyan, Color::Blue, Color::Magenta
-                ];
-                rainbow[(tick_count / 2 % rainbow.len() as u64) as usize]
+                flash_colors[(tick_count / 2 % flash_colors.len() as u64) as usize]
             } else {
                 fade_color
             };
@@ -186,8 +241,11 @@ pub async fn run() -> Result<()> {
         while let Ok(new_msg) = rx.try_recv() {
             if new_msg == "COMMAND:RESET" {
                 current_msg = WELCOME_MSG.to_string();
+                current_mood = "neutral".to_string();
             } else {
-                current_msg = new_msg;
+                let (mood, message) = parse_mood_message(&new_msg);
+                current_mood = mood.to_string();
+                current_msg = message;
             }
             last_msg_tick = tick_count; // Trigger flash
         }
@@ -216,4 +274,3 @@ pub async fn run() -> Result<()> {
 
     Ok(())
 }
-

@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod daemon;
 pub mod messages;
+pub mod personality;
 
 use std::fs;
 use std::path::PathBuf;

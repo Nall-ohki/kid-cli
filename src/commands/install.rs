@@ -41,9 +41,19 @@ fn is_inside_infrastructure() -> bool {
 fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
     let home = home::home_dir().context("Could not get home directory")?;
     
+    let old_tools = home.join("tools");
+    let new_tools = home.join(".tools");
+    if old_tools.exists() && !new_tools.exists() {
+        if let Err(e) = fs::rename(&old_tools, &new_tools) {
+            styled_message(MessageLevel::Error, &format!("Failed to migrate tools to .tools: {}", e));
+        } else {
+            styled_message(MessageLevel::Ok, "Migrated tools to .tools");
+        }
+    }
+    
     let dirs = [
         "apps",
-        "tools",
+        ".tools",
         "creations/pictures",
         "creations/programs",
         "creations/games",

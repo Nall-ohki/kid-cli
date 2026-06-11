@@ -4,7 +4,7 @@ pub mod engine;
 pub mod state;
 pub mod effects;
 pub mod stats;
-pub mod brain;
+pub mod personality;
 pub mod input;
 
 use std::fs;
