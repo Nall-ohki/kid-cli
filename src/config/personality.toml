@@ -1,9 +1,9 @@
 # ── Timing ──────────────────────────────────────────────────────
 [timing]
-idle_threshold_secs   = 60
-sleep_threshold_secs  = 90
-message_cooldown_secs = 30
-mood_decay_secs       = 200
+idle_threshold_secs = 15
+sleep_threshold_secs = 40
+message_cooldown_secs = 5
+mood_decay_secs = 30
 
 # ── Mood ────────────────────────────────────────────────────────
 [mood]
@@ -319,30 +319,22 @@ responses = [
 [[rules]]
 trigger = "exec:head"
 conditions = { chance = 0.3 }
-responses = [
-  "Just the beginning! Like reading the first page of a book.",
-]
+responses = ["Just the beginning! Like reading the first page of a book."]
 
 [[rules]]
 trigger = "exec:tail"
 conditions = { chance = 0.3 }
-responses = [
-  "Skipping to the end! Spoiler alert! 📖",
-]
+responses = ["Skipping to the end! Spoiler alert! 📖"]
 
 [[rules]]
 trigger = "exec:wc"
 conditions = { chance = 0.4 }
-responses = [
-  "Counting words! The computer is great at counting.",
-]
+responses = ["Counting words! The computer is great at counting."]
 
 [[rules]]
 trigger = "exec:grep"
 conditions = { chance = 0.3 }
-responses = [
-  "Searching! Like a detective looking for clues! 🔍",
-]
+responses = ["Searching! Like a detective looking for clues! 🔍"]
 
 [[rules]]
 trigger = "exec:mkdir"
@@ -355,9 +347,7 @@ responses = [
 [[rules]]
 trigger = "exec:touch"
 conditions = { chance = 0.4 }
-responses = [
-  "Creating a new file! It starts empty — a blank canvas. ✨",
-]
+responses = ["Creating a new file! It starts empty — a blank canvas. ✨"]
 
 [[rules]]
 trigger = "exec:cp"
@@ -370,9 +360,7 @@ responses = [
 [[rules]]
 trigger = "exec:mv"
 conditions = { chance = 0.3 }
-responses = [
-  "Moving things around! Like rearranging your room. 🏗️",
-]
+responses = ["Moving things around! Like rearranging your room. 🏗️"]
 
 # ── App Launch/Stop ─────────────────────────────────────────────
 

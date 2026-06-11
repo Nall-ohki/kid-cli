@@ -88,6 +88,21 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
         symlink(&target_tmux, &tmux_conf)?;
         styled_message(MessageLevel::Ok, "Linked ~/.tmux.conf");
     }
+
+    let target_foot = config_zsh.join("foot.ini");
+    if target_foot.exists() {
+        let config_foot = home.join(".config/foot");
+        if !config_foot.exists() {
+            fs::create_dir_all(&config_foot)?;
+        }
+        let foot_ini = config_foot.join("foot.ini");
+        if foot_ini.exists() || foot_ini.is_symlink() {
+            fs::remove_file(&foot_ini)?;
+        }
+        symlink(&target_foot, &foot_ini)?;
+        styled_message(MessageLevel::Ok, "Linked ~/.config/foot/foot.ini");
+    }
+
     install_apps(&home, commands_config)?;
     configure_mame(&home)?;
     configure_retroarch(&home)?;

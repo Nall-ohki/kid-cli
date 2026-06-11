@@ -41,6 +41,13 @@ RUN install -m 0755 -d /etc/apt/keyrings \
     && apt-get update && apt-get install -y --no-install-recommends docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
+# Layer 1.6: Install Custom Font (Comic Shanns Mono)
+RUN git clone --depth 1 https://github.com/jesusmgg/comic-shanns-mono.git /tmp/comic-shanns-mono \
+    && mkdir -p /usr/share/fonts/truetype/comic-shanns-mono \
+    && cp /tmp/comic-shanns-mono/fonts/*.ttf /usr/share/fonts/truetype/comic-shanns-mono/ \
+    && rm -rf /tmp/comic-shanns-mono \
+    && fc-cache -fv
+
 # Layer 2: Environment Setup & UV
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
