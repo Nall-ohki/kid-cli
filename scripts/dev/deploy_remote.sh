@@ -6,6 +6,7 @@ set -e
 
 PI_HOST=$1
 FLAG=$2
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 if [ -z "$PI_HOST" ]; then
     echo "Usage: $0 <pi_hostname_or_ip> [--full]"
@@ -49,6 +50,9 @@ git push
 # 2. Handle Full Docker Sync
 IMAGE_FLAG=""
 if [[ "$FLAG" == "--full" ]]; then
+    # Ensure Docker is running (macOS health check and auto-start, non-blocking)
+    "$SCRIPT_DIR/ensure_docker.sh" || true
+
     echo "--- [FULL] Building and Exporting Docker Image (Slow) ---"
     docker build -t kid-cli-kid:latest .
     docker save kid-cli-kid:latest | gzip > kid-env.tar.gz

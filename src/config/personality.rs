@@ -66,7 +66,7 @@ mod tests {
     fn test_parse_default_config() {
         let toml_str = get_default_toml();
         let config: Config = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.timing.idle_threshold_secs, 60);
+        assert_eq!(config.timing.idle_threshold_secs, 15);
         assert_eq!(config.mood.default, "neutral");
         assert!(!config.rules.is_empty());
         

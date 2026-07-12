@@ -6,6 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The project root is one level up from scripts/
 KID_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Ensure Docker is running (macOS health check and auto-start, non-blocking)
+"$SCRIPT_DIR/dev/ensure_docker.sh" || true
+
 echo "=== Ensuring kid-env:latest is up to date ==="
 DOCKER_BUILDKIT=1 docker build -t kid-env:latest "$KID_DIR"
 

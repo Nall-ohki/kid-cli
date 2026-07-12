@@ -6,6 +6,9 @@ echo "=== Starting Full Killapp Test ==="
 # Make sure we're in the right directory
 cd "$(dirname "$0")/../.."
 
+# Ensure Docker is running (macOS health check and auto-start, non-blocking)
+./scripts/dev/ensure_docker.sh || true
+
 # 1. Start a long-running app (e.g. sleep or a specific mock app)
 echo "Starting mock target app (klettres)..."
 docker exec -d kid-host-sim bash -c "exec -a klettres sleep 1000"

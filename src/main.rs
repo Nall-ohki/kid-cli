@@ -71,6 +71,8 @@ enum Commands {
         #[arg(last = true)]
         args: Vec<String>,
     },
+    /// Run companion personality scenario simulations (Scenario Runner TUI)
+    Scenarios,
 
     /// Administrative commands for system management (Requires Sudo)
     Admin {
@@ -221,6 +223,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Characters) => {
             commands::characters::run().await
+        }
+        Some(Commands::Scenarios) => {
+            commands::scenarios::run().await
         }
         Some(Commands::Panic) => {
             crate::daemon::input::execute_kiosk_exit();

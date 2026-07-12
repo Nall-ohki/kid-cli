@@ -9,6 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$ROOT_DIR"
 
+# Ensure Docker is running (macOS health check and auto-start, non-blocking)
+"$SCRIPT_DIR/ensure_docker.sh" || true
+
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.sim.yml"
 COMPOSE_CMD="docker compose -f $COMPOSE_FILE"
 

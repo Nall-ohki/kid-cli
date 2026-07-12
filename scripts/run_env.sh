@@ -6,6 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The project root is one level up from scripts/
 KID_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Ensure Docker is running (macOS health check and auto-start, non-blocking)
+"$SCRIPT_DIR/dev/ensure_docker.sh" || true
+
 # Parse arguments
 BUILD_ONLY=false
 if [[ "$1" == "--build-only" ]]; then
