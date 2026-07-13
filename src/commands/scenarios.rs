@@ -796,7 +796,7 @@ fn evaluate_rules(
     config: &PersonalityConfig,
 ) -> Option<(String, Option<String>)> {
     let cooldown = config.timing.message_cooldown_secs as f64;
-    if event_type != "app_start" && event_type != "app_stop"
+    if event_type != "app_start" && event_type != "app_stop" && event_type != "session_start"
         && (state.current_time - state.last_message_time) < cooldown
     {
         return None;
@@ -807,6 +807,11 @@ fn evaluate_rules(
         let mut trigger_matched = false;
 
         match event_type {
+            "session_start" => {
+                if trigger == "session_start" {
+                    trigger_matched = true;
+                }
+            }
             "idle" => {
                 if trigger == "idle" {
                     trigger_matched = true;
@@ -976,6 +981,29 @@ fn run_scenario(
     let mut in_app_duration = 0.0;
     let mut interjection_times = Vec::new();
     let mut logs = Vec::new();
+
+    // Trigger session start welcome message!
+    logs.push(LogEntry {
+        time: 0.0,
+        kind: LogKind::System,
+        text: "System: Session started".to_string(),
+        mood: state.mood.clone(),
+    });
+    if let Some((msg, set_mood)) = evaluate_rules("session_start", None, &state, config) {
+        triggered_interjections += 1;
+        interjection_times.push(0.0);
+        state.last_message_time = 0.0;
+        if let Some(m) = set_mood {
+            state.mood = m;
+            state.mood_last_set = 0.0;
+        }
+        logs.push(LogEntry {
+            time: 0.0,
+            kind: LogKind::Speech,
+            text: msg,
+            mood: state.mood.clone(),
+        });
+    }
 
     for event in &scenario.events {
         match event {
@@ -1627,5 +1655,323 @@ fn get_scenarios() -> Vec<Scenario> {
                 SimulatedEvent::Cmd("clear", "/home/kid"),
             ],
         },
+        Scenario {
+            name: "Curious Explorer",
+            description: "Navigating deep into folders, creating directories, listing files, some idle time.",
+            events: vec![
+                SimulatedEvent::Cmd("pwd", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Cmd("mkdir homework", "/home/kid/creations"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("cd homework", "/home/kid/creations/homework"),
+                SimulatedEvent::Cmd("touch math.txt", "/home/kid/creations/homework"),
+                SimulatedEvent::Idle(15),
+                SimulatedEvent::Cmd("ls", "/home/kid/creations/homework"),
+            ],
+        },
+        Scenario {
+            name: "Math Champion Challenge",
+            description: "Opening tuxmath, playing for a while, stopping, listing creations, repeating.",
+            events: vec![
+                SimulatedEvent::Cmd("tuxmath", "/home/kid"),
+                SimulatedEvent::AppStart("tuxmath", "/home/kid"),
+                SimulatedEvent::Idle(100),
+                SimulatedEvent::AppStop("tuxmath", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Cmd("ls", "/home/kid/creations"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("tuxmath", "/home/kid/creations"),
+                SimulatedEvent::AppStart("tuxmath", "/home/kid/creations"),
+                SimulatedEvent::Idle(80),
+                SimulatedEvent::AppStop("tuxmath", "/home/kid/creations"),
+            ],
+        },
+        Scenario {
+            name: "The Slow Typist",
+            description: "Practicing tuxtype with slow commands, practicing touch/nano in between.",
+            events: vec![
+                SimulatedEvent::Cmd("tuxtype", "/home/kid"),
+                SimulatedEvent::AppStart("tuxtype", "/home/kid"),
+                SimulatedEvent::Idle(200),
+                SimulatedEvent::AppStop("tuxtype", "/home/kid"),
+                SimulatedEvent::Idle(30),
+                SimulatedEvent::Cmd("touch practice.txt", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("nano practice.txt", "/home/kid"),
+                SimulatedEvent::AppStart("nano", "/home/kid"),
+                SimulatedEvent::Idle(120),
+                SimulatedEvent::AppStop("nano", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Art & Clean Up",
+            description: "Creating multiple files in creations, moving them, cleaning up with rm, checking with ls.",
+            events: vec![
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Cmd("touch art1.txt", "/home/kid/creations"),
+                SimulatedEvent::Cmd("touch art2.txt", "/home/kid/creations"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("mkdir old_art", "/home/kid/creations"),
+                SimulatedEvent::Cmd("mv art1.txt old_art", "/home/kid/creations"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("rm art2.txt", "/home/kid/creations"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("ls", "/home/kid/creations"),
+            ],
+        },
+        Scenario {
+            name: "Calculator Experiment",
+            description: "Repeatedly calling cal and date to track time, checking directory.",
+            events: vec![
+                SimulatedEvent::Cmd("date", "/home/kid"),
+                SimulatedEvent::Idle(4),
+                SimulatedEvent::Cmd("cal", "/home/kid"),
+                SimulatedEvent::Idle(4),
+                SimulatedEvent::Cmd("date", "/home/kid"),
+                SimulatedEvent::Idle(20),
+                SimulatedEvent::Cmd("ls", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "The Lost Programmer",
+            description: "Error streak of 4, finally cd-ing home, then run whoami and help.",
+            events: vec![
+                SimulatedEvent::Error("cdd", "/home/kid"),
+                SimulatedEvent::Idle(2),
+                SimulatedEvent::Error("lss", "/home/kid"),
+                SimulatedEvent::Idle(3),
+                SimulatedEvent::Error("mkdirr", "/home/kid"),
+                SimulatedEvent::Idle(4),
+                SimulatedEvent::Error("helpp", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("cd ~", "/home/kid"),
+                SimulatedEvent::Cmd("whoami", "/home/kid"),
+                SimulatedEvent::Cmd("help", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Persistent Painter",
+            description: "Tuxpaint started multiple times, with small idle pauses between sessions.",
+            events: vec![
+                SimulatedEvent::Cmd("tuxpaint", "/home/kid"),
+                SimulatedEvent::AppStart("tuxpaint", "/home/kid"),
+                SimulatedEvent::Idle(90),
+                SimulatedEvent::AppStop("tuxpaint", "/home/kid"),
+                SimulatedEvent::Idle(8),
+                SimulatedEvent::Cmd("tuxpaint", "/home/kid"),
+                SimulatedEvent::AppStart("tuxpaint", "/home/kid"),
+                SimulatedEvent::Idle(120),
+                SimulatedEvent::AppStop("tuxpaint", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Brief GCompris Session",
+            description: "Fast startup and shutdown of gcompris, checking creations, logging off.",
+            events: vec![
+                SimulatedEvent::Cmd("gcompris", "/home/kid"),
+                SimulatedEvent::AppStart("gcompris", "/home/kid"),
+                SimulatedEvent::Idle(40),
+                SimulatedEvent::AppStop("gcompris", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Cmd("ls", "/home/kid/creations"),
+            ],
+        },
+        Scenario {
+            name: "Word Counter",
+            description: "Using touch, echo, cat, head, tail, and wc to check text files.",
+            events: vec![
+                SimulatedEvent::Cmd("touch notes.txt", "/home/kid"),
+                SimulatedEvent::Cmd("echo one two three > notes.txt", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("cat notes.txt", "/home/kid"),
+                SimulatedEvent::Cmd("head notes.txt", "/home/kid"),
+                SimulatedEvent::Cmd("tail notes.txt", "/home/kid"),
+                SimulatedEvent::Cmd("wc notes.txt", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Detective Mode",
+            description: "Using grep and cat to find things, cd-ing between directories, running help.",
+            events: vec![
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Cmd("grep homework math.txt", "/home/kid/creations"),
+                SimulatedEvent::Idle(8),
+                SimulatedEvent::Cmd("cd ..", "/home/kid"),
+                SimulatedEvent::Cmd("help", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Multi-App Marathon",
+            description: "Starting tuxpaint, tuxmath, tuxtype, and gcompris in sequence with idle times.",
+            events: vec![
+                SimulatedEvent::Cmd("tuxpaint", "/home/kid"),
+                SimulatedEvent::AppStart("tuxpaint", "/home/kid"),
+                SimulatedEvent::Idle(60),
+                SimulatedEvent::AppStop("tuxpaint", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("tuxmath", "/home/kid"),
+                SimulatedEvent::AppStart("tuxmath", "/home/kid"),
+                SimulatedEvent::Idle(60),
+                SimulatedEvent::AppStop("tuxmath", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("tuxtype", "/home/kid"),
+                SimulatedEvent::AppStart("tuxtype", "/home/kid"),
+                SimulatedEvent::Idle(60),
+                SimulatedEvent::AppStop("tuxtype", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("gcompris", "/home/kid"),
+                SimulatedEvent::AppStart("gcompris", "/home/kid"),
+                SimulatedEvent::Idle(90),
+                SimulatedEvent::AppStop("gcompris", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Accidental Delete Recovery",
+            description: "Checking files, accidentally deleting a file, practicing touch to recreate it.",
+            events: vec![
+                SimulatedEvent::Cmd("ls", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("rm story.txt", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("touch story.txt", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("ls", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Late Night Creative Session",
+            description: "Idle checks, creating a folder, nanoing a text file, leaving it.",
+            events: vec![
+                SimulatedEvent::Idle(30),
+                SimulatedEvent::Cmd("mkdir midnight", "/home/kid"),
+                SimulatedEvent::Cmd("cd midnight", "/home/kid/midnight"),
+                SimulatedEvent::Cmd("nano diary.txt", "/home/kid/midnight"),
+                SimulatedEvent::AppStart("nano", "/home/kid/midnight"),
+                SimulatedEvent::Idle(120),
+                SimulatedEvent::AppStop("nano", "/home/kid/midnight"),
+            ],
+        },
+        Scenario {
+            name: "Train Driver & Matrix Fan",
+            description: "Alternating sl and matrix apps and having fun.",
+            events: vec![
+                SimulatedEvent::Cmd("sl", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("matrix", "/home/kid"),
+                SimulatedEvent::AppStart("matrix", "/home/kid"),
+                SimulatedEvent::Idle(50),
+                SimulatedEvent::AppStop("matrix", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("sl", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Echo Chamber",
+            description: "Repeatedly echo-ing different sentences, checking with history/ls, clear.",
+            events: vec![
+                SimulatedEvent::Cmd("echo hello", "/home/kid"),
+                SimulatedEvent::Cmd("echo world", "/home/kid"),
+                SimulatedEvent::Cmd("echo moo", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("ls", "/home/kid"),
+                SimulatedEvent::Cmd("clear", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Typing Speed Test",
+            description: "Rapid commands, practice tuxtype, back, fast clear.",
+            events: vec![
+                SimulatedEvent::Cmd("pwd", "/home/kid"),
+                SimulatedEvent::Cmd("whoami", "/home/kid"),
+                SimulatedEvent::Cmd("tuxtype", "/home/kid"),
+                SimulatedEvent::AppStart("tuxtype", "/home/kid"),
+                SimulatedEvent::Idle(70),
+                SimulatedEvent::AppStop("tuxtype", "/home/kid"),
+                SimulatedEvent::Cmd("clear", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "Quiet Homework Hour",
+            description: "Long idle times between simple command runs, reading files.",
+            events: vec![
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Idle(35),
+                SimulatedEvent::Cmd("cat math.txt", "/home/kid/creations"),
+                SimulatedEvent::Idle(45),
+                SimulatedEvent::Cmd("clear", "/home/kid/creations"),
+            ],
+        },
+        Scenario {
+            name: "Nyan Cat Dancer",
+            description: "Starting nyan, leaving it on, stopping, starting matrix, leaving it on.",
+            events: vec![
+                SimulatedEvent::Cmd("nyan", "/home/kid"),
+                SimulatedEvent::AppStart("nyan", "/home/kid"),
+                SimulatedEvent::Idle(150),
+                SimulatedEvent::AppStop("nyan", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("matrix", "/home/kid"),
+                SimulatedEvent::AppStart("matrix", "/home/kid"),
+                SimulatedEvent::Idle(100),
+                SimulatedEvent::AppStop("matrix", "/home/kid"),
+            ],
+        },
+        Scenario {
+            name: "New Folder Structure",
+            description: "Creating nested folders in creations, cd-ing, touching files, ls-ing.",
+            events: vec![
+                SimulatedEvent::Cmd("cd creations", "/home/kid/creations"),
+                SimulatedEvent::Cmd("mkdir school", "/home/kid/creations"),
+                SimulatedEvent::Cmd("cd school", "/home/kid/creations/school"),
+                SimulatedEvent::Cmd("mkdir science", "/home/kid/creations/school"),
+                SimulatedEvent::Cmd("cd science", "/home/kid/creations/school/science"),
+                SimulatedEvent::Cmd("touch project.txt", "/home/kid/creations/school/science"),
+                SimulatedEvent::Idle(15),
+                SimulatedEvent::Cmd("ls", "/home/kid/creations/school/science"),
+            ],
+        },
+        Scenario {
+            name: "Frustrated Artist Recovery",
+            description: "Tuxpaint error, help check, successful tuxpaint run, creations review.",
+            events: vec![
+                SimulatedEvent::Error("tuxpaintt", "/home/kid"),
+                SimulatedEvent::Idle(5),
+                SimulatedEvent::Cmd("help", "/home/kid"),
+                SimulatedEvent::Idle(10),
+                SimulatedEvent::Cmd("tuxpaint", "/home/kid"),
+                SimulatedEvent::AppStart("tuxpaint", "/home/kid"),
+                SimulatedEvent::Idle(120),
+                SimulatedEvent::AppStop("tuxpaint", "/home/kid"),
+                SimulatedEvent::Cmd("cd creations", "/home/kid"),
+                SimulatedEvent::Cmd("ls", "/home/kid/creations"),
+            ],
+        },
     ]
 }
+
+#[cfg(test)]
+mod scenario_tests {
+    use super::*;
+
+    #[test]
+    fn dump_scenario_metrics() {
+        let config = toml::from_str(crate::config::personality::get_default_toml()).unwrap();
+        let scenarios = get_scenarios();
+        let mut out = String::new();
+        out.push_str("# Scenario Simulation Metrics Dump\n\n");
+        out.push_str("| ID | Scenario Name | Cmds | Trig | Idle | Trig% | AppTime | Avg/Sec | MaxPause |\n");
+        out.push_str("|---|---|---|---|---|---|---|---|---|\n");
+        for (idx, sc) in scenarios.iter().enumerate() {
+            let (m, _) = run_scenario(sc, &config);
+            out.push_str(&format!(
+                "| {} | {} | {} | {} | {} | {:.1}% | {:.1}s | {:.3} | {:.1}s |\n",
+                idx + 1, sc.name, m.cmds, m.trig, m.idle, m.trig_rate, m.app_time, m.avg_sec, m.longest_pause
+            ));
+        }
+        std::fs::write("/Users/nall/pers/kid-cli/scenario_metrics.md", out).unwrap();
+    }
+}
+

@@ -10,6 +10,17 @@ mood_decay_secs = 30
 default = "neutral"
 options = ["energetic", "neutral", "sympathetic", "sleepy", "bored"]
 
+# ── Session Start: Welcome Message ──────────────────────────────
+
+[[rules]]
+trigger = "session_start"
+responses = [
+  "Welcome! I am your companion coach. Let's learn some commands! 🐮",
+  "Hello there! Ready to explore the terminal together?",
+  "Moo! Welcome to your workstation. Type 'help' if you want to see what we can do!",
+  "Hi! I'm here to help you learn. What would you like to build or play today?",
+]
+
 # ── Idle Chatter ────────────────────────────────────────────────
 
 [[rules]]
@@ -202,8 +213,11 @@ responses = [
 [[rules]]
 trigger = "cd:*/apps"
 responses = [
-  "The app folder! Lots of fun things to try in here. Type 'ls'!",
+  "The app folder! Lots of fun things to try in here. Type 'ls'! 📂",
   "Ooh, apps! I wonder which one you'll pick today!",
+  "Try running 'tuxpaint' to draw, or 'tuxmath' for math games!",
+  "Practice typing speed by running 'tuxtype'!",
+  "Try some retro learning! Type 'oregon' for Oregon Trail, or 'num_munchers'!",
 ]
 
 [[rules]]
@@ -216,6 +230,66 @@ responses = [
 trigger = "cd:*/apps/tuxpaint"
 responses = [
   "Tux Paint! You can draw anything you want! Type 'tuxpaint' to start! 🎨",
+]
+
+[[rules]]
+trigger = "cd:*/apps/tuxmath"
+responses = [
+  "TuxMath! Practice your arithmetic while defending cities! Type 'tuxmath'! ☄️",
+]
+
+[[rules]]
+trigger = "cd:*/apps/tuxtype"
+responses = [
+  "TuxType! practice typing words quickly! Type 'tuxtype' to begin! ⌨️",
+]
+
+[[rules]]
+trigger = "cd:*/apps/klettres"
+responses = [
+  "KLettres! Learn your alphabet and basic sounds. Type 'klettres' to play! 🔤",
+]
+
+[[rules]]
+trigger = "cd:*/apps/scratch"
+responses = [
+  "Scratch! Build your own interactive stories and games. Type 'scratch'! 🐱",
+]
+
+[[rules]]
+trigger = "cd:*/apps/oregon"
+responses = [
+  "The Oregon Trail! Can you lead your wagon safely to Oregon? Type 'oregon'! 🤠",
+]
+
+[[rules]]
+trigger = "cd:*/apps/num_munchers"
+responses = [
+  "Number Munchers! Munch your way through math grid challenges! Type 'num_munchers'! 🧮",
+]
+
+[[rules]]
+trigger = "cd:*/apps/word_munchers"
+responses = [
+  "Word Munchers! Practice spelling, grammar, and vocabulary! Type 'word_munchers'! 🔡",
+]
+
+[[rules]]
+trigger = "cd:*/apps/fraction_munchers"
+responses = [
+  "Fraction Munchers! Test your knowledge of fractions and decimals! Type 'fraction_munchers'! 🍰",
+]
+
+[[rules]]
+trigger = "cd:*/apps/odell"
+responses = [
+  "Odell Lake! Survive as a fish in the food web. Type 'odell'! 🐟",
+]
+
+[[rules]]
+trigger = "cd:*/apps/mario_paint"
+responses = [
+  "Mario Paint! Classic music composing and painting with a mouse. Type 'mario_paint'! 🎨🐭",
 ]
 
 [[rules]]
@@ -347,7 +421,11 @@ responses = [
 [[rules]]
 trigger = "exec:touch"
 conditions = { chance = 0.4 }
-responses = ["Creating a new file! It starts empty — a blank canvas. ✨"]
+responses = [
+  "Creating a new file! It starts empty — a blank canvas. ✨",
+  "Fun fact: 'touch' updates the file's modification time if the file already exists!",
+  "A brand new file! What are you planning to put inside it? 📝",
+]
 
 [[rules]]
 trigger = "exec:cp"
@@ -355,12 +433,116 @@ conditions = { chance = 0.3 }
 responses = [
   "Copy! Now there are two of them!",
   "Duplicating... computers are great at making copies!",
+  "Double trouble! A perfect clone of your file has been made. 👥",
 ]
 
 [[rules]]
 trigger = "exec:mv"
 conditions = { chance = 0.3 }
-responses = ["Moving things around! Like rearranging your room. 🏗️"]
+responses = [
+  "Moving things around! Like rearranging your room. 🏗️",
+  "Renaming or shifting locations... keep that workspace organized!",
+  "Pushed to a new home! Hopefully it's easier to find now. 🏠",
+]
+
+[[rules]]
+trigger = "exec:less"
+conditions = { chance = 0.5 }
+responses = [
+  "Opening the pager! Press 'q' to quit and get back to the command line. 📖",
+  "Less is more! (Actually, 'less' is a modern improvement over the old 'more' command!)",
+  "Scrolling through text! You can use Up/Down keys or Spacebar to page down.",
+]
+
+[[rules]]
+trigger = "exec:file"
+conditions = { chance = 0.5 }
+responses = [
+  "Inspecting file types! Computers look at the file header, not just the name extension. 🕵️",
+  "Let's see what kind of data is hidden in that file!",
+  "Checking the file format... is it text, an image, or a secret program? 🔍",
+]
+
+[[rules]]
+trigger = "exec:rmdir"
+conditions = { chance = 0.6 }
+responses = [
+  "Removing an empty folder! Keeping our workspace clean and tidy. 🧹",
+  "Directory deleted! Remember: rmdir only works on folders that are completely empty.",
+  "Cleaning up empty folders! If there are files inside, you'll need to remove them first.",
+]
+
+[[rules]]
+trigger = "exec:reset"
+conditions = { chance = 0.5 }
+responses = [
+  "Resetting terminal state! If your screen is ever acting weird, 'reset' is your friend. 🔄",
+  "Cleaning up the screen buffer and resetting terminal configuration!",
+  "Starting fresh! Reset clears up any scrambled text or visual bugs on your screen. 🧹",
+]
+
+[[rules]]
+trigger = "exec:man"
+conditions = { chance = 0.5 }
+responses = [
+  "Reading the manual! Real computer programmers read documentation all the time. 📖",
+  "Opening the instructions manual. Type 'q' to close it when you're done!",
+  "Need help with options? The manual pages explain every detail of a command. 💡",
+]
+
+[[rules]]
+trigger = "exec:help"
+conditions = { chance = 0.5 }
+responses = [
+  "Opening the kid workspace help guide! Explore what commands are allowed here. 🗺️",
+  "Need a hand? Our interactive help menu is a great place to start!",
+  "Guide time! Select a section to learn about fun tools and apps. 🧭",
+]
+
+[[rules]]
+trigger = "exec:sl"
+conditions = { chance = 0.8 }
+responses = [
+  "Choo choo! Here comes the train crossing your terminal! 🚂💨",
+  "Train spotting! Did you mean to type 'ls' or were you looking for the locomotive?",
+  "All aboard! A steam locomotive is passing through. 🎫",
+]
+
+[[rules]]
+trigger = "exec:nyan"
+conditions = { chance = 0.8 }
+responses = [
+  "Rainbow cat loop! Nyan nyan nyan! 🌈🐱",
+  "Pop-tart cat in space! This retro loop is super famous on the internet.",
+  "Infinite music and rainbows! How long can you watch the cat fly? 🎶",
+]
+
+[[rules]]
+trigger = "exec:matrix"
+conditions = { chance = 0.8 }
+responses = [
+  "Falling green code! You look like a real computer hacker now. 💻🟢",
+  "Entering the Matrix... watch the binary streams drop!",
+  "Very cool! This classic screen effect mimics old sci-fi computer screens.",
+]
+
+[[rules]]
+trigger = "exec:letters"
+conditions = { chance = 0.8 }
+responses = [
+  "Drawing word art! You can make giant banners on your screen. 🔡",
+  "Big banners! Try combining this with different words.",
+  "ASCII typography! Drawing letters using other letters. 🎨",
+]
+
+[[rules]]
+trigger = "exec:say"
+conditions = { chance = 0.8 }
+responses = [
+  "Making me talk! What did you want me to say? 🐮💬",
+  "Moo! You can make me say anything by typing 'say <your message>'!",
+  "Cowsay bubble! I love repeating your messages.",
+]
 
 # ── App Launch/Stop ─────────────────────────────────────────────
 
@@ -369,6 +551,7 @@ trigger = "app_start:gcompris"
 responses = [
   "GCompris time! Have fun with the games! 🎮",
   "Learning AND having fun? That's the best combo!",
+  "Opening GCompris! There are so many activities to discover inside. 🧭",
 ]
 
 [[rules]]
@@ -376,6 +559,7 @@ trigger = "app_start:tuxpaint"
 responses = [
   "Art time! Make something beautiful! 🎨",
   "Tux Paint! I bet you'll make something amazing!",
+  "Get creative! Draw, stamp, and paint whatever you imagine. 🖌️",
 ]
 
 [[rules]]
@@ -383,6 +567,7 @@ trigger = "app_start:tuxmath"
 responses = [
   "Math time! You've got this! 🧮",
   "Numbers! Show those math problems who's boss!",
+  "Defend your cities by solving arithmetic equations! Quick! ☄️",
 ]
 
 [[rules]]
@@ -390,6 +575,71 @@ trigger = "app_start:tuxtype"
 responses = [
   "Typing practice! Speed and accuracy! ⌨️",
   "Let's see those fingers fly!",
+  "Help Tux eat fish by typing words as fast as they fall! 🐟",
+]
+
+[[rules]]
+trigger = "app_start:klettres"
+responses = [
+  "KLettres! Learn to read and hear letters and sounds. 🔤",
+  "Language learning time! Practice your pronunciation.",
+  "Opening KLettres! Let's master the alphabet together. 🗣️",
+]
+
+[[rules]]
+trigger = "app_start:scratch"
+responses = [
+  "Scratch! Drag and drop code blocks to make animations! 🐱",
+  "Coding time! What kind of game or story are you building today?",
+  "Unleash your programming skills with visual blocks. 🧩",
+]
+
+[[rules]]
+trigger = "app_start:oregon"
+responses = [
+  "The Oregon Trail! Good luck heading west in 1848! 🤠",
+  "Make sure to buy enough oxen and food before you leave Independence!",
+  "Watch out for diseases and deep rivers on your wagon journey! 🌊",
+]
+
+[[rules]]
+trigger = "app_start:num_munchers"
+responses = [
+  "Number Munchers! Munch the multiples and avoid the Troggles! 🧮",
+  "Math challenge! Check the rules carefully before you start munching.",
+  "Munching numbers! How high of a score can you get?",
+]
+
+[[rules]]
+trigger = "app_start:word_munchers"
+responses = [
+  "Word Munchers! practice vocabulary and spelling rules. 🔡",
+  "Munch the correct words and run away from the Troggles!",
+  "Spelling and grammar practice is super fun with Munchers! 📚",
+]
+
+[[rules]]
+trigger = "app_start:fraction_munchers"
+responses = [
+  "Fraction Munchers! Find the fractions that match the target! 🍰",
+  "Munching fractions! Remember, 1/2 is the same as 2/4 and 0.5!",
+  "Check the grid and chew up the equivalent fractions! 🍕",
+]
+
+[[rules]]
+trigger = "app_start:odell"
+responses = [
+  "Odell Lake! Explore the underwater food web as a fish. 🐟",
+  "Will you swim away, chase, or ignore the other creatures? Choose wisely!",
+  "Try to survive as long as you can in the lake! 🌊",
+]
+
+[[rules]]
+trigger = "app_start:mario_paint"
+responses = [
+  "Mario Paint! Make cool retro tracks and custom drawings! 🎨🐭",
+  "Use the SNES mouse to compose music or play the fly swatting game!",
+  "Painting and composing music with Mario. Have fun! 🎵",
 ]
 
 [[rules]]

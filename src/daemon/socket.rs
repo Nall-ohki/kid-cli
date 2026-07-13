@@ -21,6 +21,16 @@ pub async fn listen(primary_pane_id: String) -> Result<()> {
     let engine = engine::Engine::new(primary_pane_id);
     engine.spawn_idle_loop();
 
+    // Trigger session start welcome message!
+    let engine_clone = engine.clone();
+    tokio::spawn(async move {
+        // Give a tiny moment for everything to settle
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        if let Err(e) = engine_clone.trigger_session_start().await {
+            eprintln!("Failed to trigger session start: {}", e);
+        }
+    });
+
     loop {
         match listener.accept().await {
             Ok((stream, _)) => {

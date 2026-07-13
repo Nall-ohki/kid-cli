@@ -128,6 +128,22 @@ impl Engine {
         Ok(())
     }
 
+    pub async fn trigger_session_start(&self) -> Result<()> {
+        let mut state = self.state.lock().await;
+        let stats_snapshot = state.stats.clone();
+        if let Some(result) = self.personality.evaluate(&CompanionEvent::SessionStart, &state, &stats_snapshot) {
+            if let Some(ref mood) = result.set_mood {
+                state.set_mood(mood);
+            }
+            state.update_last_message_time();
+            let current_mood = state.mood.clone();
+            drop(state);
+            let _ = crate::daemon::pane::ensure_companion_pane();
+            effects::show_companion_message(&result.message, &current_mood).await?;
+        }
+        Ok(())
+    }
+
     pub async fn process(&self, event_type: &str, data: &str, cwd: &str, pane_id: &str) -> Result<()> {
         println!("Engine processing event: {} | data: {} | cwd: {} | pane: {}", event_type, data, cwd, pane_id);
         

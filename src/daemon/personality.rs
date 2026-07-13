@@ -27,6 +27,8 @@ pub enum CompanionEvent {
     Wake,
     /// Periodic tick — used for time-of-day and random rules
     Tick,
+    /// Tmux session started / daemon started
+    SessionStart,
 }
 
 /// Result of evaluating a rule.
@@ -91,6 +93,7 @@ impl Personality {
         let trigger = rule.trigger.as_str();
 
         match event {
+            CompanionEvent::SessionStart => trigger == "session_start",
             CompanionEvent::Idle => trigger == "idle",
             CompanionEvent::Sleep => trigger == "sleep",
             CompanionEvent::Wake => trigger == "wake",
@@ -540,5 +543,25 @@ mod tests {
         assert!(result.is_some());
         let msg = result.unwrap().message;
         assert!(msg.contains("nyan") || msg.contains("days"), "Got: {}", msg);
+    }
+
+    #[test]
+    fn test_session_start_trigger() {
+        let p = make_personality();
+        let state = make_state();
+        let stats = make_stats();
+
+        let result = p.evaluate(
+            &CompanionEvent::SessionStart,
+            &state,
+            &stats,
+        );
+        assert!(result.is_some());
+        let msg = result.unwrap().message;
+        assert!(
+            msg.contains("Welcome") || msg.contains("Hello") || msg.contains("Moo") || msg.contains("Hi"),
+            "Got: {}",
+            msg
+        );
     }
 }
