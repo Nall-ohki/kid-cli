@@ -16,6 +16,7 @@ integration-tests/.venv/
 .DS_Store
 *.log
 # Kid CLI
+/bin/kid
 tmp_repos/
 scratch/
 assets/roms/
