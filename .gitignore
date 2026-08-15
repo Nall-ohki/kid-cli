@@ -15,6 +15,7 @@ integration-tests/.venv/
 # System
 .DS_Store
 *.log
+.agents/
 # Kid CLI
 /bin/kid
 tmp_repos/
