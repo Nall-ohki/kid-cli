@@ -6,14 +6,14 @@ use std::path::Path;
 use std::os::unix::fs::symlink;
 
 pub fn run(system: bool, user: bool) -> Result<()> {
-    if !is_inside_infrastructure() {
-        styled_message(MessageLevel::Info, "This command is for internal container environment setup.");
-        styled_message(MessageLevel::Info, "To initialize the system globally, use: sudo kid admin init");
-        styled_message(MessageLevel::Info, "To create a new kid environment, use: sudo kid admin kid create <name>");
-        return Ok(());
-    }
-
-    let config_dir = config::get_config_dir().context("Could not get config directory")?;
+    let config_dir = config::get_config_dir().unwrap_or_else(|_| {
+        let global = Path::new("/opt/kid-cli/config");
+        if global.exists() {
+            global.to_path_buf()
+        } else {
+            Path::new("/kid/config").to_path_buf()
+        }
+    });
     
     // 1. Bootstrap TOMLs if needed (System concern)
     if system {
@@ -31,11 +31,6 @@ pub fn run(system: bool, user: bool) -> Result<()> {
 
     styled_message(MessageLevel::Ok, "Installation step complete!");
     Ok(())
-}
-
-fn is_inside_infrastructure() -> bool {
-    // Check for the canonical binary path that only exists in the Docker environment
-    Path::new("/kid/bin/kid").exists()
 }
 
 fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
@@ -68,9 +63,15 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
     }
 
     // Link shell and tmux configs
+    let global_config = Path::new("/opt/kid-cli/config");
     let config_zsh = home.join(".config/zsh");
+    
     let zshrc = home.join(".zshrc");
-    let target_zshrc = config_zsh.join("zshrc.zsh");
+    let target_zshrc = if global_config.join("zshrc.zsh").exists() {
+        global_config.join("zshrc.zsh")
+    } else {
+        config_zsh.join("zshrc.zsh")
+    };
     if target_zshrc.exists() {
         if zshrc.exists() || zshrc.is_symlink() {
             fs::remove_file(&zshrc)?;
@@ -80,7 +81,11 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
     }
 
     let tmux_conf = home.join(".tmux.conf");
-    let target_tmux = config_zsh.join("tmux.conf");
+    let target_tmux = if global_config.join("tmux.conf").exists() {
+        global_config.join("tmux.conf")
+    } else {
+        config_zsh.join("tmux.conf")
+    };
     if target_tmux.exists() {
         if tmux_conf.exists() || tmux_conf.is_symlink() {
             fs::remove_file(&tmux_conf)?;
@@ -89,7 +94,11 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
         styled_message(MessageLevel::Ok, "Linked ~/.tmux.conf");
     }
 
-    let target_foot = config_zsh.join("foot.ini");
+    let target_foot = if global_config.join("foot.ini").exists() {
+        global_config.join("foot.ini")
+    } else {
+        config_zsh.join("foot.ini")
+    };
     if target_foot.exists() {
         let config_foot = home.join(".config/foot");
         if !config_foot.exists() {

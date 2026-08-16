@@ -71,11 +71,42 @@ pub fn system_init() -> Result<()> {
     std::os::unix::fs::symlink(&install_bin_path, BINARY_PATH)?;
     styled_message(MessageLevel::Ok, &format!("Symlinked binary to {}", BINARY_PATH));
 
-    // 5. Install Global Launcher in /etc/zsh/zprofile
+    // 5. Setup /kid infrastructure and system symlinks
+    fs::create_dir_all("/kid/bin")?;
+    fs::create_dir_all("/kid/wrap/bin")?;
+    fs::create_dir_all("/kid/allow/bin")?;
+    fs::create_dir_all("/kid/restricted/bin")?;
+    fs::create_dir_all("/kid/emulation/disks")?;
+
+    let kid_bin_link = Path::new("/kid/bin/kid");
+    if kid_bin_link.exists() || kid_bin_link.is_symlink() {
+        let _ = fs::remove_file(kid_bin_link);
+    }
+    std::os::unix::fs::symlink(&install_bin_path, kid_bin_link)?;
+
+    // Link ROMs if assets/roms exists
+    let roms_src = Path::new(GLOBAL_PATH).join("assets/roms");
+    let roms_dst = Path::new("/kid/emulation/disks");
+    if roms_src.exists() {
+        let apple2gs_src = roms_src.join("apple2gs");
+        let apple2gs_dst = roms_dst.join("apple2gs");
+        if apple2gs_src.exists() && !apple2gs_dst.exists() {
+            let _ = std::os::unix::fs::symlink(&apple2gs_src, &apple2gs_dst);
+        }
+        let snes_src = roms_src.join("snes");
+        let snes_dst = roms_dst.join("snes");
+        if snes_src.exists() && !snes_dst.exists() {
+            let _ = std::os::unix::fs::symlink(&snes_src, &snes_dst);
+        }
+    }
+
+    // Run system installation to create /kid/wrap/bin, /kid/allow/bin, /kid/restricted/bin
+    let _ = crate::commands::install::run(true, false);
+
+    // 6. Install Global Launcher in /etc/zsh/zprofile
     install_global_launcher()?;
 
     styled_message(MessageLevel::Ok, "System initialization complete!");
-    styled_message(MessageLevel::Info, "Note: Docker image will be built JIT on first kid login.");
     Ok(())
 }
 
@@ -195,7 +226,7 @@ pub fn create_kid(name: &str) -> Result<()> {
         
         // Ensure user is in groups
         let _ = Command::new("usermod")
-            .args(&["-aG", &format!("docker,{}", SYSTEM_GROUP), name])
+            .args(&["-aG", &format!("video,render,input,tty,docker,{}", SYSTEM_GROUP), name])
             .status();
         
         if Path::new("/var/run/docker.sock").exists() {
@@ -437,14 +468,11 @@ fn install_global_launcher() -> Result<()> {
           if id -nG | grep -q \"{0}\"; then\n    \
             export KID_CREATIONS_DIR=\"$HOME/creations\"\n    \
             if [[ -z \"$SSH_CONNECTION\" && -z \"$DISPLAY\" && -z \"$WAYLAND_DISPLAY\" ]]; then\n      \
-              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" run --rm -e XDG_RUNTIME_DIR=/tmp/runtime-kid kid sh -c \"mkdir -m 0700 -p /tmp/runtime-kid && exec cage foot\"\n    \
-            else\n      \
-              docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" up -d >/dev/null 2>&1\n      \
-              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" exec -e XDG_RUNTIME_DIR=/tmp/runtime-kid kid /bin/zsh -l\n    \
+              exec cage foot\n    \
             fi\n  \
           fi\n\
         fi\n",
-        SYSTEM_GROUP, GLOBAL_PATH
+        SYSTEM_GROUP
     );
 
     let mut content = if Path::new(profile_path).exists() {
