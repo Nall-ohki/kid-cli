@@ -77,7 +77,7 @@ if [[ "$FLAG" == "--full" ]]; then
 fi
 
 echo "--- Updating and Deploying on $PI_HOST ---"
-ssh -t "$PI_HOST" "sudo kid admin deploy $IMAGE_FLAG && sudo rm -f /tmp/kid-env.tar.gz"
+ssh -t "$PI_HOST" "cd /opt/kid-cli && git pull && ( [ -f /opt/kid-cli/bin/kid ] || sudo ./scripts/internal/build_kid_binary.sh ) && sudo /usr/local/bin/kid admin deploy $IMAGE_FLAG && sudo rm -f /tmp/kid-env.tar.gz"
 
 echo ""
 echo "=== Remote Deployment Complete! ==="
