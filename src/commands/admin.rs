@@ -59,10 +59,12 @@ pub fn system_init() -> Result<()> {
     }
 
     let current_exe = std::env::current_exe()?;
-    if install_bin_path.exists() {
-        let _ = fs::remove_file(&install_bin_path);
+    if current_exe != install_bin_path {
+        if install_bin_path.exists() {
+            let _ = fs::remove_file(&install_bin_path);
+        }
+        fs::copy(&current_exe, &install_bin_path)?;
     }
-    fs::copy(&current_exe, &install_bin_path)?;
     styled_message(MessageLevel::Ok, &format!("Installed binary to {}", install_bin_path.display()));
 
     if Path::new(BINARY_PATH).exists() || Path::new(BINARY_PATH).is_symlink() {
