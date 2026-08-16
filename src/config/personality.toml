@@ -257,6 +257,12 @@ responses = [
 ]
 
 [[rules]]
+trigger = "cd:*/apps/krita"
+responses = [
+  "Krita! A digital art studio for drawing and sketching! Type 'krita' to open your canvas! 🎨🖌️",
+]
+
+[[rules]]
 trigger = "cd:*/apps/oregon"
 responses = [
   "The Oregon Trail! Can you lead your wagon safely to Oregon? Type 'oregon'! 🤠",
@@ -592,6 +598,13 @@ responses = [
   "Scratch! Drag and drop code blocks to make animations! 🐱",
   "Coding time! What kind of game or story are you building today?",
   "Unleash your programming skills with visual blocks. 🧩",
+]
+
+[[rules]]
+trigger = "app_start:krita"
+responses = [
+  "Opening Krita! Time to create a digital masterpiece! 🎨",
+  "Digital painting time! Grab your brush and let your imagination run wild! 🖌️",
 ]
 
 [[rules]]

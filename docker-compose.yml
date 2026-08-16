@@ -12,6 +12,7 @@ services:
       # Named volumes for saving progress and history
       - tuxpaint-data:/home/kid/.tuxpaint
       - gcompris-data:/home/kid/.config/gcompris
+      - krita-data:/home/kid/.local/share/krita
       - zsh-history:/home/kid/.zsh_history
       # Direct passage to host devices for Wayland/GPU/input/sound
       - /dev:/dev
@@ -23,4 +24,5 @@ services:
 volumes:
   tuxpaint-data:
   gcompris-data:
+  krita-data:
   zsh-history:

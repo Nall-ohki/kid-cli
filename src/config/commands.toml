@@ -143,6 +143,14 @@ lolcat = "never"
 persist = false
 gui = true
 
+[launchers.krita]
+binary = "krita"
+pane = "none"
+lolcat = "never"
+persist = false
+gui = true
+
+
 [passthroughs]
 ls    = "/bin/ls"
 cat   = "/usr/bin/cat"

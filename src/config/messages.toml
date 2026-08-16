@@ -20,6 +20,7 @@ pool = [
 "*/apps"           = "Apps are here! Type 'ls' to see them all!"
 "*/apps/gcompris"  = "You found GCompris! Type './gcompris' to play!"
 "*/apps/tuxpaint"  = "Tux Paint! Type './tuxpaint' to draw!"
+"*/apps/krita"     = "Krita! Type './krita' to paint and draw!"
 
 [ls]
 pool = [

@@ -53,3 +53,12 @@ def test_app_008_putt_zoo_wrapper(run_in_restricted_env):
     rc, out, err = run_in_restricted_env("/bin/grep 'kid launch putt_zoo' /home/kid/apps/putt_zoo/putt_zoo")
     assert rc == 0
 
+def test_app_009_krita(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/krita/krita")
+    assert rc == 0
+
+def test_app_010_krita_wrapper_delegation(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch krita' /home/kid/apps/krita/krita")
+    assert rc == 0
+
+

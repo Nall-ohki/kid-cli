@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Layer 1: System packages (Heavy lifting)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     zsh tmux cage foot kbd xwayland git curl ca-certificates sudo gnupg \
-    tuxpaint klettres gcompris-qt tuxmath tuxtype scratch xvfb x11vnc qtwayland5 \
+    tuxpaint klettres gcompris-qt tuxmath tuxtype scratch krita xvfb x11vnc qtwayland5 \
     mame retroarch libretro-bsnes-mercury-performance scummvm \
     sl cowsay figlet nyancat cmatrix lolcat \
     vim less file libgl1-mesa-dri rsync \
