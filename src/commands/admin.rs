@@ -433,10 +433,10 @@ fn install_global_launcher() -> Result<()> {
           if id -nG | grep -q \"{0}\"; then\n    \
             export KID_CREATIONS_DIR=\"$HOME/creations\"\n    \
             if [[ -z \"$SSH_CONNECTION\" && -z \"$DISPLAY\" && -z \"$WAYLAND_DISPLAY\" ]]; then\n      \
-              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" run --rm kid cage foot\n    \
+              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" run --rm -e XDG_RUNTIME_DIR=/tmp/runtime-kid kid sh -c \"mkdir -m 0700 -p /tmp/runtime-kid && exec cage foot\"\n    \
             else\n      \
               docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" up -d >/dev/null 2>&1\n      \
-              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" exec kid /bin/zsh -l\n    \
+              exec docker compose -f \"{1}/docker-compose.yml\" -p \"kid-$USER\" exec -e XDG_RUNTIME_DIR=/tmp/runtime-kid kid /bin/zsh -l\n    \
             fi\n  \
           fi\n\
         fi\n",

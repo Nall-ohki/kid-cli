@@ -52,6 +52,7 @@ RUN git clone --depth 1 https://github.com/jesusmgg/comic-shanns-mono.git /tmp/c
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
+ENV XDG_RUNTIME_DIR=/tmp/runtime-kid
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" UV_NO_MODIFY_PATH=1 sh
 ENV PATH="/kid/bin:/home/kid/.local/bin:${PATH}"
 
@@ -62,7 +63,9 @@ RUN getent group render || groupadd render \
     && usermod -aG render,video,tty,input kid \
     && echo "kid ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kid \
     && mkdir -p /kid/bin /kid/wrap/bin /kid/allow/bin /kid/tools /kid/restricted/bin /kid/emulation/disks \
-    && chown kid:kid /kid/emulation/disks
+    && chown kid:kid /kid/emulation/disks \
+    && mkdir -m 0700 -p /tmp/runtime-kid \
+    && chown kid:kid /tmp/runtime-kid
 
 USER kid
 WORKDIR /home/kid

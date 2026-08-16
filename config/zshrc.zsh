@@ -12,6 +12,8 @@ export ZSH_ROOT="$HOME/.config/zsh"
 # Force Qt to use native Wayland (avoids falling back to xcb/Xwayland)
 export QT_QPA_PLATFORM=wayland
 export XDG_SESSION_TYPE=wayland
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-kid}"
+mkdir -m 0700 -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
 
 # tmux's async initialization causes Pane 0 to drop environment variables because the 
 # session environment is updated *after* the first pane starts. 

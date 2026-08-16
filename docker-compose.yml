@@ -18,6 +18,7 @@ services:
       - /run/udev:/run/udev
     environment:
       - TERM=xterm-256color
+      - XDG_RUNTIME_DIR=/tmp/runtime-kid
 
 volumes:
   tuxpaint-data:
