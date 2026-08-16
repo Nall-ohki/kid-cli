@@ -155,11 +155,24 @@ pub fn execute_kiosk_exit() {
 
     // 2. Fallback using system binaries with explicit full paths
     for target in &targets {
-        for pkill_bin in &["/usr/bin/pkill", "/bin/pkill", "/usr/bin/killall", "/bin/killall"] {
+        for pkill_bin in &["/usr/bin/pkill", "/bin/pkill"] {
             if std::path::Path::new(pkill_bin).exists() {
                 if let Ok(status) = std::process::Command::new(pkill_bin)
                     .arg("-9")
                     .arg("-f")
+                    .arg(target)
+                    .status() 
+                {
+                    if status.success() {
+                        app_killed = true;
+                    }
+                }
+            }
+        }
+        for killall_bin in &["/usr/bin/killall", "/bin/killall"] {
+            if std::path::Path::new(killall_bin).exists() {
+                if let Ok(status) = std::process::Command::new(killall_bin)
+                    .arg("-9")
                     .arg(target)
                     .status() 
                 {
