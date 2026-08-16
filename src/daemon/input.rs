@@ -161,6 +161,8 @@ pub fn execute_kiosk_exit() {
                     .arg("-9")
                     .arg("-f")
                     .arg(target)
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
                     .status() 
                 {
                     if status.success() {
@@ -174,6 +176,8 @@ pub fn execute_kiosk_exit() {
                 if let Ok(status) = std::process::Command::new(killall_bin)
                     .arg("-9")
                     .arg(target)
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
                     .status() 
                 {
                     if status.success() {
