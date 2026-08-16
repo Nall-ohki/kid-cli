@@ -136,9 +136,6 @@ async fn main() -> anyhow::Result<()> {
         .map(|s| s.to_string())
         .unwrap_or(full_program_path.clone());
 
-    // Context detection
-    let is_inside = std::path::Path::new("/kid/bin/kid").exists();
-
     let is_busybox = match program_name.as_str() {
         "kid" | "target" | "kid-binary" | "companion" => false,
         "kid-run" => {
@@ -169,14 +166,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Permission enforcement for Admin commands
     if let Some(Commands::Admin { .. }) = &cli.command {
-        if is_inside {
-            eprintln!("Error: Administrative commands are not allowed inside the Kid Environment.");
-            std::process::exit(1);
-        }
         #[cfg(unix)]
         {
             if !nix::unistd::getuid().is_root() {
-                eprintln!("Error: This command requires root privileges (sudo).");
+                eprintln!("Error: Administrative commands require root privileges (sudo).");
                 std::process::exit(1);
             }
         }
