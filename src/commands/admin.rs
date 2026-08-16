@@ -44,6 +44,9 @@ pub fn system_init() -> Result<()> {
     if cfg!(target_os = "linux") {
         Command::new("groupadd").arg("-f").arg(SYSTEM_GROUP).status()?;
         styled_message(MessageLevel::Ok, &format!("System group '{}' ensured.", SYSTEM_GROUP));
+        if Path::new("/var/run/docker.sock").exists() {
+            let _ = Command::new("chmod").args(&["666", "/var/run/docker.sock"]).status();
+        }
     }
 
     // 4. Install and Symlink binary
@@ -190,6 +193,10 @@ pub fn create_kid(name: &str) -> Result<()> {
         let _ = Command::new("usermod")
             .args(&["-aG", &format!("docker,{}", SYSTEM_GROUP), name])
             .status();
+        
+        if Path::new("/var/run/docker.sock").exists() {
+            let _ = Command::new("chmod").args(&["666", "/var/run/docker.sock"]).status();
+        }
     }
 
     // 3. Create creations directory and .zshrc (to silence new user prompt)
@@ -363,11 +370,11 @@ pub fn system_status() -> Result<()> {
 
     // 3. Docker Image Status
     println!("\n--- Docker Assets ---");
-    let img_check = Command::new("docker").args(&["images", "-q", "kid-cli-kid"]).output()?;
+    let img_check = Command::new("docker").args(&["images", "-q", "kid-env"]).output()?;
     if !img_check.stdout.is_empty() {
-        styled_message(MessageLevel::Ok, "Base Image: 'kid-cli-kid' [Ready]");
+        styled_message(MessageLevel::Ok, "Base Image: 'kid-env' [Ready]");
     } else {
-        styled_message(MessageLevel::Warn, "Base Image: 'kid-cli-kid' [Not Built - will build JIT]");
+        styled_message(MessageLevel::Warn, "Base Image: 'kid-env' [Not Built - will build JIT]");
     }
 
     // 4. Managed Kids

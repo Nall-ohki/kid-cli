@@ -58,4 +58,9 @@ else
     echo "Systemd not detected. Skipping Docker service start/enable."
 fi
 
+# Ensure docker socket has accessible permissions for non-root users
+if [ -S /var/run/docker.sock ]; then
+    sudo chmod 666 /var/run/docker.sock || true
+fi
+
 echo "--- System Dependencies Installed ---"

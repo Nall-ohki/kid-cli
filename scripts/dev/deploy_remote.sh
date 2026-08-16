@@ -44,18 +44,32 @@ if [ "$FORCE" = false ]; then
     fi
 fi
 
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 echo "--- Pushing local changes to Git ---"
 git push
 
-# 2. Handle Full Docker Sync
+# 2. Sync Unversioned Assets (ROMs) directly via SSH
+if [ -d "$ROOT_DIR/assets/roms" ]; then
+    echo "--- Syncing assets/roms directly to $PI_HOST (bypassing Git) ---"
+    ssh "$PI_HOST" "sudo mkdir -p /opt/kid-cli/assets/roms && sudo chown -R \$(id -u):\$(id -g) /opt/kid-cli/assets/roms"
+    rsync -avz --delete "$ROOT_DIR/assets/roms/" "$PI_HOST:/opt/kid-cli/assets/roms/"
+fi
+
+# 3. Handle Full Docker Sync
 IMAGE_FLAG=""
 if [[ "$FLAG" == "--full" ]]; then
-    # Ensure Docker is running (macOS health check and auto-start, non-blocking)
+    # Ensure Docker is running (macOS health check and auto-start)
     "$SCRIPT_DIR/ensure_docker.sh" || true
+    if ! docker info &> /dev/null; then
+        echo "❌ Error: Docker is not running." >&2
+        echo "💡 Run './scripts/start_docker.sh' to start Docker, then try again." >&2
+        exit 1
+    fi
 
     echo "--- [FULL] Building and Exporting Docker Image (Slow) ---"
-    docker build -t kid-cli-kid:latest .
-    docker save kid-cli-kid:latest | gzip > kid-env.tar.gz
+    docker build -t kid-env:latest "$ROOT_DIR"
+    docker save kid-env:latest | gzip > kid-env.tar.gz
     
     echo "--- [FULL] Syncing Image to $PI_HOST ---"
     rsync -azP kid-env.tar.gz "$PI_HOST:/tmp/kid-env.tar.gz"

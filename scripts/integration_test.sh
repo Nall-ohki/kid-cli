@@ -6,6 +6,12 @@ cd "$SCRIPT_DIR/.."
 # Handle --sim flag (Run inside Docker)
 if [[ "$1" == "--sim" ]]; then
   echo "--- Preparing Simulator ---"
+  "$SCRIPT_DIR/dev/ensure_docker.sh" || true
+  if ! docker info &> /dev/null; then
+    echo "❌ Error: Docker is not running." >&2
+    echo "💡 Run './scripts/start_docker.sh' to start Docker, then try again." >&2
+    exit 1
+  fi
   docker compose -f dev/docker-compose.sim.yml build
   echo "--- Launching Test in Simulator ---"
   # Use docker compose to run this script inside the simulator
@@ -33,6 +39,9 @@ echo "PASS: System user looks correct."
 
 # 4. Verify Docker Container
 echo "--- Step 4: Verifying Docker Launch ---"
+if [ -S /var/run/docker.sock ]; then
+    sudo chmod 666 /var/run/docker.sock || true
+fi
 # We simulate a login by running the launcher logic
 export USER="$TEST_USER"
 sudo -E -u "$TEST_USER" docker compose -f /opt/kid-cli/docker-compose.yml -p "kid-$TEST_USER" up -d

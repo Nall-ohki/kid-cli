@@ -6,8 +6,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The project root is one level up from scripts/
 KID_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Ensure Docker is running (macOS health check and auto-start, non-blocking)
+# Ensure Docker is running (macOS health check and auto-start)
 "$SCRIPT_DIR/dev/ensure_docker.sh" || true
+if ! docker info &> /dev/null; then
+    echo "❌ Error: Docker is not running." >&2
+    echo "💡 Run './scripts/start_docker.sh' to start Docker, then try again." >&2
+    exit 1
+fi
 
 # Parse arguments
 BUILD_ONLY=false
