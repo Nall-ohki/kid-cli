@@ -299,6 +299,24 @@ responses = [
 ]
 
 [[rules]]
+trigger = "cd:*/apps/murphys_minerals"
+responses = [
+  "Murphy's Minerals! Discover minerals and run tests to identify rocks! Type 'murphys_minerals'! 💎🪨",
+]
+
+[[rules]]
+trigger = "cd:*/apps/amazon_trail"
+responses = [
+  "The Amazon Trail! Journey up the Amazon River and photograph wildlife! Type 'amazon_trail'! 🛶🌿",
+]
+
+[[rules]]
+trigger = "cd:*/apps/yukon_trail"
+responses = [
+  "The Yukon Trail! Head to the Klondike in search of gold! Type 'yukon_trail'! ⛏️🏔️",
+]
+
+[[rules]]
 trigger = "cd:*/creations"
 responses = [
   "Your creations folder! Everything you make gets saved here. ✨",
@@ -653,6 +671,30 @@ responses = [
   "Mario Paint! Make cool retro tracks and custom drawings! 🎨🐭",
   "Use the SNES mouse to compose music or play the fly swatting game!",
   "Painting and composing music with Mario. Have fun! 🎵",
+]
+
+[[rules]]
+trigger = "app_start:murphys_minerals"
+responses = [
+  "Murphy's Minerals! Time to test mineral samples and explore geology! 💎",
+  "Test hardness, streak, and acid reactions to find the mystery mineral! 🔬",
+  "Rock on! Help Murphy identify the mineral specimens! 🪨",
+]
+
+[[rules]]
+trigger = "app_start:amazon_trail"
+responses = [
+  "The Amazon Trail! Watch out for piranhas and keep your canoe steady! 🛶",
+  "Explore the rainforest, trade with locals, and photograph rare animals! 🦜",
+  "Navigate the Amazon river! Check your supplies and stay healthy! 🌿",
+]
+
+[[rules]]
+trigger = "app_start:yukon_trail"
+responses = [
+  "The Yukon Trail! Bundle up, buy warm supplies, and head for the Klondike! ❄️",
+  "Will you strike gold in Dawson City? Watch your stamina on the trail! ⛏️",
+  "Klondike Gold Rush! Pick your partner and plan your route carefully! 🏔️",
 ]
 
 [[rules]]

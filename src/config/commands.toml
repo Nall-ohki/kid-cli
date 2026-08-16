@@ -71,6 +71,10 @@ rom_dir = "/kid/emulation/disks/snes"
 template = "scummvm -f --path={rom_path} --auto-detect"
 rom_dir = "/kid/emulation/disks/scummvm"
 
+[systems.dosbox]
+template = "dosbox -fullscreen -exit -c \"imgmount d {rom_path} -t iso\" -c \"d:\""
+rom_dir = "/kid/emulation/disks/dosbox"
+
 [games.num_munchers]
 system = "apple2gs"
 rom = "num_munchers.woz"
@@ -91,6 +95,10 @@ rom = "oregon.woz"
 system = "apple2gs"
 rom = "odell.woz"
 
+[games.murphys_minerals]
+system = "apple2gs"
+rom = "murphys_minerals.woz"
+
 [games.mario_paint]
 system = "snes-mouse"
 rom = "mario_paint.sfc"
@@ -106,6 +114,14 @@ rom = "putt_moon"
 [games.putt_zoo]
 system = "scummvm"
 rom = "putt_zoo"
+
+[games.amazon_trail]
+system = "dosbox"
+rom = "amazon_trail.iso"
+
+[games.yukon_trail]
+system = "dosbox"
+rom = "yukon_trail.iso"
 
 [launchers.gcompris]
 binary = "gcompris-qt"

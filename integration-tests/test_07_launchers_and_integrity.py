@@ -61,4 +61,22 @@ def test_app_010_krita_wrapper_delegation(run_in_restricted_env):
     rc, out, err = run_in_restricted_env("/bin/grep 'kid launch krita' /home/kid/apps/krita/krita")
     assert rc == 0
 
+def test_app_011_murphys_minerals_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/murphys_minerals/murphys_minerals")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch murphys_minerals' /home/kid/apps/murphys_minerals/murphys_minerals")
+    assert rc == 0
+
+def test_app_012_amazon_trail_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/amazon_trail/amazon_trail")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch amazon_trail' /home/kid/apps/amazon_trail/amazon_trail")
+    assert rc == 0
+
+def test_app_013_yukon_trail_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/yukon_trail/yukon_trail")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch yukon_trail' /home/kid/apps/yukon_trail/yukon_trail")
+    assert rc == 0
+
 

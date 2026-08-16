@@ -34,12 +34,18 @@ mod tests {
         assert!(config.launchers.contains_key("matrix"));
         assert!(config.passthroughs.contains_key("ls"));
         assert!(config.blocks.commands.contains(&"sudo".to_string()));
+        assert!(config.systems.contains_key("apple2gs"));
         assert!(config.systems.contains_key("snes"));
         assert!(config.systems.contains_key("scummvm"));
+        assert!(config.systems.contains_key("dosbox"));
+        assert!(config.games.contains_key("oregon"));
+        assert!(config.games.contains_key("murphys_minerals"));
         assert!(config.games.contains_key("mario_paint"));
         assert!(config.games.contains_key("putt_parade"));
         assert!(config.games.contains_key("putt_moon"));
         assert!(config.games.contains_key("putt_zoo"));
+        assert!(config.games.contains_key("amazon_trail"));
+        assert!(config.games.contains_key("yukon_trail"));
     }
 }
 

@@ -23,6 +23,7 @@ PACKAGES=(
   "retroarch"
   "libretro-bsnes-mercury-performance"
   "scummvm"
+  "dosbox"
   "krita"
 )
 

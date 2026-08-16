@@ -8,13 +8,13 @@
 | 4 | Napping Companion (Idle to Sleep) | 3 | 3 | 2 | 100.0% | 0.0s | 0.077 | 20.0s |
 | 5 | App Hopping | 3 | 5 | 2 | 166.7% | 280.0s | 0.023 | 200.0s |
 | 6 | Deep Explorer | 6 | 2 | 1 | 33.3% | 0.0s | 0.059 | 31.0s |
-| 7 | The Echo Game | 5 | 3 | 0 | 60.0% | 0.0s | 0.176 | 7.0s |
-| 8 | Time Traveler | 4 | 3 | 0 | 75.0% | 0.0s | 0.111 | 14.0s |
+| 7 | The Echo Game | 5 | 2 | 0 | 40.0% | 0.0s | 0.118 | 13.0s |
+| 8 | Time Traveler | 4 | 3 | 0 | 75.0% | 0.0s | 0.111 | 12.0s |
 | 9 | Creating Art (Creations) | 7 | 5 | 0 | 71.4% | 0.0s | 0.109 | 12.0s |
 | 10 | Reading & Writing Stories | 4 | 4 | 1 | 100.0% | 90.0s | 0.042 | 90.0s |
 | 11 | Frustrated Smash & Recovery | 5 | 2 | 2 | 40.0% | 0.0s | 0.100 | 25.0s |
 | 12 | The Matrix Addict | 2 | 3 | 1 | 150.0% | 105.0s | 0.035 | 60.0s |
-| 13 | Train Conductor | 4 | 2 | 0 | 50.0% | 0.0s | 0.067 | 30.0s |
+| 13 | Train Conductor | 4 | 4 | 0 | 100.0% | 0.0s | 0.133 | 12.0s |
 | 14 | Quick Peek Session | 3 | 2 | 0 | 66.7% | 0.0s | 0.118 | 10.0s |
 | 15 | Nyan Cat Party | 2 | 2 | 1 | 100.0% | 180.0s | 0.016 | 180.0s |
 | 16 | Spring Cleaning | 4 | 3 | 0 | 75.0% | 0.0s | 0.143 | 10.0s |
@@ -26,14 +26,14 @@
 | 22 | Math Champion Challenge | 4 | 5 | 1 | 125.0% | 180.0s | 0.031 | 100.0s |
 | 23 | The Slow Typist | 3 | 6 | 1 | 200.0% | 320.0s | 0.019 | 200.0s |
 | 24 | Art & Clean Up | 7 | 4 | 0 | 57.1% | 0.0s | 0.200 | 10.0s |
-| 25 | Calculator Experiment | 4 | 1 | 1 | 25.0% | 0.0s | 0.071 | 28.0s |
+| 25 | Calculator Experiment | 4 | 2 | 1 | 50.0% | 0.0s | 0.107 | 20.0s |
 | 26 | The Lost Programmer | 7 | 2 | 0 | 28.6% | 0.0s | 0.105 | 19.0s |
 | 27 | Persistent Painter | 2 | 5 | 1 | 250.0% | 210.0s | 0.028 | 120.0s |
 | 28 | Brief GCompris Session | 3 | 3 | 1 | 100.0% | 40.0s | 0.089 | 40.0s |
 | 29 | Word Counter | 6 | 2 | 0 | 33.3% | 0.0s | 0.400 | 5.0s |
 | 30 | Detective Mode | 4 | 2 | 0 | 50.0% | 0.0s | 0.250 | 8.0s |
 | 31 | Multi-App Marathon | 4 | 9 | 3 | 225.0% | 270.0s | 0.040 | 90.0s |
-| 32 | Accidental Delete Recovery | 4 | 3 | 0 | 75.0% | 0.0s | 0.150 | 10.0s |
+| 32 | Accidental Delete Recovery | 4 | 4 | 0 | 100.0% | 0.0s | 0.200 | 10.0s |
 | 33 | Late Night Creative Session | 3 | 2 | 2 | 66.7% | 120.0s | 0.027 | 120.0s |
 | 34 | Train Driver & Matrix Fan | 3 | 3 | 1 | 100.0% | 50.0s | 0.067 | 50.0s |
 | 35 | Echo Chamber | 5 | 2 | 0 | 40.0% | 0.0s | 0.400 | 5.0s |

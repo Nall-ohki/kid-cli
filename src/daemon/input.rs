@@ -116,7 +116,7 @@ pub async fn monitor_inputs() {
 pub fn execute_kiosk_exit() {
     println!("Panic / Kiosk Exit triggered! Terminating active GUI games and applications...");
     let targets = [
-        "mame", "retroarch", "gcompris-qt", "gcompris", "scratch", 
+        "mame", "retroarch", "scummvm", "dosbox", "gcompris-qt", "gcompris", "scratch", 
         "tuxpaint", "tuxmath", "tuxtype", "klettres", "krita", "cmatrix", "nyancat"
     ];
     
