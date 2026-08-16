@@ -4,7 +4,7 @@ use std::path::Path;
 use tokio::time::sleep;
 
 pub async fn monitor_inputs() {
-    println!("Starting evdev input monitor for Kiosk Exit (F12)");
+    println!("Starting evdev input monitor for Kiosk Exit (F10 / F12)");
     
     // In a real system, we might want to use udev or inotify to watch for new devices,
     // but for kiosk mode, periodically scanning available devices is robust enough.
@@ -17,7 +17,9 @@ pub async fn monitor_inputs() {
             if path.exists() {
                 match Device::open(path) {
                     Ok(device) => {
-                        if device.supported_keys().map_or(false, |keys| keys.contains(KeyCode::KEY_F12)) {
+                        if device.supported_keys().map_or(false, |keys| {
+                            keys.contains(KeyCode::KEY_F10) || keys.contains(KeyCode::KEY_F12)
+                        }) {
                             println!("Found suitable device: {} at {}", device.name().unwrap_or("Unknown"), path_str);
                             devices.push(device);
                         }
@@ -49,10 +51,10 @@ pub async fn monitor_inputs() {
                         Ok(events) => {
                             for event in events {
                                 match event.destructure() {
-                                    EventSummary::Key(_, KeyCode::KEY_F12, 1) => {
+                                    EventSummary::Key(_, KeyCode::KEY_F10 | KeyCode::KEY_F12, 1) => {
                                         let _ = tx.blocking_send(true); // Key Down
                                     }
-                                    EventSummary::Key(_, KeyCode::KEY_F12, 0) => {
+                                    EventSummary::Key(_, KeyCode::KEY_F10 | KeyCode::KEY_F12, 0) => {
                                         let _ = tx.blocking_send(false); // Key Up
                                     }
                                     _ => {}
@@ -67,13 +69,13 @@ pub async fn monitor_inputs() {
             });
         }
 
-        // Process events asynchronously with a timeout
+        // Process events asynchronously with a 2-second hold timeout
         let mut is_pressed = false;
         loop {
             if is_pressed {
-                match tokio::time::timeout(Duration::from_secs(5), rx.recv()).await {
+                match tokio::time::timeout(Duration::from_millis(2000), rx.recv()).await {
                     Ok(Some(false)) => {
-                        // Key released before 5 seconds
+                        // Key released before 2 seconds
                         is_pressed = false;
                     }
                     Ok(Some(true)) => {
@@ -84,8 +86,8 @@ pub async fn monitor_inputs() {
                         break;
                     }
                     Err(_) => {
-                        // Timeout reached! F12 has been held for 5 seconds
-                        println!("Panic Hotkey (F12) detected! Executing Kiosk Exit.");
+                        // Timeout reached! F10/F12 has been held for 2 seconds
+                        println!("Panic Hotkey (F10/F12) detected! Executing Kiosk Exit.");
                         execute_kiosk_exit();
                         is_pressed = false; // Reset state
                     }
@@ -101,7 +103,6 @@ pub async fn monitor_inputs() {
                     }
                     Err(_) => {
                         // Timeout reached while idle, break to rescan devices (hotplug support)
-                        break;
                     }
                 }
             }
@@ -113,7 +114,7 @@ pub async fn monitor_inputs() {
 }
 
 pub fn execute_kiosk_exit() {
-    println!("Panic Hotkey (F12) detected! Executing Kiosk Exit.");
+    println!("Panic Hotkey (F10/F12) detected! Executing Kiosk Exit.");
     let targets = ["retroarch", "mame", "gcompris-qt", "scratch", "tuxpaint", "tuxmath", "tuxtype", "klettres"];
     
     let mut app_killed = false;

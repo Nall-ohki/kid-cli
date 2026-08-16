@@ -7,7 +7,11 @@ if [[ -z "$HOME" ]] || [[ "$HOME" == "/var/empty" ]]; then
   export HOME=$(eval echo "~$USER")
 fi
 export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
-export ZSH_ROOT="$HOME/.config/zsh"
+if [[ -d "/opt/kid-cli/config" ]]; then
+  export ZSH_ROOT="/opt/kid-cli/config"
+else
+  export ZSH_ROOT="$HOME/.config/zsh"
+fi
 
 # Force Qt to use native Wayland (avoids falling back to xcb/Xwayland)
 export QT_QPA_PLATFORM=wayland
