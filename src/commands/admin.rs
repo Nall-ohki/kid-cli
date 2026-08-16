@@ -348,6 +348,21 @@ pub fn reset_kid(name: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn abort_session(name: Option<&str>) -> Result<()> {
+    if let Some(user) = name {
+        styled_message(MessageLevel::Info, &format!("Aborting session and killing all processes for user '{}'...", user));
+        let _ = Command::new("/usr/bin/pkill").args(&["-u", user, "-9"]).status();
+        let _ = Command::new("/bin/pkill").args(&["-u", user, "-9"]).status();
+        let _ = Command::new("pkill").args(&["-u", user, "-9"]).status();
+        let _ = Command::new("loginctl").args(&["terminate-user", user]).status();
+        styled_message(MessageLevel::Ok, &format!("User '{}' session terminated.", user));
+    } else {
+        styled_message(MessageLevel::Info, "Triggering global panic exit for running applications...");
+        crate::daemon::input::execute_kiosk_exit();
+    }
+    Ok(())
+}
+
 pub fn list_kids() -> Result<()> {
     styled_message(MessageLevel::Info, "Managed Kid Users:");
 

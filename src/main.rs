@@ -98,6 +98,11 @@ enum AdminCommands {
     Build,
     /// Show detailed system and environment status
     Status,
+    /// Abort running applications or terminate a kid session
+    Abort {
+        /// Optional kid username to terminate entirely
+        name: Option<String>,
+    },
     /// Manage individual kid environments
     Kid {
         #[command(subcommand)]
@@ -192,6 +197,7 @@ async fn main() -> anyhow::Result<()> {
                 AdminCommands::Deploy { image, no_rebuild } => commands::admin::deploy(image, no_rebuild),
                 AdminCommands::Build => commands::admin::build_docker(),
                 AdminCommands::Status => commands::admin::system_status(),
+                AdminCommands::Abort { name } => commands::admin::abort_session(name.as_deref()),
                 AdminCommands::Kid { command } => match command {
                     KidManagementCommands::Create { name } => commands::admin::create_kid(&name),
                     KidManagementCommands::Delete { name } => commands::admin::delete_kid(&name),

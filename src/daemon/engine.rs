@@ -156,6 +156,11 @@ impl Engine {
         {
             let mut state = self.state.lock().await;
             match event_type {
+                "panic" | "abort" => {
+                    drop(state);
+                    crate::daemon::input::execute_kiosk_exit();
+                    return Ok(());
+                }
                 "pre" => {
                     if state.active_app.is_some() {
                         return Ok(());
