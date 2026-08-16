@@ -215,8 +215,14 @@ fn configure_retroarch(home: &Path) -> Result<()> {
 }
 
 fn bootstrap_tomls(config_dir: &Path) -> Result<()> {
+    if !config_dir.exists() {
+        fs::create_dir_all(config_dir)?;
+    }
+
     let files = [
         ("commands.toml", config::commands::get_default_toml()),
+        ("personality.toml", config::personality::get_default_toml()),
+        ("messages.toml", config::messages::get_default_toml()),
     ];
 
     for (name, content) in files {
@@ -273,25 +279,9 @@ fn install_symlinks(config_dir: &Path) -> Result<()> {
         create_symlink(kid_bin, &format!("/kid/allow/bin/{}", p))?;
     }
 
-    // E. Blocks -> /kid/restricted/bin AND their real locations
+    // E. Blocks -> /kid/restricted/bin
     for name in &commands_config.blocks.commands {
         create_symlink(kid_bin, &format!("/kid/restricted/bin/{}", name))?;
-        
-        // Also capture at common system locations if we are root
-        let system_paths = [
-            format!("/bin/{}", name),
-            format!("/usr/bin/{}", name),
-            format!("/usr/sbin/{}", name),
-        ];
-        
-        for p in system_paths {
-            let path = std::path::Path::new(&p);
-            if path.exists() && !path.is_symlink() {
-                // Try to capture it. This might fail if we don't have perms,
-                // but in Docker build we usually are root.
-                let _ = create_symlink(kid_bin, &p);
-            }
-        }
     }
 
     // E. Legacy Symlinks -> /kid/bin
