@@ -35,7 +35,11 @@ mod tests {
         assert!(config.passthroughs.contains_key("ls"));
         assert!(config.blocks.commands.contains(&"sudo".to_string()));
         assert!(config.systems.contains_key("snes"));
+        assert!(config.systems.contains_key("scummvm"));
         assert!(config.games.contains_key("mario_paint"));
+        assert!(config.games.contains_key("putt_parade"));
+        assert!(config.games.contains_key("putt_moon"));
+        assert!(config.games.contains_key("putt_zoo"));
     }
 }
 

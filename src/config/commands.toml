@@ -60,12 +60,16 @@ template = "mame apple2gs -rompath {rom_dir} -skip_gameinfo -nowindow -flop3 {ro
 rom_dir = "/kid/emulation/disks/apple2gs"
 
 [systems.snes]
-template = "retroarch -L /usr/lib/*/libretro/bsnes_mercury_performance_libretro.so --config /home/kid/.config/retroarch/retroarch.cfg {rom_path}"
+template = "retroarch -L /usr/lib/*/libretro/bsnes_mercury_performance_libretro.so --config {home}/.config/retroarch/retroarch.cfg {rom_path}"
 rom_dir = "/kid/emulation/disks/snes"
 
 [systems.snes-mouse]
-template = "retroarch -L /usr/lib/*/libretro/bsnes_mercury_performance_libretro.so --config /home/kid/.config/retroarch/retroarch.cfg --appendconfig /home/kid/.config/retroarch/mouse.cfg {rom_path}"
+template = "retroarch -L /usr/lib/*/libretro/bsnes_mercury_performance_libretro.so -d 1:2 --config {home}/.config/retroarch/retroarch.cfg --appendconfig {home}/.config/retroarch/mouse.cfg {rom_path}"
 rom_dir = "/kid/emulation/disks/snes"
+
+[systems.scummvm]
+template = "scummvm -f --path={rom_path} --auto-detect"
+rom_dir = "/kid/emulation/disks/scummvm"
 
 [games.num_munchers]
 system = "apple2gs"
@@ -90,6 +94,18 @@ rom = "odell.woz"
 [games.mario_paint]
 system = "snes-mouse"
 rom = "mario_paint.sfc"
+
+[games.putt_parade]
+system = "scummvm"
+rom = "putt_parade"
+
+[games.putt_moon]
+system = "scummvm"
+rom = "putt_moon"
+
+[games.putt_zoo]
+system = "scummvm"
+rom = "putt_zoo"
 
 [launchers.gcompris]
 binary = "gcompris-qt"

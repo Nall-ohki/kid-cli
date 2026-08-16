@@ -245,9 +245,15 @@ async fn main() -> anyhow::Result<()> {
                 }
                 if let Some(system) = commands_config.systems.get(&game.system) {
                     let rom_path = format!("{}/{}", system.rom_dir, game.rom);
+                    let home_str = home::home_dir()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "/home/kid".to_string());
                     let binary = system.template
                         .replace("{rom_dir}", &system.rom_dir)
-                        .replace("{rom_path}", &rom_path);
+                        .replace("{rom_path}", &rom_path)
+                        .replace("{rom}", &game.rom)
+                        .replace("{home}", &home_str)
+                        .replace("/home/kid", &home_str);
 
                     let mut launcher = config::commands::LauncherConfig::default();
                     launcher.binary = Some(binary);

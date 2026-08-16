@@ -34,3 +34,22 @@ def test_img_012_uv_installed(run_in_restricted_env):
     rc, out, err = run_in_restricted_env("/kid/allow/bin/uv --version || /home/kid/.cargo/bin/uv --version || /usr/local/bin/uv --version || /bin/uv --version")
     assert rc == 0
     assert "uv" in out
+
+def test_app_006_putt_parade_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/putt_parade/putt_parade")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch putt_parade' /home/kid/apps/putt_parade/putt_parade")
+    assert rc == 0
+
+def test_app_007_putt_moon_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/putt_moon/putt_moon")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch putt_moon' /home/kid/apps/putt_moon/putt_moon")
+    assert rc == 0
+
+def test_app_008_putt_zoo_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/putt_zoo/putt_zoo")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch putt_zoo' /home/kid/apps/putt_zoo/putt_zoo")
+    assert rc == 0
+

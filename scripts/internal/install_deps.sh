@@ -22,6 +22,7 @@ PACKAGES=(
   "mame"
   "retroarch"
   "libretro-bsnes-mercury-performance"
+  "scummvm"
 )
 
 # Decide on Docker package

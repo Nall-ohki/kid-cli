@@ -25,7 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     zsh tmux cage foot kbd xwayland git curl ca-certificates sudo gnupg \
     tuxpaint klettres gcompris-qt tuxmath tuxtype scratch xvfb x11vnc qtwayland5 \
-    mame retroarch libretro-bsnes-mercury-performance \
+    mame retroarch libretro-bsnes-mercury-performance scummvm \
     sl cowsay figlet nyancat cmatrix lolcat \
     vim less file libgl1-mesa-dri rsync \
     locales procps python3-evdev fonts-noto-color-emoji \
@@ -62,8 +62,8 @@ RUN getent group render || groupadd render \
     && useradd -m -s /bin/zsh -c "Kid User" kid \
     && usermod -aG render,video,tty,input kid \
     && echo "kid ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kid \
-    && mkdir -p /kid/bin /kid/wrap/bin /kid/allow/bin /kid/tools /kid/restricted/bin /kid/emulation/disks \
-    && chown kid:kid /kid/emulation/disks \
+    && mkdir -p /kid/bin /kid/wrap/bin /kid/allow/bin /kid/tools /kid/restricted/bin /kid/emulation/disks /kid/config \
+    && chown -R kid:kid /kid \
     && mkdir -m 0700 -p /tmp/runtime-kid \
     && chown kid:kid /tmp/runtime-kid
 

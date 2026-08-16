@@ -190,19 +190,23 @@ fn configure_mame(home: &Path) -> Result<()> {
     Ok(())
 }
 
-fn configure_retroarch(home: &Path) -> Result<()> {
+pub fn configure_retroarch(home: &Path) -> Result<()> {
     let retroarch_dir = home.join(".config").join("retroarch");
     fs::create_dir_all(&retroarch_dir)?;
 
     let cfg_path = retroarch_dir.join("retroarch.cfg");
     let cfg_content = "menu_driver = \"null\"\n\
                        input_menu_toggle = \"nul\"\n\
-                       input_driver = \"sdl2\"\n";
+                       input_driver = \"udev\"\n\
+                       input_joypad_driver = \"udev\"\n\
+                       input_auto_mouse_grab = \"true\"\n";
     fs::write(&cfg_path, cfg_content)?;
 
     let mouse_cfg_path = retroarch_dir.join("mouse.cfg");
     // Libretro device 2 = Mouse. Device 258 = Joypad w/ Analog. Port 1 is index 0.
-    let mouse_cfg_content = "input_player1_mouse_index = \"0\"\ninput_libretro_device_p1 = \"2\"\n";
+    let mouse_cfg_content = "input_player1_mouse_index = \"0\"\n\
+                             input_libretro_device_p1 = \"2\"\n\
+                             input_auto_mouse_grab = \"true\"\n";
     fs::write(&mouse_cfg_path, mouse_cfg_content)?;
 
     styled_message(MessageLevel::Ok, "Installed RetroArch kiosk configuration");

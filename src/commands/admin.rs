@@ -92,15 +92,18 @@ pub fn system_init() -> Result<()> {
     let roms_src = Path::new(GLOBAL_PATH).join("assets/roms");
     let roms_dst = Path::new("/kid/emulation/disks");
     if roms_src.exists() {
-        let apple2gs_src = roms_src.join("apple2gs");
-        let apple2gs_dst = roms_dst.join("apple2gs");
-        if apple2gs_src.exists() && !apple2gs_dst.exists() {
-            let _ = std::os::unix::fs::symlink(&apple2gs_src, &apple2gs_dst);
-        }
-        let snes_src = roms_src.join("snes");
-        let snes_dst = roms_dst.join("snes");
-        if snes_src.exists() && !snes_dst.exists() {
-            let _ = std::os::unix::fs::symlink(&snes_src, &snes_dst);
+        if let Ok(entries) = fs::read_dir(&roms_src) {
+            for entry in entries.flatten() {
+                let src_path = entry.path();
+                if src_path.is_dir() {
+                    if let Some(folder_name) = src_path.file_name() {
+                        let dst_path = roms_dst.join(folder_name);
+                        if !dst_path.exists() && !dst_path.is_symlink() {
+                            let _ = std::os::unix::fs::symlink(&src_path, &dst_path);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -210,6 +213,27 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
 
     // 4. Ensure global launcher in /etc/zsh/zprofile is updated
     install_global_launcher()?;
+
+    // 5. Refresh system symlinks and user retroarch configs
+    let _ = crate::commands::install::run(true, false);
+    if let Ok(entries) = fs::read_dir("/home") {
+        for entry in entries.flatten() {
+            let user_home = entry.path();
+            if user_home.is_dir() {
+                if let Some(_user_name) = user_home.file_name().and_then(|n| n.to_str()) {
+                    let _ = crate::commands::install::configure_retroarch(&user_home);
+                    #[cfg(target_os = "linux")]
+                    {
+                        let _ = Command::new("chown")
+                            .arg("-R")
+                            .arg(&format!("{}:{}", _user_name, SYSTEM_GROUP))
+                            .arg(user_home.join(".config/retroarch"))
+                            .status();
+                    }
+                }
+            }
+        }
+    }
 
     styled_message(MessageLevel::Ok, "Deployment successful!");
     Ok(())
