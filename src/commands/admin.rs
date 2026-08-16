@@ -20,20 +20,21 @@ pub fn system_init() -> Result<()> {
     }
 
     // 2. Sync Repository
-    let repo_root = std::env::current_dir()?;
-    if repo_root != Path::new(GLOBAL_PATH) {
-        if !repo_root.join("Cargo.toml").exists() {
-            return Err(anyhow::anyhow!(
-                "Error: Current directory does not look like the Kid-CLI project root."
-            ));
-        }
+    let repo_root = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/"));
+    let global_has_repo = Path::new(GLOBAL_PATH).join("Cargo.toml").exists();
+    if !global_has_repo {
+        if repo_root.join("Cargo.toml").exists() && repo_root != Path::new(GLOBAL_PATH) {
+            styled_message(MessageLevel::Info, "Ensuring repository at /opt/kid-cli...");
+            if Path::new(GLOBAL_PATH).exists() && !Path::new(GLOBAL_PATH).join(".git").exists() {
+                fs::remove_dir_all(GLOBAL_PATH)?;
+            }
 
-        styled_message(MessageLevel::Info, "Ensuring repository at /opt/kid-cli...");
-        if Path::new(GLOBAL_PATH).exists() && !Path::new(GLOBAL_PATH).join(".git").exists() {
-            fs::remove_dir_all(GLOBAL_PATH)?;
-        }
-
-        if !Path::new(GLOBAL_PATH).exists() {
+            if !Path::new(GLOBAL_PATH).exists() {
+                Command::new("git")
+                    .args(&["clone", "https://github.com/Nall-ohki/kid-cli.git", GLOBAL_PATH])
+                    .status()?;
+            }
+        } else if !Path::new(GLOBAL_PATH).exists() {
             Command::new("git")
                 .args(&["clone", "https://github.com/Nall-ohki/kid-cli.git", GLOBAL_PATH])
                 .status()?;
@@ -161,6 +162,9 @@ pub fn deploy(image_path: Option<String>, no_rebuild: bool) -> Result<()> {
         }
         styled_message(MessageLevel::Ok, "Docker image loaded successfully.");
     }
+
+    // 4. Ensure global launcher in /etc/zsh/zprofile is updated
+    install_global_launcher()?;
 
     styled_message(MessageLevel::Ok, "Deployment successful!");
     Ok(())
