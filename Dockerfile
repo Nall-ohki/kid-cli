@@ -70,8 +70,9 @@ RUN getent group render || groupadd render \
 USER kid
 WORKDIR /home/kid
 
-# Layer 4: Configuration Migration (Move to hidden .config/zsh)
-RUN mkdir -p /home/kid/.config/zsh
+# Layer 4: Configuration Migration (Populate /kid/config and ~/.config/zsh)
+RUN mkdir -p /home/kid/.config/zsh /kid/config
+COPY --chown=kid:kid config/ /kid/config/
 COPY --chown=kid:kid config/ /home/kid/.config/zsh/
 
 # Layer 5: Assets and ROMs

@@ -62,43 +62,38 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
         }
     }
 
-    // Link shell and tmux configs
+    // Link shell and tmux configs from canonical /kid/config
+    let kid_config = Path::new("/kid/config");
     let global_config = Path::new("/opt/kid-cli/config");
-    let config_zsh = home.join(".config/zsh");
+    let config_source = if kid_config.exists() {
+        kid_config
+    } else if global_config.exists() {
+        global_config
+    } else {
+        Path::new("/home/kid/.config/zsh")
+    };
     
     let zshrc = home.join(".zshrc");
-    let target_zshrc = if global_config.join("zshrc.zsh").exists() {
-        global_config.join("zshrc.zsh")
-    } else {
-        config_zsh.join("zshrc.zsh")
-    };
+    let target_zshrc = config_source.join("zshrc.zsh");
     if target_zshrc.exists() {
         if zshrc.exists() || zshrc.is_symlink() {
-            fs::remove_file(&zshrc)?;
+            let _ = fs::remove_file(&zshrc);
         }
-        symlink(&target_zshrc, &zshrc)?;
+        let _ = symlink(&target_zshrc, &zshrc);
         styled_message(MessageLevel::Ok, "Linked ~/.zshrc");
     }
 
     let tmux_conf = home.join(".tmux.conf");
-    let target_tmux = if global_config.join("tmux.conf").exists() {
-        global_config.join("tmux.conf")
-    } else {
-        config_zsh.join("tmux.conf")
-    };
+    let target_tmux = config_source.join("tmux.conf");
     if target_tmux.exists() {
         if tmux_conf.exists() || tmux_conf.is_symlink() {
-            fs::remove_file(&tmux_conf)?;
+            let _ = fs::remove_file(&tmux_conf);
         }
-        symlink(&target_tmux, &tmux_conf)?;
+        let _ = symlink(&target_tmux, &tmux_conf);
         styled_message(MessageLevel::Ok, "Linked ~/.tmux.conf");
     }
 
-    let target_foot = if global_config.join("foot.ini").exists() {
-        global_config.join("foot.ini")
-    } else {
-        config_zsh.join("foot.ini")
-    };
+    let target_foot = config_source.join("foot.ini");
     if target_foot.exists() {
         let config_foot = home.join(".config/foot");
         if !config_foot.exists() {
@@ -106,9 +101,9 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
         }
         let foot_ini = config_foot.join("foot.ini");
         if foot_ini.exists() || foot_ini.is_symlink() {
-            fs::remove_file(&foot_ini)?;
+            let _ = fs::remove_file(&foot_ini);
         }
-        symlink(&target_foot, &foot_ini)?;
+        let _ = symlink(&target_foot, &foot_ini);
         styled_message(MessageLevel::Ok, "Linked ~/.config/foot/foot.ini");
     }
 

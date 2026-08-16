@@ -41,9 +41,11 @@ pub fn system_init() -> Result<()> {
         }
     }
 
-    // 3. Create kid-users group
+    // 3. Create system and hardware groups
     if cfg!(target_os = "linux") {
-        Command::new("groupadd").arg("-f").arg(SYSTEM_GROUP).status()?;
+        for group in &[SYSTEM_GROUP, "render", "input", "video", "tty", "docker"] {
+            let _ = Command::new("groupadd").arg("-f").arg(group).status();
+        }
         styled_message(MessageLevel::Ok, &format!("System group '{}' ensured.", SYSTEM_GROUP));
         if Path::new("/var/run/docker.sock").exists() {
             let _ = Command::new("chmod").args(&["666", "/var/run/docker.sock"]).status();
@@ -100,6 +102,16 @@ pub fn system_init() -> Result<()> {
         if snes_src.exists() && !snes_dst.exists() {
             let _ = std::os::unix::fs::symlink(&snes_src, &snes_dst);
         }
+    }
+
+    // Link global config /kid/config -> /opt/kid-cli/config
+    let config_src = Path::new(GLOBAL_PATH).join("config");
+    let config_dst = Path::new("/kid/config");
+    if config_src.exists() {
+        if config_dst.exists() || config_dst.is_symlink() {
+            let _ = fs::remove_file(config_dst);
+        }
+        let _ = std::os::unix::fs::symlink(&config_src, config_dst);
     }
 
     // Run system installation to create /kid/wrap/bin, /kid/allow/bin, /kid/restricted/bin
@@ -227,9 +239,10 @@ pub fn create_kid(name: &str) -> Result<()> {
             .status();
         
         // Ensure user is in groups
-        let _ = Command::new("usermod")
-            .args(&["-aG", &format!("video,render,input,tty,docker,{}", SYSTEM_GROUP), name])
-            .status();
+        for group in &[SYSTEM_GROUP, "video", "render", "input", "tty", "docker"] {
+            let _ = Command::new("groupadd").arg("-f").arg(group).status();
+            let _ = Command::new("usermod").args(&["-aG", group, name]).status();
+        }
         
         if Path::new("/var/run/docker.sock").exists() {
             let _ = Command::new("chmod").args(&["666", "/var/run/docker.sock"]).status();

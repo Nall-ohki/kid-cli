@@ -58,6 +58,19 @@ else
     echo "Systemd not detected. Skipping Docker service start/enable."
 fi
 
+# 4. Install Custom Font (Comic Shanns Mono)
+if [ ! -d /usr/share/fonts/truetype/comic-shanns-mono ]; then
+    echo "Installing Comic Shanns Mono font..."
+    sudo rm -rf /tmp/comic-shanns-mono
+    if git clone --depth 1 https://github.com/jesusmgg/comic-shanns-mono.git /tmp/comic-shanns-mono 2>/dev/null; then
+        sudo mkdir -p /usr/share/fonts/truetype/comic-shanns-mono
+        sudo cp /tmp/comic-shanns-mono/fonts/*.ttf /usr/share/fonts/truetype/comic-shanns-mono/
+        sudo rm -rf /tmp/comic-shanns-mono
+        sudo fc-cache -f >/dev/null 2>&1 || true
+        echo "Comic Shanns Mono font installed."
+    fi
+fi
+
 # Ensure docker socket has accessible permissions for non-root users
 if [ -S /var/run/docker.sock ]; then
     sudo chmod 666 /var/run/docker.sock || true

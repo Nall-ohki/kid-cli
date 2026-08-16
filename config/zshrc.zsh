@@ -7,7 +7,9 @@ if [[ -z "$HOME" ]] || [[ "$HOME" == "/var/empty" ]]; then
   export HOME=$(eval echo "~$USER")
 fi
 export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
-if [[ -d "/opt/kid-cli/config" ]]; then
+if [[ -d "/kid/config" ]]; then
+  export ZSH_ROOT="/kid/config"
+elif [[ -d "/opt/kid-cli/config" ]]; then
   export ZSH_ROOT="/opt/kid-cli/config"
 else
   export ZSH_ROOT="$HOME/.config/zsh"
