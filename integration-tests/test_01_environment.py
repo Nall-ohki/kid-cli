@@ -72,7 +72,7 @@ def test_dir_008_tools_exists(run_in_kid_env):
     assert rc == 0
 
 def test_dir_009_app_category_dirs(run_in_kid_env):
-    rc, out, err = run_in_kid_env("test -d /home/kid/apps/art && test -d /home/kid/apps/math && test -d /home/kid/apps/abc && test -d /home/kid/apps/play && test -d /home/kid/apps/code")
+    rc, out, err = run_in_kid_env("test -d /home/kid/apps/art && test -d /home/kid/apps/math && test -d /home/kid/apps/abc && test -d /home/kid/apps/play && test -d /home/kid/apps/code && test -d /home/kid/apps/putt && test -d /home/kid/apps/trail")
     assert rc == 0
 
 def test_lnk_001_zshrc_is_symlink(run_in_kid_env):

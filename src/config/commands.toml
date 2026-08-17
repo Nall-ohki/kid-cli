@@ -105,7 +105,7 @@ system = "dosbox-donald"
 rom = "donald"
 
 [games.oregon]
-category = "play"
+category = "trail"
 system = "apple2gs"
 rom = "oregon.woz"
 
@@ -125,27 +125,27 @@ system = "snes-mouse"
 rom = "mario_paint.sfc"
 
 [games.parade]
-category = "play"
+category = "putt"
 system = "scummvm"
 rom = "putt_parade"
 
 [games.moon]
-category = "play"
+category = "putt"
 system = "scummvm"
 rom = "putt_moon"
 
 [games.zoo]
-category = "play"
+category = "putt"
 system = "scummvm"
 rom = "putt_zoo"
 
 [games.amazon]
-category = "play"
+category = "trail"
 system = "dosbox"
 rom = "amazon_trail.iso"
 
 [games.yukon]
-category = "play"
+category = "trail"
 system = "dosbox"
 rom = "yukon_trail.iso"
 

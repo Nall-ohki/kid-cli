@@ -36,21 +36,21 @@ def test_img_012_uv_installed(run_in_restricted_env):
     assert "uv" in out
 
 def test_app_006_parade_wrapper(run_in_restricted_env):
-    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/play/parade")
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/putt/parade")
     assert rc == 0
-    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch parade' /home/kid/apps/play/parade")
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch parade' /home/kid/apps/putt/parade")
     assert rc == 0
 
 def test_app_007_moon_wrapper(run_in_restricted_env):
-    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/play/moon")
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/putt/moon")
     assert rc == 0
-    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch moon' /home/kid/apps/play/moon")
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch moon' /home/kid/apps/putt/moon")
     assert rc == 0
 
 def test_app_008_zoo_wrapper(run_in_restricted_env):
-    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/play/zoo")
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/putt/zoo")
     assert rc == 0
-    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch zoo' /home/kid/apps/play/zoo")
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch zoo' /home/kid/apps/putt/zoo")
     assert rc == 0
 
 def test_app_009_krita(run_in_restricted_env):
@@ -68,15 +68,15 @@ def test_app_011_murphy_wrapper(run_in_restricted_env):
     assert rc == 0
 
 def test_app_012_amazon_wrapper(run_in_restricted_env):
-    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/play/amazon")
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/trail/amazon")
     assert rc == 0
-    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch amazon' /home/kid/apps/play/amazon")
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch amazon' /home/kid/apps/trail/amazon")
     assert rc == 0
 
 def test_app_013_yukon_wrapper(run_in_restricted_env):
-    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/play/yukon")
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/trail/yukon")
     assert rc == 0
-    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch yukon' /home/kid/apps/play/yukon")
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch yukon' /home/kid/apps/trail/yukon")
     assert rc == 0
 
 def test_app_014_mario_wrapper(run_in_restricted_env):
@@ -93,7 +93,7 @@ def test_app_015_math_wrappers(run_in_restricted_env):
         assert rc == 0
 
 def test_app_016_abc_wrappers(run_in_restricted_env):
-    for app in ["tuxtype", "klettres", "wordmunch", "donald"]:
+    for app in ["tuxtype", "klettres", "wordmunch", "donald", "gcompris"]:
         rc, out, err = run_in_restricted_env(f"test -x /home/kid/apps/abc/{app}")
         assert rc == 0
         rc, out, err = run_in_restricted_env(f"/bin/grep 'kid launch {app}' /home/kid/apps/abc/{app}")
@@ -103,6 +103,12 @@ def test_app_017_carmen_wrapper(run_in_restricted_env):
     rc, out, err = run_in_restricted_env("test -x /home/kid/apps/play/carmen")
     assert rc == 0
     rc, out, err = run_in_restricted_env("/bin/grep 'kid launch carmen' /home/kid/apps/play/carmen")
+    assert rc == 0
+
+def test_app_018_trail_oregon_wrapper(run_in_restricted_env):
+    rc, out, err = run_in_restricted_env("test -x /home/kid/apps/trail/oregon")
+    assert rc == 0
+    rc, out, err = run_in_restricted_env("/bin/grep 'kid launch oregon' /home/kid/apps/trail/oregon")
     assert rc == 0
 
 

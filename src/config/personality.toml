@@ -213,7 +213,7 @@ responses = [
 [[rules]]
 trigger = "cd:*/apps"
 responses = [
-  "The app zone! Check out 'math', 'abc', 'art', 'play', or 'code'! 📂",
+  "The app zone! Check out 'math', 'abc', 'art', 'play', 'putt', 'trail', or 'code'! 📂",
   "Ooh, apps! Which category do you want to explore today?",
   "Type 'ls' to see all the app categories!",
 ]
@@ -242,9 +242,22 @@ responses = [
 [[rules]]
 trigger = "cd:*/apps/play"
 responses = [
-  "The arcade! 🕹️ ScummVM adventures, Oregon Trail, and classic quests!",
-  "Adventure awaits! Head down the trail or solve a mystery with Putt-Putt! 🚗",
-  "Fun and learning games! Type 'ls' to see everything you can play! 🎮",
+  "The arcade! 🕹️ Explore Odell Lake, Murphy's Minerals, or catch Carmen Sandiego!",
+  "Fun and mystery games! Type 'ls' to see what you can play! 🎮",
+]
+
+[[rules]]
+trigger = "cd:*/apps/putt"
+responses = [
+  "Putt-Putt headquarters! 🚗 Join the Parade, Go to the Moon, or Save the Zoo!",
+  "Honk honk! Putt-Putt and Pep are ready for adventure! Type 'ls' to pick one! 🐶",
+]
+
+[[rules]]
+trigger = "cd:*/apps/trail"
+responses = [
+  "The Trail series! 🤠 Oregon Trail, Amazon Trail, or Yukon Trail!",
+  "Pack your wagon or canoe! Type 'ls' to pick your expedition! 🛶🏔️",
 ]
 
 [[rules]]

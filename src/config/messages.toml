@@ -17,12 +17,14 @@ pool = [
 ]
 
 [cd.context]
-"*/apps"      = "Apps are here! Pick a category: math, abc, art, play, or code!"
-"*/apps/math" = "Math games! Type 'ls' to see them all!"
-"*/apps/abc"  = "Letters and words! Type 'ls' to see them all!"
-"*/apps/art"  = "Art studio! Type 'ls' to see drawing and painting apps!"
-"*/apps/play" = "The arcade! Type 'ls' to see games and adventures!"
-"*/apps/code" = "Coding lab! Type 'ls' to see programming tools!"
+"*/apps"       = "Apps are here! Pick a category: math, abc, art, play, putt, trail, or code!"
+"*/apps/math"  = "Math games! Type 'ls' to see them all!"
+"*/apps/abc"   = "Letters and words! Type 'ls' to see them all!"
+"*/apps/art"   = "Art studio! Type 'ls' to see drawing and painting apps!"
+"*/apps/play"  = "The arcade! Type 'ls' to see games and adventures!"
+"*/apps/putt"  = "Putt-Putt adventures! Type 'ls' to see Cartown, Moon, and Zoo!"
+"*/apps/trail" = "Trail expeditions! Type 'ls' to journey along the trails!"
+"*/apps/code"  = "Coding lab! Type 'ls' to see programming tools!"
 
 [ls]
 pool = [
