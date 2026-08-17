@@ -213,107 +213,45 @@ responses = [
 [[rules]]
 trigger = "cd:*/apps"
 responses = [
-  "The app folder! Lots of fun things to try in here. Type 'ls'! 📂",
-  "Ooh, apps! I wonder which one you'll pick today!",
-  "Try running 'tuxpaint' to draw, or 'tuxmath' for math games!",
-  "Practice typing speed by running 'tuxtype'!",
-  "Try some retro learning! Type 'oregon' for Oregon Trail, or 'num_munchers'!",
+  "The app zone! Check out 'math', 'abc', 'art', 'play', or 'code'! 📂",
+  "Ooh, apps! Which category do you want to explore today?",
+  "Type 'ls' to see all the app categories!",
 ]
 
 [[rules]]
-trigger = "cd:*/apps/gcompris"
+trigger = "cd:*/apps/math"
 responses = [
-  "GCompris! It has tons of learning games inside. Type 'gcompris' to start! 🎮",
+  "Math time! 🧮 Defend cities in TuxMath or crunch numbers in Number Munchers!",
+  "Numbers and equations live here! Type 'ls' to pick a math game! 🔢",
 ]
 
 [[rules]]
-trigger = "cd:*/apps/tuxpaint"
+trigger = "cd:*/apps/abc"
 responses = [
-  "Tux Paint! You can draw anything you want! Type 'tuxpaint' to start! 🎨",
+  "Word power! 🔤 Practice typing with TuxType or learn letters with KLettres!",
+  "Spelling, words, and typing! Type 'ls' to choose an activity! ⌨️",
 ]
 
 [[rules]]
-trigger = "cd:*/apps/tuxmath"
+trigger = "cd:*/apps/art"
 responses = [
-  "TuxMath! Practice your arithmetic while defending cities! Type 'tuxmath'! ☄️",
+  "The art studio! 🎨 Paint in Krita, draw in Tux Paint, or make music in Mario Paint!",
+  "Time to be creative! Type 'ls' to pick your canvas! 🖌️",
 ]
 
 [[rules]]
-trigger = "cd:*/apps/tuxtype"
+trigger = "cd:*/apps/play"
 responses = [
-  "TuxType! practice typing words quickly! Type 'tuxtype' to begin! ⌨️",
+  "The arcade! 🕹️ ScummVM adventures, Oregon Trail, and classic quests!",
+  "Adventure awaits! Head down the trail or solve a mystery with Putt-Putt! 🚗",
+  "Fun and learning games! Type 'ls' to see everything you can play! 🎮",
 ]
 
 [[rules]]
-trigger = "cd:*/apps/klettres"
+trigger = "cd:*/apps/code"
 responses = [
-  "KLettres! Learn your alphabet and basic sounds. Type 'klettres' to play! 🔤",
-]
-
-[[rules]]
-trigger = "cd:*/apps/scratch"
-responses = [
-  "Scratch! Build your own interactive stories and games. Type 'scratch'! 🐱",
-]
-
-[[rules]]
-trigger = "cd:*/apps/krita"
-responses = [
-  "Krita! A digital art studio for drawing and sketching! Type 'krita' to open your canvas! 🎨🖌️",
-]
-
-[[rules]]
-trigger = "cd:*/apps/oregon"
-responses = [
-  "The Oregon Trail! Can you lead your wagon safely to Oregon? Type 'oregon'! 🤠",
-]
-
-[[rules]]
-trigger = "cd:*/apps/num_munchers"
-responses = [
-  "Number Munchers! Munch your way through math grid challenges! Type 'num_munchers'! 🧮",
-]
-
-[[rules]]
-trigger = "cd:*/apps/word_munchers"
-responses = [
-  "Word Munchers! Practice spelling, grammar, and vocabulary! Type 'word_munchers'! 🔡",
-]
-
-[[rules]]
-trigger = "cd:*/apps/fraction_munchers"
-responses = [
-  "Fraction Munchers! Test your knowledge of fractions and decimals! Type 'fraction_munchers'! 🍰",
-]
-
-[[rules]]
-trigger = "cd:*/apps/odell"
-responses = [
-  "Odell Lake! Survive as a fish in the food web. Type 'odell'! 🐟",
-]
-
-[[rules]]
-trigger = "cd:*/apps/mario_paint"
-responses = [
-  "Mario Paint! Classic music composing and painting with a mouse. Type 'mario_paint'! 🎨🐭",
-]
-
-[[rules]]
-trigger = "cd:*/apps/murphys_minerals"
-responses = [
-  "Murphy's Minerals! Discover minerals and run tests to identify rocks! Type 'murphys_minerals'! 💎🪨",
-]
-
-[[rules]]
-trigger = "cd:*/apps/amazon_trail"
-responses = [
-  "The Amazon Trail! Journey up the Amazon River and photograph wildlife! Type 'amazon_trail'! 🛶🌿",
-]
-
-[[rules]]
-trigger = "cd:*/apps/yukon_trail"
-responses = [
-  "The Yukon Trail! Head to the Klondike in search of gold! Type 'yukon_trail'! ⛏️🏔️",
+  "The coding lab! 💻 Build your own stories and games with Scratch! 🐱",
+  "Time to program! Type 'scratch' to start coding! 🧩",
 ]
 
 [[rules]]
@@ -634,7 +572,7 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:num_munchers"
+trigger = "app_start:nummunch"
 responses = [
   "Number Munchers! Munch the multiples and avoid the Troggles! 🧮",
   "Math challenge! Check the rules carefully before you start munching.",
@@ -642,7 +580,7 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:word_munchers"
+trigger = "app_start:wordmunch"
 responses = [
   "Word Munchers! practice vocabulary and spelling rules. 🔡",
   "Munch the correct words and run away from the Troggles!",
@@ -650,7 +588,7 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:fraction_munchers"
+trigger = "app_start:fracmunch"
 responses = [
   "Fraction Munchers! Find the fractions that match the target! 🍰",
   "Munching fractions! Remember, 1/2 is the same as 2/4 and 0.5!",
@@ -666,7 +604,7 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:mario_paint"
+trigger = "app_start:mario"
 responses = [
   "Mario Paint! Make cool retro tracks and custom drawings! 🎨🐭",
   "Use the SNES mouse to compose music or play the fly swatting game!",
@@ -674,7 +612,7 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:murphys_minerals"
+trigger = "app_start:murphy"
 responses = [
   "Murphy's Minerals! Time to test mineral samples and explore geology! 💎",
   "Test hardness, streak, and acid reactions to find the mystery mineral! 🔬",
@@ -682,7 +620,7 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:amazon_trail"
+trigger = "app_start:amazon"
 responses = [
   "The Amazon Trail! Watch out for piranhas and keep your canoe steady! 🛶",
   "Explore the rainforest, trade with locals, and photograph rare animals! 🦜",
@@ -690,11 +628,46 @@ responses = [
 ]
 
 [[rules]]
-trigger = "app_start:yukon_trail"
+trigger = "app_start:yukon"
 responses = [
   "The Yukon Trail! Bundle up, buy warm supplies, and head for the Klondike! ❄️",
   "Will you strike gold in Dawson City? Watch your stamina on the trail! ⛏️",
   "Klondike Gold Rush! Pick your partner and plan your route carefully! 🏔️",
+]
+
+[[rules]]
+trigger = "app_start:parade"
+responses = [
+  "Putt-Putt Joins the Parade! Help Putt-Putt earn money for the car wash! 🚗🎈",
+  "Honk honk! Time to explore Cartown with Putt-Putt! 🐶",
+]
+
+[[rules]]
+trigger = "app_start:moon"
+responses = [
+  "Putt-Putt Goes to the Moon! Explore outer space with Putt-Putt and Pep! 🚀🌕",
+  "Out of this world! Help Putt-Putt build a rocket and get back home! 🌌",
+]
+
+[[rules]]
+trigger = "app_start:zoo"
+responses = [
+  "Putt-Putt Saves the Zoo! Rescue the baby animals before the grand opening! 🦁🐼",
+  "Zoo adventure time! Help Putt-Putt find all the lost animals! 🦛🎉",
+]
+
+[[rules]]
+trigger = "app_start:donald"
+responses = [
+  "Donald's Alphabet Chase! Help Donald catch the runaway letters! 🦆🔤",
+  "Quack! Can you find all the letters of the alphabet with Donald Duck? 🎈",
+]
+
+[[rules]]
+trigger = "app_start:carmen"
+responses = [
+  "Where in the World is Carmen Sandiego? Track the VILE villains across the globe! 🕵️🌍",
+  "Grab your passport, gumshoe! Find the clues and catch Carmen Sandiego! 🔍",
 ]
 
 [[rules]]

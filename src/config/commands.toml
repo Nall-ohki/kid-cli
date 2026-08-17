@@ -49,6 +49,7 @@ lolcat = "never"
 persist = true
 
 [launchers.tuxpaint]
+category = "art"
 binary = "tuxpaint"
 pane = "none"
 lolcat = "never"
@@ -75,55 +76,86 @@ rom_dir = "/kid/emulation/disks/scummvm"
 template = "dosbox -fullscreen -exit -c \"imgmount d {rom_path} -t iso\" -c \"d:\""
 rom_dir = "/kid/emulation/disks/dosbox"
 
-[games.num_munchers]
+[systems.dosbox-carmen]
+template = "dosbox -fullscreen -exit -c \"imgmount d {rom_path} -t iso\" -c \"d:\" -c \"carmen.exe\""
+rom_dir = "/kid/emulation/disks/dosbox"
+
+[systems.dosbox-donald]
+template = "dosbox -fullscreen -exit -c \"mount c {rom_path}\" -c \"c:\" -c \"donald.exe\""
+rom_dir = "/kid/emulation/disks/dosbox"
+
+[games.nummunch]
+category = "math"
 system = "apple2gs"
 rom = "num_munchers.woz"
 
-[games.word_munchers]
+[games.wordmunch]
+category = "abc"
 system = "apple2gs"
 rom = "word_munchers.woz"
 
-[games.fraction_munchers]
+[games.fracmunch]
+category = "math"
 system = "apple2gs"
 rom = "fraction_munchers.woz"
 
+[games.donald]
+category = "abc"
+system = "dosbox-donald"
+rom = "donald"
+
 [games.oregon]
+category = "play"
 system = "apple2gs"
 rom = "oregon.woz"
 
 [games.odell]
+category = "play"
 system = "apple2gs"
 rom = "odell.woz"
 
-[games.murphys_minerals]
+[games.murphy]
+category = "play"
 system = "apple2gs"
 rom = "murphys_minerals.woz"
 
-[games.mario_paint]
+[games.mario]
+category = "art"
 system = "snes-mouse"
 rom = "mario_paint.sfc"
 
-[games.putt_parade]
+[games.parade]
+category = "play"
 system = "scummvm"
 rom = "putt_parade"
 
-[games.putt_moon]
+[games.moon]
+category = "play"
 system = "scummvm"
 rom = "putt_moon"
 
-[games.putt_zoo]
+[games.zoo]
+category = "play"
 system = "scummvm"
 rom = "putt_zoo"
 
-[games.amazon_trail]
+[games.amazon]
+category = "play"
 system = "dosbox"
 rom = "amazon_trail.iso"
 
-[games.yukon_trail]
+[games.yukon]
+category = "play"
 system = "dosbox"
 rom = "yukon_trail.iso"
 
+[games.carmen]
+category = "play"
+system = "dosbox-carmen"
+rom = "carmen.iso"
+
 [launchers.gcompris]
+category = "abc"
 binary = "gcompris-qt"
 pane = "none"
 lolcat = "never"
@@ -131,14 +163,16 @@ persist = false
 gui = true
 
 [launchers.scratch]
+category = "code"
 binary = "scratch"
 pane = "none"
 lolcat = "never"
 persist = false
 gui = true
-enabled = false
+enabled = true
 
 [launchers.tuxmath]
+category = "math"
 binary = "tuxmath"
 pane = "none"
 lolcat = "never"
@@ -146,6 +180,7 @@ persist = false
 gui = true
 
 [launchers.tuxtype]
+category = "abc"
 binary = "tuxtype"
 pane = "none"
 lolcat = "never"
@@ -153,6 +188,7 @@ persist = false
 gui = true
 
 [launchers.klettres]
+category = "abc"
 binary = "klettres"
 pane = "none"
 lolcat = "never"
@@ -160,6 +196,7 @@ persist = false
 gui = true
 
 [launchers.krita]
+category = "art"
 binary = "krita"
 pane = "none"
 lolcat = "never"

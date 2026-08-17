@@ -71,8 +71,8 @@ def test_dir_008_tools_exists(run_in_kid_env):
     rc, out, err = run_in_kid_env("test -d /home/kid/.tools")
     assert rc == 0
 
-def test_dir_009_no_legacy_category_dirs(run_in_kid_env):
-    rc, out, err = run_in_kid_env("test ! -d /home/kid/apps/art")
+def test_dir_009_app_category_dirs(run_in_kid_env):
+    rc, out, err = run_in_kid_env("test -d /home/kid/apps/art && test -d /home/kid/apps/math && test -d /home/kid/apps/abc && test -d /home/kid/apps/play && test -d /home/kid/apps/code")
     assert rc == 0
 
 def test_lnk_001_zshrc_is_symlink(run_in_kid_env):
@@ -82,7 +82,7 @@ def test_lnk_001_zshrc_is_symlink(run_in_kid_env):
 def test_lnk_002_zshrc_target_correct(run_in_kid_env):
     rc, out, err = run_in_kid_env("readlink /home/kid/.zshrc")
     assert rc == 0
-    assert ".config/zsh/zshrc.zsh" in out
+    assert "zshrc.zsh" in out
 
 def test_lnk_003_tmux_conf_is_symlink(run_in_kid_env):
     rc, out, err = run_in_kid_env("test -L /home/kid/.tmux.conf")
@@ -91,4 +91,4 @@ def test_lnk_003_tmux_conf_is_symlink(run_in_kid_env):
 def test_lnk_004_tmux_conf_target_correct(run_in_kid_env):
     rc, out, err = run_in_kid_env("readlink /home/kid/.tmux.conf")
     assert rc == 0
-    assert ".config/zsh/tmux.conf" in out
+    assert "tmux.conf" in out

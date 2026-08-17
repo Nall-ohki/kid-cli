@@ -115,44 +115,70 @@ fn create_structure(commands_config: &config::commands::Config) -> Result<()> {
 }
 
 fn install_apps(home: &std::path::Path, commands_config: &config::commands::Config) -> Result<()> {
-    let mut apps = Vec::new();
+    let mut apps_by_category: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
     
     for (name, launcher) in &commands_config.launchers {
         if launcher.enabled && launcher.gui {
-            apps.push(name.clone());
+            let cat = launcher.category.as_deref().unwrap_or("play").to_string();
+            apps_by_category.entry(cat).or_default().push(name.clone());
         }
     }
     for (name, game) in &commands_config.games {
         if game.enabled {
-            apps.push(name.clone());
+            let cat = game.category.as_deref().unwrap_or("play").to_string();
+            apps_by_category.entry(cat).or_default().push(name.clone());
         }
     }
 
-    for name in &apps {
-        let app_dir = home.join("apps").join(name);
-        fs::create_dir_all(&app_dir)?;
-        
-        let wrapper_path = app_dir.join(name);
-        
-        let content = format!(
-            "#!/bin/zsh\n\
-             # Restricted App Wrapper\n\n\
-             # Delegate to the unified kid-cli launcher\n\
-             exec /kid/bin/kid launch {}\n",
-            name
-        );
-        
-        fs::write(&wrapper_path, content)?;
-        
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut perms = fs::metadata(&wrapper_path)?.permissions();
-            perms.set_mode(0o755);
-            fs::set_permissions(&wrapper_path, perms)?;
+    let apps_root = home.join("apps");
+    if !apps_root.exists() {
+        fs::create_dir_all(&apps_root)?;
+    }
+
+    // Clean up legacy flat app directories (e.g. ~/apps/<name>/<name>) if they exist directly in ~/apps
+    if let Ok(entries) = fs::read_dir(&apps_root) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
+                    if !apps_by_category.contains_key(dir_name) {
+                        let _ = fs::remove_dir_all(&path);
+                    }
+                }
+            }
         }
-        
-        styled_message(MessageLevel::Ok, &format!("Installed app wrapper: ~/apps/{}/{}", name, name));
+    }
+
+    for (category, app_names) in &apps_by_category {
+        if app_names.is_empty() {
+            continue;
+        }
+        let category_dir = apps_root.join(category);
+        fs::create_dir_all(&category_dir)?;
+
+        for name in app_names {
+            let wrapper_path = category_dir.join(name);
+            
+            let content = format!(
+                "#!/bin/zsh\n\
+                 # Restricted App Wrapper\n\n\
+                 # Delegate to the unified kid-cli launcher\n\
+                 exec /kid/bin/kid launch {}\n",
+                name
+            );
+            
+            fs::write(&wrapper_path, content)?;
+            
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let mut perms = fs::metadata(&wrapper_path)?.permissions();
+                perms.set_mode(0o755);
+                fs::set_permissions(&wrapper_path, perms)?;
+            }
+            
+            styled_message(MessageLevel::Ok, &format!("Installed app wrapper: ~/apps/{}/{}", category, name));
+        }
     }
     
     Ok(())
@@ -306,4 +332,65 @@ fn create_symlink(src: &str, dst: &str) -> Result<()> {
 
     symlink(src, dst_path).context(format!("Could not create symlink {} -> {}", dst, src))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_install_apps_hierarchy_and_conditional_dirs() {
+        let temp = tempdir().unwrap();
+        let home_path = temp.path();
+
+        let toml_content = r#"
+[launchers.tuxpaint]
+category = "art"
+gui = true
+enabled = true
+
+[launchers.tuxmath]
+category = "math"
+gui = true
+enabled = true
+
+[launchers.scratch]
+category = "code"
+gui = true
+enabled = false
+
+[games.oregon]
+category = "play"
+system = "apple2gs"
+rom = "oregon.woz"
+enabled = true
+
+[games.num_munchers]
+category = "math"
+system = "apple2gs"
+rom = "num_munchers.woz"
+enabled = true
+"#;
+        let config: config::commands::Config = toml::from_str(toml_content).unwrap();
+        install_apps(home_path, &config).unwrap();
+
+        // 1. Check art category
+        assert!(home_path.join("apps/art/tuxpaint").is_file());
+        assert!(!home_path.join("apps/art/tuxpaint/tuxpaint").exists());
+
+        // 2. Check math category
+        assert!(home_path.join("apps/math/tuxmath").is_file());
+        assert!(home_path.join("apps/math/num_munchers").is_file());
+
+        // 3. Check play category
+        assert!(home_path.join("apps/play/oregon").is_file());
+
+        // 4. Check code category (disabled -> folder must not exist)
+        assert!(!home_path.join("apps/code").exists());
+
+        // 5. Verify wrapper script content
+        let tuxpaint_content = fs::read_to_string(home_path.join("apps/art/tuxpaint")).unwrap();
+        assert!(tuxpaint_content.contains("exec /kid/bin/kid launch tuxpaint"));
+    }
 }
