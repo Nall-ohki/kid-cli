@@ -8,13 +8,13 @@
 | 4 | Napping Companion (Idle to Sleep) | 3 | 3 | 2 | 100.0% | 0.0s | 0.077 | 20.0s |
 | 5 | App Hopping | 3 | 5 | 2 | 166.7% | 280.0s | 0.023 | 200.0s |
 | 6 | Deep Explorer | 6 | 2 | 1 | 33.3% | 0.0s | 0.059 | 31.0s |
-| 7 | The Echo Game | 5 | 3 | 0 | 60.0% | 0.0s | 0.176 | 10.0s |
+| 7 | The Echo Game | 5 | 2 | 0 | 40.0% | 0.0s | 0.118 | 17.0s |
 | 8 | Time Traveler | 4 | 3 | 0 | 75.0% | 0.0s | 0.111 | 12.0s |
 | 9 | Creating Art (Creations) | 7 | 5 | 0 | 71.4% | 0.0s | 0.109 | 12.0s |
 | 10 | Reading & Writing Stories | 4 | 4 | 1 | 100.0% | 90.0s | 0.042 | 90.0s |
 | 11 | Frustrated Smash & Recovery | 5 | 2 | 2 | 40.0% | 0.0s | 0.100 | 25.0s |
 | 12 | The Matrix Addict | 2 | 3 | 1 | 150.0% | 105.0s | 0.035 | 60.0s |
-| 13 | Train Conductor | 4 | 3 | 0 | 75.0% | 0.0s | 0.100 | 20.0s |
+| 13 | Train Conductor | 4 | 4 | 0 | 100.0% | 0.0s | 0.133 | 12.0s |
 | 14 | Quick Peek Session | 3 | 2 | 0 | 66.7% | 0.0s | 0.118 | 10.0s |
 | 15 | Nyan Cat Party | 2 | 2 | 1 | 100.0% | 180.0s | 0.016 | 180.0s |
 | 16 | Spring Cleaning | 4 | 3 | 0 | 75.0% | 0.0s | 0.143 | 10.0s |

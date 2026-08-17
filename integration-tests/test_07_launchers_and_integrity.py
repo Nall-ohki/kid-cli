@@ -86,14 +86,14 @@ def test_app_014_mario_wrapper(run_in_restricted_env):
     assert rc == 0
 
 def test_app_015_math_wrappers(run_in_restricted_env):
-    for app in ["tuxmath", "nummunch", "fracmunch"]:
+    for app in ["tuxmath", "nummunch", "fracmunch", "zoombini"]:
         rc, out, err = run_in_restricted_env(f"test -x /home/kid/apps/math/{app}")
         assert rc == 0
         rc, out, err = run_in_restricted_env(f"/bin/grep 'kid launch {app}' /home/kid/apps/math/{app}")
         assert rc == 0
 
 def test_app_016_abc_wrappers(run_in_restricted_env):
-    for app in ["tuxtype", "klettres", "wordmunch", "donald", "gcompris"]:
+    for app in ["tuxtype", "klettres", "wordmunch", "donald", "gcompris", "mariotype"]:
         rc, out, err = run_in_restricted_env(f"test -x /home/kid/apps/abc/{app}")
         assert rc == 0
         rc, out, err = run_in_restricted_env(f"/bin/grep 'kid launch {app}' /home/kid/apps/abc/{app}")

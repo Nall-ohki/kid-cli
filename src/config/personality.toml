@@ -684,6 +684,20 @@ responses = [
 ]
 
 [[rules]]
+trigger = "app_start:mariotype"
+responses = [
+  "Mario Teaches Typing! Help Mario smash blocks with quick keyboard fingers! 🍄⌨️",
+  "It's-a typing time! Practice home row keys with Mario and Luigi! 🐢🌟",
+]
+
+[[rules]]
+trigger = "app_start:zoombini"
+responses = [
+  "Logical Journey of the Zoombinis! Guide the little blue creatures to Zoombiniville! 🫐🧭",
+  "Make pizzas for the tree trolls and solve the logic puzzles! 🍕🔍",
+]
+
+[[rules]]
 trigger = "app_stop"
 responses = [
   "Welcome back! How was it?",

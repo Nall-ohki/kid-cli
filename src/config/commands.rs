@@ -42,6 +42,8 @@ mod tests {
         assert!(config.systems.contains_key("scummvm"));
         assert!(config.systems.contains_key("dosbox-carmen"));
         assert!(config.systems.contains_key("dosbox-donald"));
+        assert!(config.systems.contains_key("dosbox-mariotype"));
+        assert!(config.systems.contains_key("dosbox-zoombini"));
         assert!(config.games.contains_key("oregon"));
         assert!(config.games.contains_key("murphy"));
         assert!(config.games.contains_key("mario"));
@@ -52,6 +54,8 @@ mod tests {
         assert!(config.games.contains_key("yukon"));
         assert!(config.games.contains_key("donald"));
         assert!(config.games.contains_key("carmen"));
+        assert!(config.games.contains_key("mariotype"));
+        assert!(config.games.contains_key("zoombini"));
         assert_eq!(config.launchers.get("tuxpaint").and_then(|l| l.category.as_deref()), Some("art"));
         assert_eq!(config.launchers.get("tuxmath").and_then(|l| l.category.as_deref()), Some("math"));
         assert_eq!(config.launchers.get("tuxtype").and_then(|l| l.category.as_deref()), Some("abc"));
@@ -61,8 +65,10 @@ mod tests {
         assert_eq!(config.games.get("amazon").and_then(|g| g.category.as_deref()), Some("trail"));
         assert_eq!(config.games.get("parade").and_then(|g| g.category.as_deref()), Some("putt"));
         assert_eq!(config.games.get("nummunch").and_then(|g| g.category.as_deref()), Some("math"));
+        assert_eq!(config.games.get("zoombini").and_then(|g| g.category.as_deref()), Some("math"));
         assert_eq!(config.games.get("wordmunch").and_then(|g| g.category.as_deref()), Some("abc"));
         assert_eq!(config.games.get("donald").and_then(|g| g.category.as_deref()), Some("abc"));
+        assert_eq!(config.games.get("mariotype").and_then(|g| g.category.as_deref()), Some("abc"));
         assert_eq!(config.games.get("carmen").and_then(|g| g.category.as_deref()), Some("play"));
         assert_eq!(config.games.get("mario").and_then(|g| g.category.as_deref()), Some("art"));
     }

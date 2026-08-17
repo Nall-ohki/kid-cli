@@ -84,6 +84,14 @@ rom_dir = "/kid/emulation/disks/dosbox"
 template = "dosbox -fullscreen -exit -c \"mount c {rom_path}\" -c \"c:\" -c \"donald.exe\""
 rom_dir = "/kid/emulation/disks/dosbox"
 
+[systems.dosbox-mariotype]
+template = "dosbox -fullscreen -exit -c \"mount c {rom_path}\" -c \"c:\" -c \"mario.exe\""
+rom_dir = "/kid/emulation/disks/dosbox"
+
+[systems.dosbox-zoombini]
+template = "dosbox -fullscreen -exit -c \"imgmount d {rom_path} -t iso\" -c \"d:\""
+rom_dir = "/kid/emulation/disks/dosbox"
+
 [games.nummunch]
 category = "math"
 system = "apple2gs"
@@ -99,10 +107,20 @@ category = "math"
 system = "apple2gs"
 rom = "fraction_munchers.woz"
 
+[games.zoombini]
+category = "math"
+system = "dosbox-zoombini"
+rom = "zoombini.iso"
+
 [games.donald]
 category = "abc"
 system = "dosbox-donald"
 rom = "donald"
+
+[games.mariotype]
+category = "abc"
+system = "dosbox-mariotype"
+rom = "mariotype"
 
 [games.oregon]
 category = "trail"
